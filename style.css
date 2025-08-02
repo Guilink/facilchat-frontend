@@ -1,0 +1,405 @@
+/* Importando uma fonte mais bonita */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- Reset e Configurações Globais --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #111827; /* Fundo escuro principal */
+    color: #F9FAFB; /* Texto claro */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+}
+
+/* --- Componente CARD (fundo para seções) --- */
+.card {
+    background-color: #1F2937; /* Fundo dos cards, um pouco mais claro */
+    border: 1px solid #374151;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Estilos de Texto --- */
+h1, h2 {
+    color: #FFFFFF;
+    margin-bottom: 0.5rem;
+}
+h1 { font-size: 1.875rem; font-weight: 700; }
+h2 { font-size: 1.5rem; font-weight: 600; border-bottom: 1px solid #374151; padding-bottom: 0.75rem; margin-bottom: 1.5rem;}
+p { color: #D1D5DB; line-height: 1.6; }
+
+/* --- Tela de Login --- */
+#login-container {
+    text-align: center;
+    max-width: 480px;
+    margin: 0 auto;
+}
+.logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1.5rem;
+}
+
+/* --- Botões --- */
+button {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary { background-color: #4F46E5; color: white; }
+.btn-primary:hover:not(:disabled) { background-color: #4338CA; }
+
+.btn-secondary { background-color: #374151; color: white; border: 1px solid #4B5563; }
+.btn-secondary:hover:not(:disabled) { background-color: #4B5563; }
+
+.btn-danger { background-color: #DC2626; color: white; }
+.btn-danger:hover:not(:disabled) { background-color: #B91C1C; }
+
+.btn-success { background-color: #16A34A; color: white; }
+.btn-success:hover:not(:disabled) { background-color: #15803D; }
+
+.btn-warning { background-color: #D97706; color: white; }
+.btn-warning:hover:not(:disabled) { background-color: #B45309; }
+
+.btn-login {
+    background-color: #FFFFFF;
+    color: #1F2937;
+    width: 100%;
+    margin-top: 1.5rem;
+    font-size: 1rem;
+}
+.btn-login img { width: 20px; height: 20px; }
+
+/* --- Painel Principal --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+}
+.logo-header { width: 50px; height: 50px; }
+.user-info { display: flex; align-items: center; gap: 1rem; }
+.bots-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+/* --- Lista de Bots --- */
+#bots-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.bot-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.bot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.bot-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.bot-title h3 { font-size: 1.25rem; font-weight: 600; }
+.bot-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+.status-indicator.offline { background-color: #6B7280; }
+.status-indicator.connecting { background-color: #FBBF24; animation: pulse 1.5s infinite; }
+.status-indicator.online { background-color: #22C55E; }
+.status-indicator.paused { background-color: #F97316; }
+
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+/* --- Formulários --- */
+#create-bot-section { margin-top: 2rem; }
+form { display: flex; flex-direction: column; gap: 1.5rem; }
+label { font-weight: 500; color: #E5E7EB; }
+input, select, textarea {
+    background-color: #374151;
+    border: 1px solid #4B5563;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.5);
+}
+textarea { min-height: 80px; resize: vertical; }
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid #374151;
+    padding-top: 1.5rem;
+}
+
+/* --- MODAL (Janela flutuante para QR Code) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+/* --- CSS ATUALIZADO PARA O MODAL --- */
+.modal-content {
+    max-width: 700px; /* Aumentamos a largura para acomodar melhor o conteúdo */
+    width: 90%;
+    text-align: left; /* Alinhamos o texto à esquerda, fica mais profissional */
+    position: relative;
+    
+    /* A MÁGICA ACONTECE AQUI */
+    max-height: 85vh; /* A altura máxima será 85% da altura da tela */
+    display: flex; /* Essencial para a rolagem funcionar corretamente */
+    flex-direction: column; /* Organiza os itens em coluna */
+}
+
+.modal-content form {
+    overflow-y: auto; /* Adiciona a barra de rolagem vertical APENAS se o conteúdo do formulário for muito grande */
+    padding-right: 1.5rem; /* Cria um espaço para a barra de rolagem não esmagar o conteúdo */
+    margin-right: -1.5rem; /* Compensa o padding para manter o alinhamento visual */
+}
+#qrcode-container {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1.5rem auto;
+    display: inline-block;
+}
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #9CA3AF;
+    cursor: pointer;
+    line-height: 1;
+}
+.close-modal:hover { color: white; }
+
+/* --- Estilos para Seção de Horário --- */
+.form-section-divider {
+    border-top: 1px solid #374151;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-group-horizontal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.schedule-day {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #374151;
+}
+.schedule-day:last-child {
+    border-bottom: none;
+}
+.schedule-day-label {
+    flex-basis: 100px; /* Largura fixa para o nome do dia */
+    font-weight: 500;
+}
+.schedule-day-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-grow: 1; /* Ocupa o espaço restante */
+}
+input[type="time"] {
+    max-width: 120px;
+    padding: 0.5rem;
+}
+.schedule-day.disabled .schedule-day-inputs {
+    opacity: 0.4;
+    pointer-events: none; /* Desabilita cliques nos inputs de tempo */
+}
+
+/* --- Estilo para o Toggle Switch (Interruptor) --- */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #4B5563;
+  transition: .4s;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+}
+input:checked + .slider {
+  background-color: #4F46E5; /* Cor quando está ativo */
+}
+input:focus + .slider {
+  box-shadow: 0 0 1px #4F46E5;
+}
+input:checked + .slider:before {
+  transform: translateX(22px);
+}
+.slider.round {
+  border-radius: 34px;
+}
+.slider.round:before {
+  border-radius: 50%;
+}
+
+/* --- Estilos para Base de Conhecimento --- */
+.form-hint {
+    font-size: 0.9rem;
+    color: #9CA3AF; /* Cinza mais claro */
+    margin-bottom: 1rem;
+    margin-top: -0.25rem;
+}
+
+.knowledge-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+.knowledge-item-inputs {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.knowledge-item input {
+    width: 100%;
+}
+
+.btn-add-item {
+    width: 100%;
+    justify-content: center;
+    background-color: #374151;
+    border-style: dashed;
+}
+
+.btn-remove-item {
+    flex-shrink: 0; /* Impede que o botão encolha */
+    padding: 0;
+    width: 44px; /* Tamanho fixo */
+    height: 44px; /* Mesma altura dos inputs */
+    line-height: 44px;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+/* --- Estilo customizado para a barra de rolagem (bônus) --- */
+/* Funciona em navegadores Chrome, Edge, e Safari */
+*::-webkit-scrollbar {
+  width: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1F2937; /* Fundo da barra */
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #4B5563; /* Cor da própria barra */
+  border-radius: 20px;
+  border: 3px solid #1F2937; /* Cria uma borda com a cor do fundo */
+}
+/* --- Estilos para Seção de Arquivos --- */
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #374151;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.file-info span {
+    font-weight: 500;
+}
+
+#file-upload-input {
+    display: none; /* O input real fica escondido */
+}
+
+#upload-section label { /* O estilo do botão é aplicado no label */
+    cursor: pointer;
+}

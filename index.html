@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FacilChat - Painel</title>
+    <!-- Link para nosso futuro arquivo de estilo -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Biblioteca para gerar QR Code -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+    <!-- Container Principal da Aplicação -->
+    <div class="container">
+
+        <!-- TELA DE LOGIN (só aparece se não estiver logado) -->
+        <div id="login-container" class="card">
+            <img src="https://i.imgur.com/ODtO43c.png" alt="Logo FacilChat" class="logo">
+            <h1>Crie chatbots inteligentes</h1>
+            <p>Automatize seu atendimento no WhatsApp de forma simples e intuitiva.</p>
+            <button id="login-google" class="btn-login">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google logo">
+                Entrar com Google
+            </button>
+        </div>
+
+        <!-- PAINEL PRINCIPAL (só aparece depois do login) -->
+        <div id="app-container" style="display: none;">
+            <header>
+                <img src="https://i.imgur.com/ODtO43c.png" alt="Logo FacilChat" class="logo-header">
+                <div class="user-info">
+                    <span id="user-email"></span>
+                    <button id="logout" class="btn-secondary">Sair</button>
+                </div>
+            </header>
+
+            <main>
+                <!-- Seção para listar os assistentes existentes -->
+                <div class="bots-header">
+                    <h2>Seus Assistentes</h2>
+                    <button id="show-create-form-btn" class="btn-primary">+ Criar assistente virtual</button>
+                </div>
+                <div id="bots-list">
+                    <!-- Os bots serão inseridos aqui pelo JavaScript -->
+                    <p class="loading-bots">Carregando seus assistentes...</p>
+                </div>
+
+                <!-- Formulário para CRIAR um novo bot (inicialmente escondido) -->
+                <div id="create-bot-section" class="card" style="display:none;">
+                    <h2>Configure a Identidade do Bot</h2>
+                    <form id="create-bot-form">
+                        <label for="bot-name">Nome do Bot</label>
+                        <input type="text" id="bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                        
+                        <label for="bot-function">Função Principal</label>
+                        <select id="bot-function" required>
+                            <option value="Suporte ao Cliente">Suporte ao Cliente</option>
+                            <option value="Produtos e Serviços">Produtos e Serviços</option>
+                            <option value="Agendamentos">Agendamentos</option>
+                            <option value="Personalizado">Personalizado</option>
+                        </select>
+
+                        <label for="bot-tone">Tom de Atendimento</label>
+                        <select id="bot-tone" required>
+                            <option value="Amigável">Amigável (coloroso e acessível)</option>
+                            <option value="Neutro">Neutro (claro, objetivo e sem emoção)</option>
+                            <option value="Profissional">Profissional (formal, polido e respeitoso)</option>
+                            <option value="Personalizado">Personalizado</option>
+                        </select>
+                        <textarea id="bot-tone-custom" placeholder="Caso tenha escolhido 'Personalizado', descreva o tom aqui." style="display:none;"></textarea>
+
+                        <div class="form-actions">
+                            <button type="button" id="cancel-create-btn" class="btn-secondary">Cancelar</button>
+                            <button type="submit" class="btn-primary">Salvar e Continuar</button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL DO QR CODE (sempre escondido, só aparece quando precisa) -->
+    <div id="qr-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content card">
+            <span class="close-modal">×</span>
+            <h3 id="qr-status">Aguardando QR Code...</h3>
+            <div id="qrcode-container"></div>
+            <p class="modal-instructions">Abra o WhatsApp no seu celular, vá em Aparelhos Conectados e escaneie o código.</p>
+        </div>
+    </div>
+
+    <!-- NOVO: MODAL DE CONFIGURAÇÕES/EDIÇÃO DO BOT -->
+    <div id="edit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content card">
+            <span class="close-modal">×</span>
+            <h3>Configurações do Assistente</h3>
+            
+            <form id="edit-bot-form">
+                <!-- Este campo é invisível, mas guarda o ID do bot que estamos editando. É muito importante! -->
+                <input type="hidden" id="edit-bot-id">
+
+                <label for="edit-bot-name">Nome do Bot</label>
+                <input type="text" id="edit-bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                
+                <label for="edit-bot-function">Função Principal</label>
+                <select id="edit-bot-function" required>
+                    <option value="Suporte ao Cliente">Suporte ao Cliente</option>
+                    <option value="Produtos e Serviços">Produtos e Serviços</option>
+                    <option value="Agendamentos">Agendamentos</option>
+                    <option value="Personalizado">Personalizado</option>
+                </select>
+
+                <label for="edit-bot-tone">Tom de Atendimento</label>
+                <select id="edit-bot-tone" required>
+                    <option value="Amigável">Amigável (coloroso e acessível)</option>
+                    <option value="Neutro">Neutro (claro, objetivo e sem emoção)</option>
+                    <option value="Profissional">Profissional (formal, polido e respeitoso)</option>
+                    <option value="Personalizado">Personalizado</option>
+                </select>
+                <textarea id="edit-bot-tone-custom" placeholder="Caso tenha escolhido 'Personalizado', descreva o tom aqui." style="display:none;"></textarea>
+                    <!-- NOVO: Seção de Horário de Atendimento -->
+                    <div class="form-section-divider">
+                        <h4>Horário de Atendimento</h4>
+                    </div>
+
+                    <div class="form-group-horizontal">
+                        <label for="schedule-enabled-toggle">Ativar horário de funcionamento?</label>
+                        <!-- Este é um "toggle switch" customizado -->
+                        <label class="switch">
+                            <input type="checkbox" id="schedule-enabled-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    <!-- Container para os dias da semana (inicialmente escondido) -->
+                    <div id="schedule-details-container" style="display: none;">
+                        <!-- Aqui ficarão os dias da semana, que serão gerados pelo JavaScript -->
+                    </div>
+                        <!-- NOVO: Seção de Base de Conhecimento -->
+                        <div class="form-section-divider">
+                            <h4>Base de Conhecimento</h4>
+                        </div>
+
+                        <!-- Seção de FAQ -->
+                        <h5>Perguntas Frequentes (FAQ)</h5>
+                        <p class="form-hint">Adicione as perguntas que seus clientes mais fazem para o bot responder automaticamente.</p>
+                        <div id="faq-list-container">
+                            <!-- FAQs serão adicionados aqui pelo JavaScript -->
+                        </div>
+                        <button type="button" id="add-faq-btn" class="btn-secondary btn-add-item">+ Adicionar Pergunta</button>
+
+                        <!-- Seção de Contatos para Encaminhamento (adicionada no mesmo passo) -->
+                        <h5 style="margin-top: 2rem;">Contatos para Encaminhamento</h5>
+                        <p class="form-hint">Se o bot não souber a resposta, ele poderá sugerir um desses contatos.</p>
+                        <div id="contacts-list-container">
+                            <!-- Contatos serão adicionados aqui pelo JavaScript -->
+                        </div>
+                        <button type="button" id="add-contact-btn" class="btn-secondary btn-add-item">+ Adicionar Contato</button>
+                        <!-- NOVO: Seção de Conhecimento por Arquivos -->
+                        <div class="form-section-divider">
+                            <h4>Conhecimento por Arquivos (PDF, Imagens)</h4>
+                        </div>
+                        <p class="form-hint">Envie um arquivo para o bot aprender sobre seus produtos, serviços ou regras. Limite de 3 arquivos.</p>
+
+                        <div id="files-list-container">
+                            <!-- A lista de arquivos enviados será inserida aqui -->
+                        </div>
+
+                        <!-- O botão de upload só aparece se o limite não foi atingido -->
+                        <div id="upload-section">
+                            <label for="file-upload-input" class="btn-secondary btn-add-item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                <span>Enviar Arquivo</span>
+                            </label>
+                            <input type="file" id="file-upload-input" accept=".pdf,.png,.jpeg,.jpg,.webp" style="display: none;">
+                        </div>
+
+                        <div id="upload-progress-indicator" style="display:none; margin-top: 1rem; text-align:center;">
+                            <p>Processando documento... Isso pode levar um minuto. 🧠</p>
+                        </div>                                         
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>    
+
+    <!-- Scripts do Firebase (do seu código antigo, estão corretos) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    
+    <!-- Script do Socket.IO para comunicação em tempo real (QR Code) -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+    <!-- Link para nosso futuro arquivo de lógica -->
+    <script src="app.js"></script>
+
+</body>
+</html>
