@@ -48,12 +48,12 @@
 
                 <!-- Formulário para CRIAR um novo bot (inicialmente escondido) -->
                 <div id="create-bot-section" class="card" style="display:none;">
-                    <h2>Configure a Identidade do Bot</h2>
+                    <h2>Vamos configurar seu assistente</h2>
                     <form id="create-bot-form">
-                        <label for="bot-name">Nome do Bot</label>
-                        <input type="text" id="bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                        <label for="bot-name">Dê um nome ao seu assistente</label>
+                        <input type="text" id="bot-name" placeholder="Por exemplo, 'Assistente de Vendas.'" required>
                         
-                        <label for="bot-function">Função Principal</label>
+                        <label for="bot-function">Qual é a função principal dele?</label>
                         <select id="bot-function" required>
                             <option value="Suporte ao Cliente">Suporte ao Cliente</option>
                             <option value="Produtos e Serviços">Produtos e Serviços</option>
@@ -61,7 +61,7 @@
                             <option value="Personalizado">Personalizado</option>
                         </select>
 
-                        <label for="bot-tone">Tom de Atendimento</label>
+                        <label for="bot-tone">Defina um tom para o atendimento</label>
                         <select id="bot-tone" required>
                             <option value="Amigável">Amigável (coloroso e acessível)</option>
                             <option value="Neutro">Neutro (claro, objetivo e sem emoção)</option>
@@ -152,7 +152,7 @@
 
                         <!-- Seção de Contatos para Encaminhamento (adicionada no mesmo passo) -->
                         <h5 style="margin-top: 2rem;">Contatos para Encaminhamento</h5>
-                        <p class="form-hint">Se o bot não souber a resposta, ele poderá sugerir um desses contatos.</p>
+                        <p class="form-hint">Se o assistente não souber a resposta ou for questionado, ele poderá sugerir um desses contatos.</p>
                         <div id="contacts-list-container">
                             <!-- Contatos serão adicionados aqui pelo JavaScript -->
                         </div>
@@ -161,7 +161,7 @@
                         <div class="form-section-divider">
                             <h4>Conhecimento por Arquivos (PDF, Imagens)</h4>
                         </div>
-                        <p class="form-hint">Envie um arquivo para o bot aprender sobre seus produtos, serviços ou regras. Limite de 3 arquivos.</p>
+                        <p class="form-hint">Envie um arquivo para o assistente aprender sobre seus produtos, serviços ou regras. Limite de 3 arquivos.</p>
 
                         <div id="files-list-container">
                             <!-- A lista de arquivos enviados será inserida aqui -->

@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderBots() {
         if (userBots.length === 0) {
-            botsListDiv.innerHTML = '<div class="card" style="text-align: center;"><p>Você ainda não tem assistentes. Que tal criar um no botão acima?</p></div>';
+            botsListDiv.innerHTML = '<div class="card" style="text-align: center;"><p>Você ainda não tem assistentes. Que tal criar um agora?</p></div>';
             return;
         }
         botsListDiv.innerHTML = '';
