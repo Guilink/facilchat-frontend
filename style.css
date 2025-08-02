@@ -49,9 +49,10 @@ p { color: #D1D5DB; line-height: 1.6; }
     margin: 0 auto;
 }
 .logo {
-    width: 80px;
-    height: 80px;
+    width: 100px; /* Aumentado */
+    height: 100px; /* Aumentado */
     margin-bottom: 1.5rem;
+    object-fit: contain; /* Garante que a imagem não distorça */
 }
 
 /* --- Botões --- */
@@ -106,7 +107,11 @@ header {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
 }
-.logo-header { width: 50px; height: 50px; }
+.logo-header {
+    height: 50px;  /* Altura da "caixa" */
+    width: 70px;   /* Largura da "caixa" */
+    object-fit: contain; /* ESSA É A MÁGICA: A imagem se ajusta dentro da caixa sem distorcer */
+}
 .user-info { display: flex; align-items: center; gap: 1rem; }
 .bots-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 
