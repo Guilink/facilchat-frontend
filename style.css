@@ -49,8 +49,8 @@ p { color: #D1D5DB; line-height: 1.6; }
     margin: 0 auto;
 }
 .logo {
-    width: 100px; /* Aumentado */
-    height: 100px; /* Aumentado */
+    width: 150px; /* Aumentado */
+    height: 150px; /* Aumentado */
     margin-bottom: 1.5rem;
     object-fit: contain; /* Garante que a imagem não distorça */
 }
