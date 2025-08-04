@@ -4,107 +4,556 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FacilChat - Painel</title>
-    <!-- Link para nosso futuro arquivo de estilo -->
     <link rel="stylesheet" href="style.css">
-    <!-- Biblioteca para gerar QR Code -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+    <!-- HEADER FIXO -->
+    <header id="main-header" style="display: none;">
+        <div class="header-container">
+            <div class="header-left">
+                <img src="./assets/minichat.png" alt="FacilChat" class="header-logo">
+                <nav class="header-nav">
+                    <a href="#" class="nav-link active">Painel</a>
+                    <a href="#" class="nav-link">Planos</a>
+                </nav>
+            </div>
+            <div class="header-right">
+                <span class="plan-info">Plano atual: Básico (acaba em 3 dias)</span>
+                <button id="theme-toggle" class="icon-btn" title="Alternar tema">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+                <button id="notifications-btn" class="icon-btn" title="Notificações">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                </button>
+                <button id="user-menu" class="icon-btn" title="Menu do usuário">
+                    <div class="user-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                </button>
+                <button id="logout" class="btn-secondary">Sair</button>
+            </div>
+        </div>
+    </header>
 
-    <!-- Container Principal da Aplicação -->
-    <div class="container">
+    <!-- LOADING INICIAL -->
+    <div id="app-loading" class="app-loading">
+        <div class="loading-spinner"></div>
+    </div>
 
-        <!-- TELA DE LOGIN (só aparece se não estiver logado) -->
-        <div id="login-container" class="card">
-            <img src="./assets/logo.png" alt="Logo FacilChat" class="logo">
+    <!-- CONTAINER PRINCIPAL -->
+    <div class="app-container">
+        
+        <!-- VIEW 1: LOGIN -->
+        <div id="login-view" class="view">
+            <div class="login-container">
+                <img src="./assets/logo.png" alt="FacilChat" class="login-logo">
             <h1>Crie chatbots inteligentes</h1>
             <p>Automatize seu atendimento no WhatsApp de forma simples e intuitiva.</p>
             <button id="login-google" class="btn-login">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google logo">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
                 Entrar com Google
             </button>
         </div>
+        </div>
 
-        <!-- PAINEL PRINCIPAL (só aparece depois do login) -->
-        <div id="app-container" style="display: none;">
-            <header>
-                <img src="./assets/minichat.png" alt="Logo FacilChat" class="logo-header">
-                <div class="user-info">
-                    <span id="user-email"></span>
-                    <button id="logout" class="btn-secondary">Sair</button>
+        <!-- VIEW 2: DASHBOARD -->
+        <div id="dashboard-view" class="view">
+            <div class="dashboard-container">
+                
+                <!-- ESTADO 1: SEM BOTS (BOAS-VINDAS) -->
+                <div id="welcome-state" class="welcome-state">
+                    <div class="main-content">
+                        <div class="welcome-card">
+                            <div class="welcome-icon">
+                                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                                    <line x1="8" y1="9" x2="16" y2="9"/>
+                                    <line x1="8" y1="13" x2="14" y2="13"/>
+                                </svg>
+                            </div>
+                            <h2>Configure seu assistente virtual de forma fácil e rápida.</h2>
+                            <p>Proporcione uma experiência de atendimento eficiente para os seus clientes!</p>
+                            <button id="start-wizard-btn" class="btn-primary">Começar agora</button>
+                        </div>
+                    </div>
+                    <div class="sidebar-content">
+                        <div class="promo-card">
+                            <h3>Conheça nossos planos e preços.</h3>
+                            <p>Benefícios exclusivos em cada um de nossos planos.</p>
+                            <button class="btn-secondary">Conhecer planos</button>
+                        </div>
+                        <div class="promo-card">
+                            <h3>Veja Nossa IA de atendimento em ação!</h3>
+                            <p>Descubra como nossa Inteligência Artificial pode revolucionar o seu atendimento ao cliente.</p>
+                            <button class="btn-link">Ver demonstração →</button>
+                        </div>
+                    </div>
                 </div>
-            </header>
 
-            <main>
-                <!-- Seção para listar os assistentes existentes -->
+                <!-- ESTADO 2: COM BOTS -->
+                <div id="bots-state" class="bots-state" style="display: none;">
                 <div class="bots-header">
                     <h2>Seus Assistentes</h2>
-                    <button id="show-create-form-btn" class="btn-primary">+ Criar assistente virtual</button>
-                </div>
-                <div id="bots-list">
-                    <!-- Os bots serão inseridos aqui pelo JavaScript -->
-                    <p class="loading-bots">Carregando seus assistentes...</p>
-                </div>
+                        <button id="create-bot-btn" class="btn-primary">+ Criar assistente virtual</button>
+                    </div>
+                    
+                    <div class="bots-grid">
+                        <div id="bots-list" class="bots-list">
+                            <!-- Bots serão inseridos aqui dinamicamente -->
+                        </div>
+                    </div>
 
-                <!-- Formulário para CRIAR um novo bot (inicialmente escondido) -->
-                <div id="create-bot-section" class="card" style="display:none;">
-                    <h2>Vamos configurar seu assistente</h2>
-                    <form id="create-bot-form">
-                        <label for="bot-name">Dê um nome ao seu assistente</label>
-                        <input type="text" id="bot-name" placeholder="Por exemplo, 'Assistente de Vendas.'" required>
+                    <div class="sidebar-content">
+                        <div class="promo-card">
+                            <h3>Conheça nossos planos e preços.</h3>
+                            <p>Benefícios exclusivos em cada um de nossos planos.</p>
+                            <button class="btn-secondary">Conhecer planos</button>
+                        </div>
+                        <div class="promo-card">
+                            <h3>Veja Nossa IA de atendimento em ação!</h3>
+                            <p>Descubra como nossa Inteligência Artificial pode revolucionar o seu atendimento ao cliente.</p>
+                            <button class="btn-link">Ver demonstração →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: WIZARD DE CRIAÇÃO/EDIÇÃO -->
+        <div id="wizard-view" class="view">
+            <div class="wizard-container">
+                <div class="wizard-sidebar">
+                    <div class="wizard-header">
+                        <img src="./assets/minichat.png" alt="FacilChat" class="wizard-logo">
+                        <h3>FacilChat</h3>
+                        <button id="close-wizard" class="close-btn">×</button>
+                    </div>
+                    
+                    <div class="wizard-steps">
+                        <div class="step" data-step="1">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </div>
+                            <div class="step-content">
+                                <h4>Identidade do Bot</h4>
+                                <p>Nome, função e tom de voz</p>
+                            </div>
+                        </div>
                         
-                        <label for="bot-function">Qual é a função principal dele?</label>
-                        <select id="bot-function" required>
-                            <option value="Suporte ao Cliente">Suporte ao Cliente</option>
-                            <option value="Produtos e Serviços">Produtos e Serviços</option>
-                            <option value="Agendamentos">Agendamentos</option>
-                            <option value="Personalizado">Personalizado</option>
-                        </select>
-                        <!-- ADICIONE A LINHA ABAIXO -->
-                        <textarea id="bot-function-custom" placeholder="Caso tenha escolhido 'Personalizado', descreva a função aqui." style="display:none; margin-top: -1rem;"></textarea>
+                        <div class="step" data-step="2">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 1v6m0 6v6"/>
+                                    <path d="M12 7a5 5 0 1 0 0 0"/>
+                                </svg>
+                            </div>
+                            <div class="step-content">
+                                <h4>Horário de Atendimento</h4>
+                                <p>Quando o bot estará ativo</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step" data-step="3">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                            </div>
+                            <div class="step-content">
+                                <h4>Base de Conhecimento</h4>
+                                <p>Treine com seus dados</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step" data-step="4">
+                            <div class="step-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                            </div>
+                            <div class="step-content">
+                                <h4>Conectar ao WhatsApp</h4>
+                                <p>Vincule seu número</p>
+                            </div>
+                        </div>
+                </div>
+                </div>
 
-                        <label for="bot-tone">Defina um tom para o atendimento</label>
-                        <select id="bot-tone" required>
-                            <option value="Amigável">Amigável (coloroso e acessível)</option>
-                            <option value="Neutro">Neutro (claro, objetivo e sem emoção)</option>
-                            <option value="Profissional">Profissional (formal, polido e respeitoso)</option>
-                            <option value="Personalizado">Personalizado</option>
-                        </select>
-                        <textarea id="bot-tone-custom" placeholder="Caso tenha escolhido 'Personalizado', descreva o tom aqui." style="display:none;"></textarea>
+                <div class="wizard-main">
+                    <div class="wizard-content">
+                        
+                        <!-- PASSO 1: IDENTIDADE -->
+                        <div id="step-1" class="wizard-step active">
+                            <div class="step-header">
+                                <h2>Configure a Identidade do Bot</h2>
+                                <p>Isso definirá como ele interage com seus clientes.</p>
+                            </div>
+                            
+                            <form class="step-form">
+                                <div class="form-group">
+                                    <label for="bot-name">Nome do Bot</label>
+                                    <input type="text" id="bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                                </div>
 
-                        <div class="form-actions">
-                            <button type="button" id="cancel-create-btn" class="btn-secondary">Cancelar</button>
-                            <button type="submit" class="btn-primary">Salvar e Continuar</button>
+                                <div class="form-group">
+                                    <label>Qual vai ser a função principal desse assistente?</label>
+                                     <div class="option-grid" id="function-option-grid">
+                                        <div class="option-card" data-value="Produtos e Serviços">
+                                            <h4>Produtos e Serviços</h4>
+                                            <p>Apresenta produtos, informa sobre serviços e tira dúvidas.</p>
+                                        </div>
+                                        <div class="option-card selected" data-value="Suporte ao Cliente">
+                                            <h4>Suporte ao Cliente</h4>
+                                            <p>Resolve dúvidas e problemas comuns dos clientes.</p>
+                                        </div>
+                                        <div class="option-card" data-value="Agendamentos">
+                                            <h4>Agendamentos</h4>
+                                            <p>Marca, confirma e cancela compromissos e horários.</p>
+                                        </div>
+                                        <div class="option-card" data-value="Personalizado">
+                                            <h4>Personalizado</h4>
+                                            <p>Crie uma função única e específica para o seu bot.</p>
+                                        </div>
+                                    </div>
+                                    <textarea id="bot-function-custom" placeholder="Descreva a função personalizada do seu bot..." style="display: none;"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Tom de Atendimento</label>
+                                    <div class="option-grid" id="tone-option-grid">
+                                        <div class="option-card selected" data-value="Amigável">
+                                            <h4>Amigável</h4>
+                                            <p>Comunica-se de forma calorosa e acessível.</p>
+                                        </div>
+                                        <div class="option-card" data-value="Neutro">
+                                            <h4>Neutro</h4>
+                                            <p>Comunicação clara, objetiva e sem emoção.</p>
+                                        </div>
+                                        <div class="option-card" data-value="Profissional">
+                                            <h4>Profissional</h4>
+                                            <p>Usa uma linguagem formal, polida e respeitosa.</p>
+                                        </div>
+                                        <div class="option-card" data-value="Personalizado">
+                                            <h4>Personalizado</h4>
+                                            <p>Defina você mesmo o tom de voz do bot.</p>
+                                        </div>
+                                    </div>
+                                    <textarea id="bot-tone-custom" placeholder="Descreva o tom personalizado do seu bot..." style="display: none;"></textarea>
                         </div>
                     </form>
                 </div>
-            </main>
+
+                        <!-- PASSO 2: HORÁRIO -->
+                        <div id="step-2" class="wizard-step">
+                            <div class="step-header">
+                                <h2>Configure seu horário.</h2>
+                                <p>Defina o horário de funcionamento do seu bot.</p>
+                            </div>
+
+                            <div class="schedule-options">
+                                <button type="button" class="schedule-preset active" data-preset="always">Sempre Ligado</button>
+                                <button type="button" class="schedule-preset" data-preset="commercial">Horário Comercial</button>
+                                <button type="button" class="schedule-preset" data-preset="night">Período Noturno</button>
+                            </div>
+
+                            <div class="schedule-details">
+                                <div class="schedule-day" data-day="monday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Segunda</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="tuesday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Terça</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="wednesday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Quarta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="thursday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Quinta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="friday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Sexta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="saturday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Sábado</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="00:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="23:59">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="sunday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Domingo</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="00:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="23:59">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PASSO 3: BASE DE CONHECIMENTO -->
+                        <div id="step-3" class="wizard-step">
+                            <div class="step-header">
+                                <h2>Base de Conhecimento</h2>
+                                <p>Alimente seu bot com as informações essenciais. Quanto mais dados, mais inteligente ele será.</p>
+                            </div>
+
+                            <div class="knowledge-sections">
+                                <div class="knowledge-section">
+                                    <h3>Perguntas Frequentes (FAQ)</h3>
+                                    <p>Insira as dúvidas mais comuns dos seus clientes para respostas instantâneas.</p>
+                                    <div id="faq-list" class="knowledge-list">
+                                        <!-- FAQs serão adicionadas dinamicamente -->
+                                    </div>
+                                    <button type="button" id="add-faq" class="btn-add">+ Adicionar nova pergunta</button>
+                                </div>
+
+                                <div class="knowledge-section">
+                                    <h3>Documentos adicionais</h3>
+                                    <p>Envie arquivos como PDF, planilhas, JPG ou PNG para enriquecer o conhecimento do bot.</p>
+                                    <div id="files-list" class="files-list">
+                                        <!-- Arquivos aparecerão aqui -->
+                                    </div>
+                                    <div class="upload-area" id="upload-area">
+                                        <button type="button" class="btn-upload">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                                <polyline points="17,8 12,3 7,8"/>
+                                                <line x1="12" y1="3" x2="12" y2="15"/>
+                                            </svg>
+                                            Carregar Arquivos
+                                        </button>
+                                        <input type="file" id="file-upload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display: none;" multiple>
+                                    </div>
+                                </div>
+
+                                <div class="knowledge-section">
+                                    <h3>Encaminhamento humano</h3>
+                                    <p>Defina contatos para transferir a conversa quando o bot não souber a resposta.</p>
+                                    <div id="contacts-list" class="knowledge-list">
+                                        <!-- Contatos serão adicionados dinamicamente -->
+                                    </div>
+                                    <button type="button" id="add-contact" class="btn-add">+ Adicionar encaminhamento</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PASSO 4: WHATSAPP -->
+                        <div id="step-4" class="wizard-step">
+                            <div class="step-header">
+                                <h2>Vinculação de telefone</h2>
+                                <p>Abra o WhatsApp e conecte seu número</p>
+                            </div>
+
+                            <div class="whatsapp-connection">
+                                <div class="connection-instructions">
+                                    <div class="instruction-item">
+                                        <div class="instruction-icon">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                                                <line x1="12" y1="18" x2="12.01" y2="18"/>
+                                            </svg>
+                                        </div>
+                                        <p>Acesse o whatsapp pelo celular</p>
+                                    </div>
+
+                                    <div class="instruction-item">
+                                        <div class="instruction-icon">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="12" cy="12" r="1"/>
+                                                <circle cx="12" cy="5" r="1"/>
+                                                <circle cx="12" cy="19" r="1"/>
+                                            </svg>
+                                        </div>
+                                        <p>Toque nos três pontinhos no canto superior direito (Android) ou vá em Configurações (iPhone).</p>
+                                    </div>
+
+                                    <div class="instruction-item">
+                                        <div class="instruction-icon">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                                <line x1="12" y1="17" x2="12" y2="21"/>
+                                            </svg>
+                                        </div>
+                                        <p>Selecione WhatsApp Web ou Aparelhos conectados.</p>
+                                    </div>
+
+                                    <div class="instruction-item">
+                                        <div class="instruction-icon">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                                <rect x="7" y="7" width="3" height="9"/>
+                                                <rect x="14" y="7" width="3" height="5"/>
+                                            </svg>
+                                        </div>
+                                        <p>Escaneie o QR code ao lado.</p>
+                                    </div>
+                                </div>
+
+                                <div class="qr-container">
+                                    <div id="qr-display" class="qr-display">
+                                        <div class="qr-placeholder">
+                                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                                <rect x="3" y="3" width="5" height="5"/>
+                                                <rect x="3" y="16" width="5" height="5"/>
+                                                <rect x="16" y="3" width="5" height="5"/>
+                                                <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
+                                                <path d="M21 21v.01"/>
+                                                <path d="M12 7v3a2 2 0 0 1-2 2H7"/>
+                                                <path d="M3 12h.01"/>
+                                                <path d="M12 3h.01"/>
+                                                <path d="M12 16v.01"/>
+                                                <path d="M16 12h1"/>
+                                                <path d="M21 12v.01"/>
+                                                <path d="M12 21v-1"/>
+                                            </svg>
+                                            <p>QR Code aparecerá aqui</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="wizard-footer">
+                        <button id="wizard-back" class="btn-secondary" style="display: none;">Voltar</button>
+                        <div class="wizard-actions">
+                            <button id="wizard-skip" class="btn-ghost">Pular</button>
+                            <button id="wizard-continue" class="btn-primary">Continuar</button>
+                        </div>
+                    </div>
+                </div>
         </div>
     </div>
 
-    <!-- MODAL DO QR CODE (sempre escondido, só aparece quando precisa) -->
-    <div id="qr-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content card">
-            <span class="close-modal">×</span>
-            <h3 id="qr-status">Aguardando QR Code...</h3>
-            <div id="qrcode-container"></div>
-            <p class="modal-instructions">Abra o WhatsApp no seu celular, vá em Aparelhos Conectados e escaneie o código.</p>
+        <!-- VIEW 4: SUCESSO -->
+        <div id="success-view" class="view">
+            <div class="success-container">
+                <div class="success-content">
+                    <div class="success-icon">
+                        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22,4 12,14.01 9,11.01"/>
+                        </svg>
+                    </div>
+                    <h2>Seu bot foi criado!</h2>
+                    <p>Ele já está aprendendo com as informações fornecidas.</p>
+                    <button id="back-to-dashboard" class="btn-primary">Voltar para o painel</button>
+                </div>
         </div>
     </div>
 
-    <!-- NOVO: MODAL DE CONFIGURAÇÕES/EDIÇÃO DO BOT -->
-    <div id="edit-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content card">
-            <span class="close-modal">×</span>
-            <h3>Configurações do Assistente</h3>
-            
+        <!-- VIEW 5: EDIÇÃO DE BOT -->
+        <div id="edit-view" class="view">
+            <div class="edit-container">
+                <div class="edit-header">
+                    <h2>Configurações do Assistente</h2>
+                    <button id="close-edit" class="close-btn">×</button>
+                </div>
+                
+                <div class="edit-content">
             <form id="edit-bot-form">
-                <!-- Este campo é invisível, mas guarda o ID do bot que estamos editando. É muito importante! -->
                 <input type="hidden" id="edit-bot-id">
 
+                        <!-- Identidade -->
+                        <div class="edit-section">
+                            <h3>Identidade do Bot</h3>
+                            
+                            <div class="form-group">
                 <label for="edit-bot-name">Nome do Bot</label>
                 <input type="text" id="edit-bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                            </div>
                 
+                            <div class="form-group">
                 <label for="edit-bot-function">Função Principal</label>
                 <select id="edit-bot-function" required>
                     <option value="Suporte ao Cliente">Suporte ao Cliente</option>
@@ -112,94 +561,211 @@
                     <option value="Agendamentos">Agendamentos</option>
                     <option value="Personalizado">Personalizado</option>
                 </select>
-                <!-- ADICIONE A LINHA ABAIXO -->
-                <textarea id="edit-bot-function-custom" placeholder="Caso tenha escolhido 'Personalizado', descreva a função aqui." style="display:none; margin-top: -1rem;"></textarea>
+                                <textarea id="edit-bot-function-custom" placeholder="Descreva a função personalizada..." style="display: none;"></textarea>
+                            </div>
 
+                            <div class="form-group">
                 <label for="edit-bot-tone">Tom de Atendimento</label>
                 <select id="edit-bot-tone" required>
-                    <option value="Amigável">Amigável (coloroso e acessível)</option>
+                                    <option value="Amigável">Amigável (caloroso e acessível)</option>
                     <option value="Neutro">Neutro (claro, objetivo e sem emoção)</option>
                     <option value="Profissional">Profissional (formal, polido e respeitoso)</option>
                     <option value="Personalizado">Personalizado</option>
                 </select>
-                <textarea id="edit-bot-tone-custom" placeholder="Caso tenha escolhido 'Personalizado', descreva o tom aqui." style="display:none;"></textarea>
-                    <!-- NOVO: Seção de Horário de Atendimento -->
-                    <div class="form-section-divider">
-                        <h4>Horário de Atendimento</h4>
+                                <textarea id="edit-bot-tone-custom" placeholder="Descreva o tom personalizado..." style="display: none;"></textarea>
+                            </div>
                     </div>
 
-                    <div class="form-group-horizontal">
-                        <label for="schedule-enabled-toggle">Ativar horário de funcionamento?</label>
-                        <!-- Este é um "toggle switch" customizado -->
-                        <label class="switch">
-                            <input type="checkbox" id="schedule-enabled-toggle">
-                            <span class="slider round"></span>
+                        <!-- Horário -->
+                        <div class="edit-section">
+                            <h3>Horário de Atendimento</h3>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="edit-schedule-enabled"> 
+                                    Ativar horário de funcionamento
                         </label>
                     </div>
 
-                    <!-- Container para os dias da semana (inicialmente escondido) -->
-                    <div id="schedule-details-container" style="display: none;">
-                        <!-- Aqui ficarão os dias da semana, que serão gerados pelo JavaScript -->
+                            <div id="edit-schedule-details" class="schedule-details" style="display: none;">
+                                <div class="schedule-day" data-day="monday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Segunda</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="tuesday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Terça</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
+                                </div>
+
+                                <div class="schedule-day" data-day="wednesday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Quarta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
                     </div>
-                        <!-- NOVO: Seção de Base de Conhecimento -->
-                        <div class="form-section-divider">
-                            <h4>Base de Conhecimento</h4>
                         </div>
 
-                        <!-- Seção de FAQ -->
-                        <h5>Perguntas Frequentes (FAQ)</h5>
-                        <p class="form-hint">Adicione as perguntas que seus clientes mais fazem para o bot responder automaticamente.</p>
-                        <div id="faq-list-container">
-                            <!-- FAQs serão adicionados aqui pelo JavaScript -->
-                        </div>
-                        <button type="button" id="add-faq-btn" class="btn-secondary btn-add-item">+ Adicionar Pergunta</button>
-
-                        <!-- Seção de Contatos para Encaminhamento (adicionada no mesmo passo) -->
-                        <h5 style="margin-top: 2rem;">Contatos para Encaminhamento</h5>
-                        <p class="form-hint">Se o assistente não souber a resposta ou for questionado, ele poderá sugerir um desses contatos.</p>
-                        <div id="contacts-list-container">
-                            <!-- Contatos serão adicionados aqui pelo JavaScript -->
-                        </div>
-                        <button type="button" id="add-contact-btn" class="btn-secondary btn-add-item">+ Adicionar Contato</button>
-                        <!-- NOVO: Seção de Conhecimento por Arquivos -->
-                        <div class="form-section-divider">
-                            <h4>Conhecimento por Arquivos (PDF, Imagens)</h4>
-                        </div>
-                        <p class="form-hint">Envie um arquivo para o assistente aprender sobre seus produtos, serviços ou regras. Limite de 3 arquivos.</p>
-
-                        <div id="files-list-container">
-                            <!-- A lista de arquivos enviados será inserida aqui -->
+                                <div class="schedule-day" data-day="thursday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Quinta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                                    </div>
                         </div>
 
-                        <!-- O botão de upload só aparece se o limite não foi atingido -->
-                        <div id="upload-section">
-                            <label for="file-upload-input" class="btn-secondary btn-add-item">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                <span>Enviar Arquivo</span>
+                                <div class="schedule-day" data-day="friday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Sexta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="09:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="18:00">
+                        </div>
+                        </div>
+
+                                <div class="schedule-day" data-day="saturday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="day-name">Sábado</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label>
+                                        <input type="time" value="00:00">
+                                        <label>Fecha</label>
+                                        <input type="time" value="23:59">
+                                    </div>
+                        </div>
+
+                                <div class="schedule-day" data-day="sunday">
+                                    <label class="day-toggle">
+                                        <input type="checkbox">
+                                        <span class="toggle-slider"></span>
                             </label>
-                            <input type="file" id="file-upload-input" accept=".pdf,.png,.jpeg,.jpg,.webp" style="display: none;">
+                                    <span class="day-name">Domingo</span>
+                                    <div class="time-inputs disabled">
+                                        <label>Fechado</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="upload-progress-indicator" style="display:none; margin-top: 1rem; text-align:center;">
-                            <p>Processando documento... Isso pode levar um minuto. 🧠</p>
+                        <!-- Base de Conhecimento -->
+                        <div class="edit-section">
+                            <h3>Base de Conhecimento</h3>
+                            
+                            <!-- FAQ -->
+                            <div class="knowledge-subsection">
+                                <h4>Perguntas Frequentes (FAQ)</h4>
+                                <div id="edit-faq-list" class="knowledge-list">
+                                    <!-- FAQs serão adicionadas dinamicamente -->
+                                </div>
+                                <button type="button" id="edit-add-faq" class="btn-add">+ Adicionar pergunta</button>
+                            </div>
+
+                            <!-- Contatos -->
+                            <div class="knowledge-subsection">
+                                <h4>Encaminhamento Humano</h4>
+                                <div id="edit-contacts-list" class="knowledge-list">
+                                    <!-- Contatos serão adicionados dinamicamente -->
+                                </div>
+                                <button type="button" id="edit-add-contact" class="btn-add">+ Adicionar contato</button>
+                        </div>
+
+                            <!-- Arquivos -->
+                            <div class="knowledge-subsection">
+                                <h4>Documentos</h4>
+                                <div id="edit-files-list" class="files-list">
+                                    <!-- Arquivos aparecerão aqui -->
+                                </div>
+                                <div class="upload-area">
+                                    <button type="button" class="btn-upload" id="edit-upload-btn">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                            <polyline points="17,8 12,3 7,8"/>
+                                            <line x1="12" y1="3" x2="12" y2="15"/>
+                                        </svg>
+                                        Carregar Arquivos
+                                    </button>
+                                    <input type="file" id="edit-file-upload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display: none;" multiple>
+                                </div>
+                            </div>
                         </div>                                         
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary close-modal-btn">Cancelar</button>
+
+                        <div class="edit-actions">
+                            <button type="button" id="cancel-edit" class="btn-secondary">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Alterações</button>
                 </div>
             </form>
+                </div>
+            </div>
         </div>
     </div>    
 
-    <!-- Scripts do Firebase (do seu código antigo, estão corretos) -->
+    <!-- MODAL DE CONFIRMAÇÃO PARA DELETAR BOT -->
+    <div id="delete-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3>Deletar Assistente</h3>
+                <button class="modal-close" onclick="closeDeleteModal()">×</button>
+            </div>
+            
+            <div class="modal-content">
+                <div class="warning-icon">⚠️</div>
+                <h4>Tem certeza que deseja deletar este assistente?</h4>
+                <p>Esta ação é <strong>permanente</strong> e não pode ser desfeita. Todos os dados, conversas e configurações serão perdidos.</p>
+                
+                <div class="bot-preview">
+                    <span class="bot-preview-name" id="delete-bot-name">Nome do Bot</span>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button class="btn-danger" id="confirm-delete-btn">Deletar Permanentemente</button>
+            </div>
+        </div>
+    </div>    
+
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
-    
-    <!-- Script do Socket.IO para comunicação em tempo real (QR Code) -->
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-
-    <!-- Link para nosso futuro arquivo de lógica -->
     <script src="app.js"></script>
-
 </body>
 </html>
