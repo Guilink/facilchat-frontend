@@ -74,9 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('bot-tone-custom').style.display = (e.target.value === 'Personalizado') ? 'block' : 'none';
         });
 
+                // ADICIONE ESTE BLOCO
+        document.getElementById('bot-function').addEventListener('change', e => {
+            document.getElementById('bot-function-custom').style.display = (e.target.value === 'Personalizado') ? 'block' : 'none';
+        });
+
         document.getElementById('edit-bot-tone').addEventListener('change', e => {
             document.getElementById('edit-bot-tone-custom').style.display = (e.target.value === 'Personalizado') ? 'block' : 'none';
         });
+
+                // ADICIONE ESTE BLOCO
+        document.getElementById('edit-bot-function').addEventListener('change', e => {
+            document.getElementById('edit-bot-function-custom').style.display = (e.target.value === 'Personalizado') ? 'block' : 'none';
+        });
+// FIM DO BLOCO
         
         createBotForm.addEventListener('submit', handleCreateBot);
         editBotForm.addEventListener('submit', handleUpdateBot);
@@ -199,9 +210,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitButton = createBotForm.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         submitButton.textContent = 'Salvando...';
+        let functionValue = document.getElementById('bot-function').value;
+        if (functionValue === 'Personalizado') {
+            functionValue = document.getElementById('bot-function-custom').value;
+        }
+
         const botData = {
             name: document.getElementById('bot-name').value,
-            function_type: document.getElementById('bot-function').value,
+            function_type: functionValue,
             tone_type: document.getElementById('bot-tone').value,
             tone_custom_description: document.getElementById('bot-tone-custom').value
         };
@@ -254,10 +270,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const bot = userBots.find(b => b.id == botId);
         if (!bot) return alert('Bot não encontrado!');
         
+        // Dentro da função openSettingsModal(botId)
+
         // 1. Preenche a Identidade
         document.getElementById('edit-bot-id').value = bot.id;
         document.getElementById('edit-bot-name').value = bot.name || '';
-        document.getElementById('edit-bot-function').value = bot.function_type || 'Suporte ao Cliente';
+
+        // --- LÓGICA CORRIGIDA PARA FUNÇÃO ---
+        const functionSelect = document.getElementById('edit-bot-function');
+        const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
+        const knownFunctions = ['Suporte ao Cliente', 'Produtos e Serviços', 'Agendamentos'];
+
+        // Verifica se a função do bot é uma das opções padrão
+        if (bot.function_type && knownFunctions.includes(bot.function_type)) {
+            functionSelect.value = bot.function_type;
+            functionCustomTextarea.style.display = 'none';
+            functionCustomTextarea.value = '';
+        } else {
+            // Se não for, é uma função personalizada
+            functionSelect.value = 'Personalizado';
+            functionCustomTextarea.style.display = 'block';
+            functionCustomTextarea.value = bot.function_type || ''; // Mostra o texto personalizado
+        }
+
+        // --- LÓGICA EXISTENTE PARA O TOM (sem alteração) ---
         document.getElementById('edit-bot-tone').value = bot.tone_type || 'Amigável';
         const customToneTextarea = document.getElementById('edit-bot-tone-custom');
         customToneTextarea.value = bot.tone_custom_description || '';
@@ -323,9 +359,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const botId = document.getElementById('edit-bot-id').value;
         
+        let functionValue = document.getElementById('edit-bot-function').value;
+        if (functionValue === 'Personalizado') {
+            functionValue = document.getElementById('edit-bot-function-custom').value;
+        }
+
         const botData = {
             name: document.getElementById('edit-bot-name').value,
-            function_type: document.getElementById('edit-bot-function').value,
+            function_type: functionValue,
             tone_type: document.getElementById('edit-bot-tone').value,
             tone_custom_description: document.getElementById('edit-bot-tone-custom').value,
             schedule_enabled: document.getElementById('schedule-enabled-toggle').checked,
@@ -371,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (file.size > 10 * 1024 * 1024) {
             alert("O arquivo é muito grande. O limite é de 10MB.");
+            event.target.value = ''; // Limpa o input
             return;
         }
 
@@ -397,20 +439,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorData.message || "Falha ao processar o documento.");
             }
 
-            alert('Documento processado com sucesso!');
-            await fetchBots();
-            const updatedBot = userBots.find(b => b.id == botId);
-            if (updatedBot) {
-                openSettingsModal(updatedBot.id);
-            } else {
-                editModal.style.display = 'none';
+            // --- INÍCIO DA NOVA LÓGICA ---
+            const newFile = await response.json(); // A API agora retorna o arquivo criado
+
+            // Adiciona o novo arquivo dinamicamente à lista na tela
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.fileId = newFile.id;
+            fileItem.innerHTML = `<div class="file-info"><span>📄</span><span>${newFile.file_name}</span></div><button type="button" class="btn-remove-item btn-danger">×</button>`;
+            filesListContainer.appendChild(fileItem);
+
+            // Atualiza o estado global dos bots para refletir o novo arquivo, sem recarregar a tela
+            const botInState = userBots.find(b => b.id == botId);
+            if (botInState) {
+                botInState.knowledge_files.push(newFile);
+                // Verifica o limite de arquivos e esconde o botão de upload se necessário
+                if (botInState.knowledge_files.length >= 3) {
+                    uploadSection.style.display = 'none';
+                }
             }
+            // --- FIM DA NOVA LÓGICA ---
             
         } catch (error) {
             console.error("Erro no upload:", error);
             alert(`Erro: ${error.message}`);
+            // Se der erro, o botão de upload deve reaparecer
+            const currentFilesCount = filesListContainer.children.length;
+            if (currentFilesCount < 3) {
+                uploadSection.style.display = 'block';
+            }
         } finally {
-            event.target.value = '';
+            event.target.value = ''; // Limpa o input de arquivo
             uploadProgressIndicator.style.display = 'none';
         }
     }
