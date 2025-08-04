@@ -8,6 +8,9 @@
     box-sizing: border-box;
 }
 
+/* EM: style.css */
+/* SUBSTITUA O SEU BLOCO :root ATUAL POR ESTE CÓDIGO INTEIRO */
+
 :root {
     /* Cores do tema escuro */
     --bg-primary: #0F172A;
@@ -37,6 +40,21 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     overflow-x: hidden;
+}
+
+/* NOVO: Definição do Tema Claro (como alternativa) */
+html.light-theme {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F8FAFC; 
+    --bg-tertiary: #F1F5F9;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --text-muted: #94A3B8;
+    --accent: #6366F1;
+    --accent-hover: #4F46E5;
+    --border: #E2E8F0;
+    --border-light: #CBD5E1;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
 }
 
 /* HEADER FIXO */
@@ -131,7 +149,6 @@ body {
 
 /* CONTAINER PRINCIPAL */
 .app-container {
-    padding-top: var(--header-height);
     min-height: 100vh;
 }
 
@@ -143,9 +160,19 @@ body {
     z-index: 1;
 }
 
+.view:not(#login-view) {
+    padding-top: var(--header-height);
+}
+
 .view.active {
     display: block !important;
     z-index: 10;
+}
+
+/* ★★★ ESTA É A REGRA CHAVE ★★★ */
+/* Força a centralização APENAS quando o login estiver ativo */
+#login-view.active {
+    display: flex !important;
 }
 
 /* FORÇA que apenas UMA view esteja ativa */
@@ -197,10 +224,11 @@ body {
 
 /* VIEW: LOGIN */
 #login-view {
-    display: flex;
+    /* REMOVEMOS o "display: flex !important" daqui */
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    width: 100%;
+    height: 100vh;
     background: var(--bg-primary);
 }
 
@@ -303,10 +331,26 @@ body {
 
 .btn-login {
     background-color: white;
-    color: var(--bg-primary);
+    color: var(--bg-primary); /* No tema escuro, isso será o azul escuro */
     width: 100%;
     font-size: 1rem;
     padding: 1rem 1.5rem;
+    border: 1px solid transparent; /* Adiciona borda para transição suave */
+}
+
+.btn-login:hover {
+    opacity: 0.9;
+}
+
+html.light-theme .btn-login {
+    background-color: var(--text-primary); /* Fundo azul escuro */
+    color: var(--bg-primary); /* Texto branco */
+    border: 1px solid var(--text-primary);
+}
+
+html.light-theme .btn-login:hover {
+    background-color: #334155; /* Um tom de azul/cinza mais claro no hover */
+    border-color: #334155;
 }
 
 .btn-login img {

@@ -97,24 +97,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // === GERENCIAMENTO DE VIEWS ===
     let lastViewChange = null;
     
+    // EM: app.js
+
     function showView(viewName) {
+        // A lógica de log e validação permanece, pois é ótima!
         const timestamp = new Date().toISOString();
-        const stack = new Error().stack.split('\n')[2].trim(); // Captura quem chamou
-        
+        const stack = new Error().stack.split('\n')[2].trim();
         console.log(`🔄 [${timestamp}] MUDANÇA DE VIEW: ${lastViewChange || 'nenhuma'} → ${viewName}`);
         console.log(`📍 Chamado por:`, stack);
         
-        // VALIDAÇÃO: Não permite mostrar login se usuário está autenticado
         if (viewName === 'login' && auth.currentUser) {
             console.log('🚫 BLOQUEADO: Tentativa de mostrar login com usuário autenticado!');
-            console.log('👤 Usuário atual:', auth.currentUser.email);
-            return; // BLOQUEIA a mudança
+            return;
         }
         
-        // Remove loading state
-        if (appLoading) {
-            appLoading.classList.add('hidden');
-        }
+        // ATENÇÃO: A linha que escondia o "appLoading" foi REMOVIDA daqui.
         
         // Atualiza views
         Object.values(views).forEach(view => view.classList.remove('active'));
@@ -126,10 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Controla header
             if (viewName === 'login') {
                 elements.header.style.display = 'none';
-                console.log('🔒 Header escondido (view: login)');
             } else {
                 elements.header.style.display = 'block';
-                console.log('🔓 Header exibido (view: ' + viewName + ')');
             }
         } else {
             console.error('❌ View não encontrada:', viewName);
@@ -138,37 +133,37 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('✅ View ativa:', viewName);
     }
 
-    // === AUTENTICAÇÃO ===
+        // === AUTENTICAÇÃO ===
     function handleAuthStateChange(user) {
         if (user) {
+            // --- O USUÁRIO ESTÁ LOGADO ---
             console.log('✅ Usuário autenticado:', user.email);
+
+            // Mostra o header antes de qualquer outra coisa
+            elements.header.style.display = 'block';
             
-            // Verifica qual view está ativa atualmente
-            const currentView = Object.keys(views).find(key => views[key].classList.contains('active'));
-            console.log('📱 View atual:', currentView || 'nenhuma');
-            
-            // Views onde o usuário pode estar trabalhando
-            const operationalViews = ['wizard', 'edit', 'success'];
-            
-            // Só redireciona para dashboard se não estiver em uma view operacional
-            if (!currentView || currentView === 'login' || !operationalViews.includes(currentView)) {
-                console.log('🏠 Redirecionando para dashboard');
-                showView('dashboard');
-            } else {
-                console.log('🔄 Mantendo view atual:', currentView);
-                // Remove loading mesmo sem trocar de view
-                if (appLoading) {
-                    appLoading.classList.add('hidden');
-                }
-            }
-            
+            // Sincroniza o usuário com o backend e busca seus dados
             syncUserWithBackend();
             fetchBots();
             initializeSocket();
+
+            // Finalmente, esconde a tela de loading...
+            appLoading.classList.add('hidden');
+            // ...e mostra o painel.
+            showView('dashboard');
+            
         } else {
-            console.log('❌ Usuário não autenticado - mostrando login');
-            showView('login');
+            // --- O USUÁRIO NÃO ESTÁ LOGADO ---
+            console.log('❌ Usuário não autenticado.');
+
+            // Esconde o header
+            elements.header.style.display = 'none';
             if (socket) socket.disconnect();
+            
+            // Esconde a tela de loading...
+            appLoading.classList.add('hidden');
+            // ...e mostra a tela de login.
+            showView('login');
         }
     }
 
@@ -2182,63 +2177,72 @@ document.addEventListener('DOMContentLoaded', () => {
         return contactItems;
     }    
 
-    // === INICIALIZAÇÃO ===
+
+    // SUBSTITUA A FUNÇÃO setupThemeToggle INTEIRA PELA VERSÃO CORRIGIDA ABAIXO
+
+    function setupThemeToggle() {
+        const themeToggleButton = document.getElementById('theme-toggle');
+        const sunIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+        const moonIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+
+        // Função para aplicar o tema no elemento <html>
+        const applyTheme = (theme) => {
+            const htmlElement = document.documentElement; // Usamos o elemento <html>
+
+            if (theme === 'light') {
+                htmlElement.classList.add('light-theme');
+                themeToggleButton.innerHTML = moonIcon; // Se está claro, mostra o ícone para ir para o escuro
+                themeToggleButton.title = "Ativar modo escuro";
+            } else {
+                htmlElement.classList.remove('light-theme');
+                themeToggleButton.innerHTML = sunIcon; // Se está escuro, mostra o ícone para ir para o claro
+                themeToggleButton.title = "Ativar modo claro";
+            }
+        };
+
+        // Padrão agora é 'dark' se nada estiver salvo, como era originalmente
+        const savedTheme = localStorage.getItem('theme') || 'dark'; 
+        applyTheme(savedTheme);
+
+        // Evento de clique para alternar
+        themeToggleButton.addEventListener('click', () => {
+            const isLight = document.documentElement.classList.contains('light-theme');
+            const newTheme = isLight ? 'dark' : 'light';
+            
+            localStorage.setItem('theme', newTheme);
+            applyTheme(newTheme);
+        });
+    }
+
+// EM: app.js (dentro da função initializeApp)
+
     function initializeApp() {
         console.log('🚀 Inicializando FacilChat...');
-        console.log('🔧 Versão: Anti-Login-Bug v2.0');
+        console.log('🔧 Versão: Anti-Race-Condition v3.0');
         
-        // Mostra loading enquanto verifica autenticação
-        if (appLoading) {
-            appLoading.classList.remove('hidden');
-            console.log('⏳ Loading ativado');
-        }
+        // Mostra a tela de loading. Ela FICARÁ visível até o Firebase responder.
+        appLoading.classList.remove('hidden');
+        console.log('⏳ Aguardando estado de autenticação...');
         
         // Garante que nenhuma view está ativa inicialmente
         Object.values(views).forEach(view => view.classList.remove('active'));
-        console.log('🧹 Todas as views desativadas');
         
-        // Esconde header inicialmente
-        if (elements.header) {
-            elements.header.style.display = 'none';
-            console.log('🔒 Header escondido inicialmente');
-        }
+        // Esconde o header inicialmente
+        elements.header.style.display = 'none';
         
         setupEventListeners();
         initializeWizard();
         initializeEditView();
+        setupThemeToggle();
         
-        // Firebase Auth State - ÚNICA fonte de verdade para views
+        // O Firebase Auth State agora é a ÚNICA fonte de verdade para o que é exibido.
         auth.onAuthStateChanged((user) => {
-            console.log('🔐 Estado de autenticação verificado:', user ? `Logado: ${user.email}` : 'Não logado');
-            
-            // DEBUG: Verifica estado atual
-            const activeViews = Object.keys(views).filter(key => views[key].classList.contains('active'));
-            console.log('📱 Views ativas antes do handleAuth:', activeViews);
-            console.log('👁️ Header visível:', elements.header.style.display !== 'none');
-            
+            console.log('🔐 Estado de autenticação DEFINIDO:', user ? `Logado: ${user.email}` : 'Não logado');
             handleAuthStateChange(user);
         });
         
-        console.log('✅ Inicialização completa');
-        
-        // VERIFICAÇÃO DE SEGURANÇA APÓS 3 SEGUNDOS
-        setTimeout(() => {
-            console.log('🔒 VERIFICAÇÃO DE SEGURANÇA - Estado após 3s:');
-            debugViewState();
-            
-            // Se usuário está logado mas view de login está ativa, CORRIGE
-            if (auth.currentUser && views.login.classList.contains('active')) {
-                console.log('🚨 DETECTADO: Login ativo com usuário logado - CORRIGINDO!');
-                showView('dashboard');
-            }
-            
-            // Se header não está visível mas usuário está logado, CORRIGE
-            if (auth.currentUser && elements.header.style.display === 'none') {
-                console.log('🚨 DETECTADO: Header escondido com usuário logado - CORRIGINDO!');
-                elements.header.style.display = 'block';
-            }
-        }, 3000);
+        console.log('✅ Inicialização configurada. App aguardando autenticação...');
     }
-
+    
     initializeApp();
 });
