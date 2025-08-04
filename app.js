@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let isEditMode = false;
     let editingBotId = null;
     let wizardBotId = null; // <-- NOVA VARIÁVEL DE CONTROLE
+    let wizardFilesToUpload = []; // <-- NOVA VARIÁVEL
+
 
     
     // === ELEMENTOS ===
@@ -55,6 +57,18 @@ document.addEventListener('DOMContentLoaded', () => {
         qrDisplay: document.getElementById('qr-display')
     };
 
+    // Adicione esta nova função auxiliar
+    function updateUploadButtonState(listElementId, buttonElementId) {
+        const list = document.getElementById(listElementId);
+        const button = document.getElementById(buttonElementId).parentElement; // Pega a div .upload-area
+        const fileCount = list.querySelectorAll('.file-item').length;
+
+        if (fileCount >= 3) {
+            button.style.display = 'none'; // Esconde o botão
+        } else {
+            button.style.display = 'block'; // Mostra o botão
+        }
+    }    
     //DUAS NOVAS FUNÇÕES GLOBAIS
     function showQrModal(contentHTML) {
         const modal = document.getElementById('qr-modal');
@@ -176,25 +190,46 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('⏳ Loading visível:', appLoading && !appLoading.classList.contains('hidden'));
     }
 
+    // SUBSTITUA A FUNÇÃO createBotAndConnect INTEIRA
     async function createBotAndConnect() {
         try {
-            // Mostra um spinner no local do QR Code enquanto o processo ocorre
+            // Passo 1: Mostra a mensagem de criação do bot
             elements.qrDisplay.innerHTML = `
                 <div class="qr-loading">
                     <div class="loading-spinner"></div>
-                    <h3>Criando bot e gerando QR Code...</h3>
+                    <h3>1/3: Criando assistente...</h3>
                 </div>
             `;
             
-            // ... o resto da função continua igual
-            await createBot(); 
+            const newBot = await createBot(); 
+            wizardBotId = newBot.id;
+
+            // Passo 2: Faz o upload dos arquivos, se houver
+            if (wizardFilesToUpload.length > 0) {
+                elements.qrDisplay.innerHTML = `
+                    <div class="qr-loading">
+                        <div class="loading-spinner"></div>
+                        <h3>2/3: Processando documentos...</h3>
+                        <p>${wizardFilesToUpload.length} arquivo(s) sendo analisado(s) pela IA.</p>
+                    </div>
+                `;
+                await Promise.all(
+                    wizardFilesToUpload.map(fileData => 
+                        uploadFileToBot(newBot.id, fileData.file, fileData.base64Content)
+                    )
+                );
+            }
+
+            // Passo 3: INICIA a conexão com o WhatsApp e pede o QR Code
+            // Esta chamada é a que estava faltando.
+            await startWhatsAppConnection(newBot.id);
 
         } catch (error) {
             console.error('Erro durante createBotAndConnect:', error);
             elements.qrDisplay.innerHTML = `
                 <div class="qr-error">
-                    <h3>❌ Erro</h3>
-                    <p>Não foi possível iniciar o processo de conexão.</p>
+                    <h3>❌ Erro na Criação</h3>
+                    <p>${error.message || 'Não foi possível concluir a criação do bot.'}</p>
                 </div>
             `;
         }
@@ -479,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const bot = userBots.find(b => b.id == botId);
         if (!bot) return;
 
+        isEditMode = true; // <-- CORREÇÃO: Define o modo de edição como ativo
         editingBotId = botId;
         populateEditFormWithBotData(bot);
         showView('edit');
@@ -827,26 +863,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // SUBSTITUA A FUNÇÃO createBot INTEIRA POR ESTA VERSÃO CORRIGIDA
 
+// SUBSTITUA A FUNÇÃO createBot INTEIRA POR ESTA VERSÃO CORRIGIDA
+
     async function createBot() {
         try {
             const token = await getAuthToken();
             
-            // A lógica de coleta de dados permanece a mesma que já corrigimos
+            // A lógica de coleta de dados permanece a mesma
             const selectedFunctionCard = document.querySelector('#function-option-grid .option-card.selected');
             const selectedToneCard = document.querySelector('#tone-option-grid .option-card.selected');
-
             let functionType = selectedFunctionCard ? selectedFunctionCard.dataset.value : 'Suporte ao Cliente';
             let toneType = selectedToneCard ? selectedToneCard.dataset.value : 'Amigável';
             let toneCustomDescription = '';
-
             if (functionType === 'Personalizado') {
                 functionType = document.getElementById('bot-function-custom').value.trim() || 'Função Personalizada';
             }
-            
             if (toneType === 'Personalizado') {
                 toneCustomDescription = document.getElementById('bot-tone-custom').value.trim();
             }
-
             const scheduleData = collectScheduleData();
             const faqData = collectFaqData();
             const contactsData = collectContactsData();
@@ -877,15 +911,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const newBot = await response.json();
-            editingBotId = newBot.id; // Para o socket saber qual bot conectar
-            wizardBotId = newBot.id;  // Para o wizard saber que um bot já foi criado
             
-            // Inicia o processo de conexão (que chama a API /connect)
-            await startWhatsAppConnection(newBot.id);
+            // Apenas definimos os IDs aqui. A conexão será iniciada em outro lugar.
+            editingBotId = newBot.id; 
+            
+            return newBot; // Retorna o bot recém-criado
             
         } catch (error) {
             console.error('Erro em createBot:', error);
-            // Propaga o erro para ser pego pela função que a chamou
             throw error; 
         }
     }
@@ -936,6 +969,47 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             elements.wizardContinue.disabled = false;
             elements.wizardContinue.textContent = 'Salvar Alterações';
+        }
+    }
+
+    window.handleDeleteFile = async function(button, botId, fileId) {
+        // A LINHA DO "if (!confirm(...))" FOI REMOVIDA DAQUI.
+
+        try {
+            button.disabled = true;
+            // Mostra um spinner dentro do botão para dar feedback visual
+            button.innerHTML = '<span class="spinner" style="width:16px; height:16px; border-width:2px;"></span>';
+
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/files/${fileId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Falha ao deletar arquivo.');
+            }
+
+            const fileItem = button.closest('.file-item');
+            fileItem.remove();
+
+            const bot = userBots.find(b => b.id == botId);
+            if (bot && bot.knowledge_files) {
+                const fileIndex = bot.knowledge_files.findIndex(f => f.id == fileId);
+                if (fileIndex > -1) {
+                    bot.knowledge_files.splice(fileIndex, 1);
+                    console.log('✅ Arquivo removido do estado local (userBots).');
+                }
+            }
+            
+            updateUploadButtonState('edit-files-list', 'edit-upload-btn');
+
+        } catch (error) {
+            alert(`Erro: ${error.message}`);
+            // Restaura o botão para o ícone de lixeira em caso de erro
+            button.disabled = false;
+            button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
         }
     }
 
@@ -1039,31 +1113,35 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const token = await getAuthToken();
             
+            // O `editingBotId` é crucial para que o socket.io saiba qual QR Code exibir
+            editingBotId = botId;
+
+            // Atualiza a UI para mostrar que está gerando o QR Code
             elements.qrDisplay.innerHTML = `
                 <div class="qr-loading">
-                    <div class="loading-animation">
-                        <div class="loading-spinner"></div>
-                    </div>
+                    <div class="loading-spinner"></div>
                     <h3>Gerando QR Code...</h3>
-                    <p>Aguarde enquanto preparamos a conexão com o WhatsApp</p>
+                    <p>Aguarde enquanto preparamos a conexão com o WhatsApp.</p>
                 </div>
             `;
             
-            await fetch(`${API_BASE_URL}/api/bots/${botId}/connect`, {
+            // Faz a chamada à API para o backend iniciar o processo
+            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/connect`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "O backend falhou em iniciar a conexão.");
+            }
             
         } catch (error) {
             console.error('Erro ao iniciar conexão:', error);
             elements.qrDisplay.innerHTML = `
-                <div class="qr-placeholder">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <circle cx="12" cy="12" r="10"/>
-                        <line x1="15" y1="9" x2="9" y2="15"/>
-                        <line x1="9" y1="9" x2="15" y2="15"/>
-                    </svg>
-                    <p>Erro ao gerar QR Code</p>
+                <div class="qr-error">
+                    <h3>❌ Erro ao iniciar conexão</h3>
+                    <p>${error.message}</p>
                 </div>
             `;
         }
@@ -1105,28 +1183,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // EM: app.js
+    // SUBSTITUA A FUNÇÃO resetWizard INTEIRA
     function resetWizard() {
         console.log('🔄 Resetando wizard...');
         
+        wizardFilesToUpload = [];
         isEditMode = false;
         editingBotId = null;
-        wizardBotId = null; // <-- GARANTE O RESET DA VARIÁVEL DE CONTROLE
+        wizardBotId = null;
         wizardBotData = {};
         currentWizardStep = 1;
         
-        // Limpa campos básicos
         document.getElementById('bot-name').value = '';
-        
-        // Remove TODAS as seleções de cards
         document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
-        
-        // Esconde e limpa textareas personalizados
         document.querySelectorAll('textarea').forEach(textarea => {
             textarea.style.display = 'none';
             textarea.value = '';
         });
         
-        // CORRIGE BUG: Limpa completamente a base de conhecimento
         const faqList = document.getElementById('faq-list');
         const contactsList = document.getElementById('contacts-list');
         const filesList = document.getElementById('files-list');
@@ -1135,40 +1210,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contactsList) contactsList.innerHTML = '';
         if (filesList) filesList.innerHTML = '';
         
-        console.log('🧹 Base de conhecimento limpa');
-        
-        // Reseta horários para padrão
         resetScheduleToDefault();
-        
-        // Define seleções padrão
         setDefaultSelections();
         
         elements.qrDisplay.innerHTML = `
             <div class="qr-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                    <rect x="3" y="3" width="5" height="5"/>
-                    <rect x="3" y="16" width="5" height="5"/>
-                    <rect x="16" y="3" width="5" height="5"/>
-                    <path d="M21 16h-3a2 2 0 0 0-2 2v3"/>
-                    <path d="M21 21v.01"/>
-                    <path d="M12 7v3a2 2 0 0 1-2 2H7"/>
-                    <path d="M3 12h.01"/>
-                    <path d="M12 3h.01"/>
-                    <path d="M12 16v.01"/>
-                    <path d="M16 12h1"/>
-                    <path d="M21 12v.01"/>
-                    <path d="M12 21v-1"/>
-                </svg>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
                 <p>QR Code aparecerá aqui</p>
             </div>
         `;
         
+        // CORREÇÃO: Garante que o botão de upload do wizard estará visível
+        updateUploadButtonState('files-list', 'file-upload');
+        
         setWizardStep(1);
         
-        // Força validação inicial após reset
-        setTimeout(() => {
-            validateWizardStep(1);
-        }, 100);
+        setTimeout(() => validateWizardStep(1), 100);
         
         console.log('✅ Wizard resetado completamente');
     }
@@ -1407,75 +1464,114 @@ document.addEventListener('DOMContentLoaded', () => {
         contactsList.appendChild(item);
     }
 
+    // SUBSTITUA A FUNÇÃO handleFileUpload INTEIRA POR ESTA
     function handleFileUpload(event) {
         const files = event.target.files;
         if (!files.length) return;
+
+        // Identifica qual lista e botão estamos usando (wizard ou edição)
+        const listId = isEditMode ? 'edit-files-list' : 'files-list';
+        const buttonId = isEditMode ? 'edit-upload-btn' : 'file-upload';
         
-        const filesList = document.getElementById('files-list');
-        
+        // Verifica o limite ANTES de processar
+        const filesList = document.getElementById(listId);
+        if (filesList.children.length >= 3) {
+            alert("Você pode enviar no máximo 3 arquivos.");
+            return;
+        }
+
         Array.from(files).forEach(async (file) => {
+            if (filesList.children.length + 1 > 3) {
+                alert("Limite de 3 arquivos atingido. Alguns arquivos não foram adicionados.");
+                updateUploadButtonState(listId, buttonId);
+                return;
+            }
+
             if (file.size > 10 * 1024 * 1024) {
                 alert(`O arquivo "${file.name}" é muito grande. O limite é de 10MB.`);
                 return;
             }
             
-            console.log('📄 Processando arquivo:', file.name);
-            
-            // Mostra o arquivo com status de processando
-            const fileItem = addFileToList(file, 'processing');
+            const fileItem = addFileToList(file, 'processing', listId);
             
             try {
-                // Converte para base64
                 const base64Content = await toBase64(file);
                 
-                // Se estamos criando um novo bot, apenas adiciona à lista
-                // O upload real será feito após a criação do bot
-                if (!isEditMode) {
-                    updateFileItemStatus(fileItem, 'ready');
-                    console.log('✅ Arquivo preparado para upload após criação do bot');
-                } else {
-                    // Se estamos editando, faz upload imediatamente
+                if (isEditMode) {
+                    // Modo Edição: Faz upload imediatamente
                     await uploadFileToBot(editingBotId, file, base64Content, fileItem);
+                } else {
+                    // Modo Wizard: Armazena para upload futuro
+                    wizardFilesToUpload.push({ file, base64Content });
+                    updateFileItemStatus(fileItem, 'ready');
                 }
-                
             } catch (error) {
-                console.error('❌ Erro ao processar arquivo:', error);
-                updateFileItemStatus(fileItem, 'error');
+                console.error('Erro ao processar arquivo:', error);
+                updateFileItemStatus(fileItem, 'error', 'Falha no processamento');
             }
         });
-        
-        event.target.value = '';
+
+        // Atualiza o estado do botão de upload
+        setTimeout(() => updateUploadButtonState(listId, buttonId), 100);
+        event.target.value = ''; // Limpa o input
     }
 
-    function addFileToList(file, status = 'ready') {
-        const filesList = document.getElementById('files-list');
+    function addFileToList(file, status = 'ready', listId) {
+        const filesList = document.getElementById(listId);
+        if (!filesList) return;
+
         const item = document.createElement('div');
-        item.className = 'file-item';
+        item.className = `file-item file-${status}`;
         item.dataset.status = status;
-        
+
         const fileName = file.name || file.file_name;
-        
+        const isSaved = status === 'saved';
+
+        // Define o ícone da lixeira uma vez para reutilizar
+        const trashIconSVG = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3,6 5,6 21,6"/>
+                <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+            </svg>
+        `;
+
+        let removeButtonHTML = '';
+        // Adiciona o atributo 'title' para melhor experiência do usuário
+        const title = 'title="Deletar permanentemente"';
+
+        if (isSaved) {
+            item.dataset.fileId = file.id;
+            removeButtonHTML = `<button type="button" class="remove-btn" ${title} onclick="handleDeleteFile(this, ${editingBotId}, ${file.id})">${trashIconSVG}</button>`;
+        } else if (isEditMode) {
+            removeButtonHTML = `<button type="button" class="remove-btn" ${title} onclick="this.parentElement.remove(); updateUploadButtonState('edit-files-list', 'edit-upload-btn');">${trashIconSVG}</button>`;
+        } else {
+            removeButtonHTML = `<button type="button" class="remove-btn" ${title} onclick="removeWizardFile(this)">${trashIconSVG}</button>`;
+        }
+
         item.innerHTML = `
             <div class="file-info">
                 <span class="file-icon">📄</span>
                 <span class="file-name">${fileName}</span>
                 <span class="file-status">${getStatusText(status)}</span>
             </div>
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            ${removeButtonHTML}
         `;
         
         filesList.appendChild(item);
+        const buttonId = listId === 'edit-files-list' ? 'edit-upload-btn' : 'file-upload';
+        updateUploadButtonState(listId, buttonId);
+
         return item;
     }
 
-    function updateFileItemStatus(fileItem, status) {
+    function updateFileItemStatus(fileItem, status, statusText = '') {
         fileItem.dataset.status = status;
         const statusEl = fileItem.querySelector('.file-status');
         if (statusEl) {
-            statusEl.textContent = getStatusText(status);
+            statusEl.textContent = statusText || getStatusText(status);
         }
-        
-        // Adiciona classe CSS para styling
         fileItem.className = `file-item file-${status}`;
     }
 
@@ -1489,18 +1585,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function uploadFileToBot(botId, file, base64Content, fileItem) {
+    // EM: app.js
+    // ADICIONE ESTA NOVA FUNÇÃO AUXILIAR
+
+    function updateEditSaveButtonState() {
+        // Seleciona o botão de salvar do formulário de edição
+        const saveButton = document.querySelector('#edit-bot-form button[type="submit"]');
+        // Seleciona a lista de arquivos da tela de edição
+        const filesList = document.getElementById('edit-files-list');
+
+        // Se os elementos não existirem na tela, não faz nada
+        if (!saveButton || !filesList) return;
+
+        // Procura por QUALQUER item na lista que tenha o status 'uploading'
+        const isUploading = filesList.querySelector('.file-item[data-status="uploading"]');
+
+        if (isUploading) {
+            // Se encontrou um arquivo sendo enviado, desabilita o botão
+            saveButton.disabled = true;
+            saveButton.innerHTML = '<span class="spinner"></span> Aguarde o upload...';
+        } else {
+            // Se não encontrou nenhum, habilita o botão
+            saveButton.disabled = false;
+            saveButton.textContent = 'Salvar Alterações';
+        }
+    }    
+
+    async function uploadFileToBot(botId, file, base64Content, fileItem = null) {
+        // Adiciona o bloco try...finally para garantir que o estado do botão seja sempre atualizado
         try {
-            updateFileItemStatus(fileItem, 'uploading');
+            if (fileItem) {
+                updateFileItemStatus(fileItem, 'uploading', 'Enviando...');
+                // ATUALIZAÇÃO 1: Chama a fiscalização logo após iniciar o upload
+                if (isEditMode) {
+                    updateEditSaveButtonState();
+                }
+            }
             
             const token = await getAuthToken();
-            
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/summarize`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     fileContent: base64Content,
                     fileType: file.type,
@@ -1508,18 +1633,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
+            const result = await response.json();
+
             if (!response.ok) {
-                throw new Error('Falha no upload do arquivo');
+                throw new Error(result.message || 'Falha no upload do arquivo');
             }
 
-            const result = await response.json();
-            updateFileItemStatus(fileItem, 'ready');
-            console.log('✅ Arquivo processado com sucesso:', result);
-
+            if (fileItem) {
+                updateFileItemStatus(fileItem, 'saved');
+                fileItem.dataset.fileId = result.id;
+                const removeBtn = fileItem.querySelector('.remove-btn');
+                removeBtn.setAttribute('onclick', `handleDeleteFile(this, ${botId}, ${result.id})`);
+            }
+            
         } catch (error) {
-            console.error('❌ Erro no upload:', error);
-            updateFileItemStatus(fileItem, 'error');
-            throw error;
+            console.error('Erro no upload:', error);
+            if (fileItem) {
+                updateFileItemStatus(fileItem, 'error', error.message);
+            } else {
+                alert(`Erro ao processar o arquivo "${file.name}": ${error.message}`);
+            }
+        } finally {
+            // ATUALIZAÇÃO 2: A fiscalização é chamada no final, garantindo que o botão
+            // seja reabilitado após o sucesso ou a falha do upload.
+            if (isEditMode) {
+                updateEditSaveButtonState();
+            }
         }
     }
 
@@ -1626,12 +1765,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (closeEditBtn) {
             closeEditBtn.addEventListener('click', () => {
+                isEditMode = false; // <-- CORREÇÃO: Reseta o modo de edição
+                editingBotId = null;
                 showView('dashboard');
             });
         }
 
         if (cancelEditBtn) {
             cancelEditBtn.addEventListener('click', () => {
+                isEditMode = false;
+                editingBotId = null;
                 showView('dashboard');
             });
         }
@@ -1691,21 +1834,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // EM: app.js
+    // SUBSTITUA A FUNÇÃO setupEditKnowledgeBase INTEIRA
     function setupEditKnowledgeBase() {
         // FAQ
         const addFaqBtn = document.getElementById('edit-add-faq');
         if (addFaqBtn) {
-            addFaqBtn.addEventListener('click', () => {
-                addEditFaqItem();
-            });
+            addFaqBtn.addEventListener('click', () => addEditFaqItem());
         }
 
         // Contacts
         const addContactBtn = document.getElementById('edit-add-contact');
         if (addContactBtn) {
-            addContactBtn.addEventListener('click', () => {
-                addEditContactItem();
-            });
+            addContactBtn.addEventListener('click', () => addEditContactItem());
         }
 
         // File upload
@@ -1713,13 +1854,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const fileInput = document.getElementById('edit-file-upload');
         
         if (uploadBtn && fileInput) {
-            uploadBtn.addEventListener('click', () => {
-                fileInput.click();
-            });
+            uploadBtn.addEventListener('click', () => fileInput.click());
             
-            fileInput.addEventListener('change', handleEditFileUpload);
+            // CORREÇÃO: Aponta para a função unificada 'handleFileUpload'
+            fileInput.addEventListener('change', handleFileUpload); 
         }
     }
+
+    // ADICIONE ESTA NOVA FUNÇÃO junto com as outras funções do Wizard
+    window.removeWizardFile = function(button) {
+        const fileItem = button.closest('.file-item');
+        const fileName = fileItem.querySelector('.file-name').textContent;
+        
+        // Remove o arquivo da nossa lista de staging
+        wizardFilesToUpload = wizardFilesToUpload.filter(f => f.file.name !== fileName);
+        
+        // Remove o item da tela
+        fileItem.remove();
+        
+        // ATUALIZA O ESTADO DO BOTÃO DE UPLOAD
+        updateUploadButtonState('files-list', 'file-upload');
+    }    
 
     function populateEditFormWithBotData(bot) {
         // Dados básicos
@@ -1834,13 +1989,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function populateEditFiles(files) {
+    function populateEditFiles(files = []) {
         const filesList = document.getElementById('edit-files-list');
-        filesList.innerHTML = '';
-        
-        files.forEach(file => {
-            addEditFileToList(file);
-        });
+        filesList.innerHTML = ''; // Limpa a lista antes de popular
+
+        if (files && files.length > 0) {
+            files.forEach(file => {
+                addFileToList(file, 'saved', 'edit-files-list');
+            });
+        }
+
+        // Atualiza o estado do botão de upload
+        updateUploadButtonState('edit-files-list', 'edit-upload-btn');
     }
 
     function addEditFaqItem(question = '', answer = '') {
@@ -2009,6 +2169,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             submitButton.disabled = false;
             submitButton.textContent = 'Salvar Alterações';
+            isEditMode = false; // <-- CORREÇÃO: Reseta o modo de edição ao finalizar
+            editingBotId = null;
         }
     }
 
