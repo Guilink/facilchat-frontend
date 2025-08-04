@@ -107,18 +107,23 @@
                     </div>
                 </div>
 
+<!-- EM: index.html -->
+<!-- NOVA ESTRUTURA MELHORADA -->
+
                 <!-- ESTADO 2: COM BOTS -->
                 <div id="bots-state" class="bots-state" style="display: none;">
-                <div class="bots-header">
-                    <h2>Seus Assistentes</h2>
-                        <button id="create-bot-btn" class="btn-primary">+ Criar assistente virtual</button>
-                    </div>
                     
-                    <div class="bots-grid">
+                    <!-- NOVO WRAPPER PARA O CONTEÚDO PRINCIPAL -->
+                    <div class="dashboard-main-content">
+                        <div class="bots-header">
+                            <h2>Seus Assistentes</h2>
+                            <button id="create-bot-btn" class="btn-primary">+ Criar assistente virtual</button>
+                        </div>
                         <div id="bots-list" class="bots-list">
                             <!-- Bots serão inseridos aqui dinamicamente -->
                         </div>
                     </div>
+                    <!-- FIM DO NOVO WRAPPER -->
 
                     <div class="sidebar-content">
                         <div class="promo-card">
@@ -541,146 +546,106 @@
                 </div>
                 
                 <div class="edit-content">
-            <form id="edit-bot-form">
-                <input type="hidden" id="edit-bot-id">
+                    <form id="edit-bot-form">
+                        <input type="hidden" id="edit-bot-id">
 
-                        <!-- Identidade -->
+                        <!-- Seção de Identidade -->
                         <div class="edit-section">
                             <h3>Identidade do Bot</h3>
-                            
-                            <div class="form-group">
-                <label for="edit-bot-name">Nome do Bot</label>
-                <input type="text" id="edit-bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                            <div class="form-grid">
+                                <!-- MODIFICADO: Campo de nome agora em uma coluna -->
+                                <div class="form-group grid-col-span-2">
+                                    <label for="edit-bot-name">Nome do Bot</label>
+                                    <input type="text" id="edit-bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                                </div>
+                                
+                                <!-- MODIFICADO: <select> substituído por option-cards -->
+                                <div class="form-group">
+                                    <label>Função Principal</label>
+                                    <div class="option-grid" id="edit-function-options">
+                                        <div class="option-card" data-value="Produtos e Serviços"><h4>Produtos e Serviços</h4></div>
+                                        <div class="option-card" data-value="Suporte ao Cliente"><h4>Suporte ao Cliente</h4></div>
+                                        <div class="option-card" data-value="Agendamentos"><h4>Agendamentos</h4></div>
+                                        <div class="option-card" data-value="Personalizado"><h4>Personalizado</h4></div>
+                                    </div>
+                                    <textarea id="edit-bot-function-custom" placeholder="Descreva a função personalizada..." style="display: none; margin-top: 1rem;"></textarea>
+                                </div>
+                                
+                                <!-- MODIFICADO: <select> substituído por option-cards -->
+                                <div class="form-group">
+                                    <label>Tom de Atendimento</label>
+                                    <div class="option-grid" id="edit-tone-options">
+                                        <div class="option-card" data-value="Amigável"><h4>Amigável</h4></div>
+                                        <div class="option-card" data-value="Neutro"><h4>Neutro</h4></div>
+                                        <div class="option-card" data-value="Profissional"><h4>Profissional</h4></div>
+                                        <div class="option-card" data-value="Personalizado"><h4>Personalizado</h4></div>
+                                    </div>
+                                    <textarea id="edit-bot-tone-custom" placeholder="Descreva o tom personalizado..." style="display: none; margin-top: 1rem;"></textarea>
+                                </div>
                             </div>
-                
-                            <div class="form-group">
-                <label for="edit-bot-function">Função Principal</label>
-                <select id="edit-bot-function" required>
-                    <option value="Suporte ao Cliente">Suporte ao Cliente</option>
-                    <option value="Produtos e Serviços">Produtos e Serviços</option>
-                    <option value="Agendamentos">Agendamentos</option>
-                    <option value="Personalizado">Personalizado</option>
-                </select>
-                                <textarea id="edit-bot-function-custom" placeholder="Descreva a função personalizada..." style="display: none;"></textarea>
-                            </div>
+                        </div>
 
-                            <div class="form-group">
-                <label for="edit-bot-tone">Tom de Atendimento</label>
-                <select id="edit-bot-tone" required>
-                                    <option value="Amigável">Amigável (caloroso e acessível)</option>
-                    <option value="Neutro">Neutro (claro, objetivo e sem emoção)</option>
-                    <option value="Profissional">Profissional (formal, polido e respeitoso)</option>
-                    <option value="Personalizado">Personalizado</option>
-                </select>
-                                <textarea id="edit-bot-tone-custom" placeholder="Descreva o tom personalizado..." style="display: none;"></textarea>
-                            </div>
-                    </div>
-
-                        <!-- Horário -->
+                        <!-- Seção de Horário -->
                         <div class="edit-section">
                             <h3>Horário de Atendimento</h3>
                             
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="edit-schedule-enabled"> 
-                                    Ativar horário de funcionamento
-                        </label>
-                    </div>
+                            <!-- MODIFICADO: Checkbox substituído por um toggle centralizado -->
+                            <div class="schedule-toggle-container">
+                                <label for="edit-schedule-enabled" class="day-name">Ativar horário de funcionamento</label>
+                                <label class="day-toggle">
+                                    <input type="checkbox" id="edit-schedule-enabled">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
 
                             <div id="edit-schedule-details" class="schedule-details" style="display: none;">
+                                <!-- O conteúdo dos dias da semana permanece o mesmo, apenas será estilizado pelo CSS -->
                                 <div class="schedule-day" data-day="monday">
-                                    <label class="day-toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
                                     <span class="day-name">Segunda</span>
                                     <div class="time-inputs">
-                                        <label>Abre</label>
-                                        <input type="time" value="09:00">
-                                        <label>Fecha</label>
-                                        <input type="time" value="18:00">
+                                        <label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00">
                                     </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
                                 </div>
-
                                 <div class="schedule-day" data-day="tuesday">
-                                    <label class="day-toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
                                     <span class="day-name">Terça</span>
                                     <div class="time-inputs">
-                                        <label>Abre</label>
-                                        <input type="time" value="09:00">
-                                        <label>Fecha</label>
-                                        <input type="time" value="18:00">
+                                        <label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00">
                                     </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
                                 </div>
-
                                 <div class="schedule-day" data-day="wednesday">
-                                    <label class="day-toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
                                     <span class="day-name">Quarta</span>
                                     <div class="time-inputs">
-                                        <label>Abre</label>
-                                        <input type="time" value="09:00">
-                                        <label>Fecha</label>
-                                        <input type="time" value="18:00">
-                    </div>
-                        </div>
-
+                                        <label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
                                 <div class="schedule-day" data-day="thursday">
-                                    <label class="day-toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
                                     <span class="day-name">Quinta</span>
                                     <div class="time-inputs">
-                                        <label>Abre</label>
-                                        <input type="time" value="09:00">
-                                        <label>Fecha</label>
-                                        <input type="time" value="18:00">
+                                        <label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00">
                                     </div>
-                        </div>
-
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
                                 <div class="schedule-day" data-day="friday">
-                                    <label class="day-toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
                                     <span class="day-name">Sexta</span>
                                     <div class="time-inputs">
-                                        <label>Abre</label>
-                                        <input type="time" value="09:00">
-                                        <label>Fecha</label>
-                                        <input type="time" value="18:00">
-                        </div>
-                        </div>
-
+                                        <label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
                                 <div class="schedule-day" data-day="saturday">
-                                    <label class="day-toggle">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
                                     <span class="day-name">Sábado</span>
                                     <div class="time-inputs">
-                                        <label>Abre</label>
-                                        <input type="time" value="00:00">
-                                        <label>Fecha</label>
-                                        <input type="time" value="23:59">
+                                        <label>Abre</label><input type="time" value="00:00"><label>Fecha</label><input type="time" value="23:59">
                                     </div>
-                        </div>
-
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
                                 <div class="schedule-day" data-day="sunday">
-                                    <label class="day-toggle">
-                                        <input type="checkbox">
-                                        <span class="toggle-slider"></span>
-                            </label>
                                     <span class="day-name">Domingo</span>
-                                    <div class="time-inputs disabled">
-                                        <label>Fechado</label>
-                                    </div>
+                                    <div class="time-inputs disabled"><label>Fechado</label></div>
+                                    <label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
                                 </div>
                             </div>
                         </div>
@@ -688,50 +653,35 @@
                         <!-- Base de Conhecimento -->
                         <div class="edit-section">
                             <h3>Base de Conhecimento</h3>
-                            
-                            <!-- FAQ -->
+                            <!-- O conteúdo aqui permanece o mesmo -->
                             <div class="knowledge-subsection">
                                 <h4>Perguntas Frequentes (FAQ)</h4>
-                                <div id="edit-faq-list" class="knowledge-list">
-                                    <!-- FAQs serão adicionadas dinamicamente -->
-                                </div>
+                                <div id="edit-faq-list" class="knowledge-list"></div>
                                 <button type="button" id="edit-add-faq" class="btn-add">+ Adicionar pergunta</button>
                             </div>
-
-                            <!-- Contatos -->
                             <div class="knowledge-subsection">
                                 <h4>Encaminhamento Humano</h4>
-                                <div id="edit-contacts-list" class="knowledge-list">
-                                    <!-- Contatos serão adicionados dinamicamente -->
-                                </div>
+                                <div id="edit-contacts-list" class="knowledge-list"></div>
                                 <button type="button" id="edit-add-contact" class="btn-add">+ Adicionar contato</button>
-                        </div>
-
-                            <!-- Arquivos -->
+                            </div>
                             <div class="knowledge-subsection">
                                 <h4>Documentos</h4>
-                                <div id="edit-files-list" class="files-list">
-                                    <!-- Arquivos aparecerão aqui -->
-                                </div>
+                                <div id="edit-files-list" class="files-list"></div>
                                 <div class="upload-area">
                                     <button type="button" class="btn-upload" id="edit-upload-btn">
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                            <polyline points="17,8 12,3 7,8"/>
-                                            <line x1="12" y1="3" x2="12" y2="15"/>
-                                        </svg>
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                         Carregar Arquivos
                                     </button>
                                     <input type="file" id="edit-file-upload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display: none;" multiple>
                                 </div>
                             </div>
-                        </div>                                         
+                        </div>
 
                         <div class="edit-actions">
                             <button type="button" id="cancel-edit" class="btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Alterações</button>
-                </div>
-            </form>
+                            <button type="submit" class="btn-primary">Salvar Alterações</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

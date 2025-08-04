@@ -348,12 +348,12 @@ button:disabled {
 /* VIEW: DASHBOARD */
 .dashboard-container {
     display: grid;
-    grid-template-columns: 1fr 300px;
+    /* Ajustado para usar o nome da nova classe */
+    grid-template-columns: minmax(0, 1fr) 300px; 
     max-width: 1400px;
     margin: 0 auto;
     padding: 2rem;
     gap: 2rem;
-    min-height: calc(100vh - var(--header-height));
     align-items: start;
 }
 
@@ -449,10 +449,6 @@ button:disabled {
     font-size: 1.75rem;
     font-weight: 600;
     color: var(--text-primary);
-}
-
-.bots-grid {
-    display: contents;
 }
 
 .bots-list {
@@ -1388,6 +1384,101 @@ input:checked + .toggle-slider:before {
     border-top: 1px solid var(--border);
 }
 
+/* EM: style.css */
+/* --- MELHORIAS VISUAIS E RESPONSIVAS PARA A VIEW DE EDIÇÃO --- */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.grid-col-span-2 {
+    grid-column: span 2;
+}
+
+/* Deixa os option-cards da edição um pouco mais compactos que os do wizard */
+.edit-section .option-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+
+.edit-section .option-card {
+    padding: 1rem;
+    text-align: center;
+}
+
+.edit-section .option-card h4 {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+.edit-section .option-card p {
+    display: none; /* Esconde a descrição no modo de edição para economizar espaço */
+}
+
+/* Estilos para o novo toggle de ativar horário */
+.schedule-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.schedule-toggle-container .day-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Ajustes na lista de horários */
+.edit-section .schedule-details {
+    max-width: 600px;
+    margin: 0 auto; /* Centraliza a lista de horários */
+}
+
+.edit-section .schedule-day {
+    justify-content: space-between; /* Alinha os itens */
+}
+
+.edit-section .schedule-day .day-name {
+    flex-grow: 1; /* Faz o nome do dia ocupar o espaço disponível */
+}
+
+.edit-section .schedule-day .time-inputs {
+    justify-content: flex-end; /* Alinha os inputs de tempo à direita */
+}
+
+/* --- RESPONSIVIDADE PARA A VIEW DE EDIÇÃO --- */
+@media (max-width: 768px) {
+    .edit-container {
+        padding: 1rem;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr; /* Coluna única no mobile */
+        gap: 1.5rem;
+    }
+
+    .grid-col-span-2 {
+        grid-column: span 1; /* Garante que o span não quebre no mobile */
+    }
+
+    .edit-section .schedule-day {
+        flex-wrap: wrap; /* Permite que os itens quebrem a linha */
+        gap: 0.5rem;
+        padding: 1rem;
+    }
+
+    .edit-section .schedule-day .day-name {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+}
 /* RESPONSIVIDADE */
 @media (max-width: 1200px) {
     .dashboard-container {
@@ -1406,9 +1497,6 @@ input:checked + .toggle-slider:before {
         order: 1;
     }
     
-    .bots-grid {
-        flex-direction: column;
-    }
 }
 
 @media (max-width: 768px) {
@@ -1715,4 +1803,31 @@ input:checked + .toggle-slider:before {
 .bot-name-highlight {
     color: var(--accent);
     font-weight: 700;
+}
+/* EM: style.css */
+/* ADICIONE este bloco de código perto das outras media queries */
+
+/* --- RESPONSIVIDADE PARA O DASHBOARD --- */
+@media (max-width: 992px) {
+    .dashboard-container {
+        /* Muda de grid para flex-column em telas menores */
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Define a ordem para o estado de boas-vindas */
+    .welcome-state .main-content {
+        order: 2;
+    }
+    .welcome-state .sidebar-content {
+        order: 1;
+    }
+    
+    /* Define a ordem para o estado com bots (a nossa correção!) */
+    .bots-state .dashboard-main-content {
+        order: 1; /* Conteúdo principal primeiro */
+    }
+    .bots-state .sidebar-content {
+        order: 2; /* Sidebar depois */
+    }
 }

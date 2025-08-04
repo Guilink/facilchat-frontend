@@ -1756,6 +1756,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEditEventListeners();
         setupEditScheduleControls();
         setupEditKnowledgeBase();
+        setupEditOptionCards();
     }
 
     function setupEditEventListeners() {
@@ -1861,6 +1862,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function setupEditOptionCards() {
+        // Delegação de evento para os cards de opção na tela de edição
+        const editContent = document.getElementById('edit-content');
+        if (!editContent) return;
+
+        editContent.addEventListener('click', (e) => {
+            if (!e.target.closest('.option-card')) return;
+
+            const card = e.target.closest('.option-card');
+            const container = card.closest('.form-group');
+            if (!container) return;
+
+            // Desseleciona outros cards no mesmo grupo
+            container.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+            // Seleciona o card clicado
+            card.classList.add('selected');
+
+            // Lógica para mostrar/esconder o textarea "Personalizado"
+            const customTextarea = container.querySelector('textarea');
+            if (customTextarea) {
+                if (card.dataset.value === 'Personalizado') {
+                    customTextarea.style.display = 'block';
+                    customTextarea.focus();
+                } else {
+                    customTextarea.style.display = 'none';
+                }
+            }
+        });
+    }    
+
     // ADICIONE ESTA NOVA FUNÇÃO junto com as outras funções do Wizard
     window.removeWizardFile = function(button) {
         const fileItem = button.closest('.file-item');
@@ -1875,99 +1906,83 @@ document.addEventListener('DOMContentLoaded', () => {
         // ATUALIZA O ESTADO DO BOTÃO DE UPLOAD
         updateUploadButtonState('files-list', 'file-upload');
     }    
-
+    
     function populateEditFormWithBotData(bot) {
-        // Dados básicos
+        // --- Dados básicos ---
         document.getElementById('edit-bot-id').value = bot.id;
         document.getElementById('edit-bot-name').value = bot.name || '';
         
-        // Função
-        const functionSelect = document.getElementById('edit-bot-function');
+        // --- Função Principal ---
+        const functionOptionsContainer = document.getElementById('edit-function-options');
         const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
-        const knownFunctions = ['Suporte ao Cliente', 'Produtos e Serviços', 'Agendamentos'];
-
-        if (bot.function_type && knownFunctions.includes(bot.function_type)) {
-            functionSelect.value = bot.function_type;
+        
+        // Limpa seleções anteriores
+        functionOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        
+        // Encontra o card correspondente ao valor do bot, ou o card "Personalizado"
+        let functionCard = functionOptionsContainer.querySelector(`.option-card[data-value="${bot.function_type}"]`);
+        if (functionCard) {
+            functionCard.classList.add('selected');
             functionCustomTextarea.style.display = 'none';
-            functionCustomTextarea.value = '';
         } else {
-            functionSelect.value = 'Personalizado';
-            functionCustomTextarea.style.display = 'block';
-            functionCustomTextarea.value = bot.function_type || '';
+            // Se não encontrou, assume que é um valor personalizado
+            functionCard = functionOptionsContainer.querySelector('.option-card[data-value="Personalizado"]');
+            if (functionCard) {
+                functionCard.classList.add('selected');
+                functionCustomTextarea.style.display = 'block';
+                functionCustomTextarea.value = bot.function_type || '';
+            }
+        }
+        
+        // --- Tom de Atendimento ---
+        const toneOptionsContainer = document.getElementById('edit-tone-options');
+        const toneCustomTextarea = document.getElementById('edit-bot-tone-custom');
+
+        toneOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        
+        let toneCard = toneOptionsContainer.querySelector(`.option-card[data-value="${bot.tone_type}"]`);
+        if (toneCard) {
+            toneCard.classList.add('selected');
+            toneCustomTextarea.style.display = bot.tone_type === 'Personalizado' ? 'block' : 'none';
+            toneCustomTextarea.value = bot.tone_custom_description || '';
         }
 
-        // Tom
-        const toneSelect = document.getElementById('edit-bot-tone');
-        const toneCustomTextarea = document.getElementById('edit-bot-tone-custom');
-        
-        toneSelect.value = bot.tone_type || 'Amigável';
-        toneCustomTextarea.value = bot.tone_custom_description || '';
-        toneCustomTextarea.style.display = (bot.tone_type === 'Personalizado') ? 'block' : 'none';
-
-        // Horário - parse dos dados JSON do backend
+        // --- Horário ---
         const scheduleEnabledCheckbox = document.getElementById('edit-schedule-enabled');
         const scheduleDetails = document.getElementById('edit-schedule-details');
         
         scheduleEnabledCheckbox.checked = bot.schedule_enabled || false;
         scheduleDetails.style.display = bot.schedule_enabled ? 'block' : 'none';
 
-        // Parse dos dados de horário que vêm como string JSON do backend
         let scheduleData = [];
         if (bot.schedule_data) {
             try {
-                scheduleData = typeof bot.schedule_data === 'string' ? 
-                              JSON.parse(bot.schedule_data) : 
-                              bot.schedule_data;
-            } catch (e) {
-                console.error('Erro ao fazer parse do schedule_data:', e);
-                scheduleData = [];
-            }
+                scheduleData = Array.isArray(bot.schedule_data) ? bot.schedule_data : JSON.parse(bot.schedule_data);
+            } catch (e) { console.error('Erro ao fazer parse do schedule_data:', e); }
         }
 
         if (scheduleData.length > 0) {
-            const editScheduleDays = document.querySelectorAll('#edit-schedule-details .schedule-day');
-            editScheduleDays.forEach((dayElement, index) => {
-                const dayData = scheduleData[index] || { active: false, open: '09:00', close: '18:00' };
+            const dayMap = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            scheduleData.forEach((dayData, index) => {
+                const dayName = dayMap[index];
+                const dayElement = scheduleDetails.querySelector(`.schedule-day[data-day="${dayName}"]`);
+                if(!dayElement) return;
+
                 const toggle = dayElement.querySelector('input[type="checkbox"]');
-                const openTime = dayElement.querySelector('input[type="time"]:first-of-type');
-                const closeTime = dayElement.querySelector('input[type="time"]:last-of-type');
+                const openTimeInput = dayElement.querySelector('input[type="time"]:first-of-type');
+                const closeTimeInput = dayElement.querySelector('input[type="time"]:last-of-type');
                 
                 if (toggle) toggle.checked = dayData.active;
-                if (openTime) openTime.value = dayData.open;
-                if (closeTime) closeTime.value = dayData.close;
+                if (openTimeInput) openTimeInput.value = dayData.open;
+                if (closeTimeInput) closeTimeInput.value = dayData.close;
                 
                 updateDayScheduleState(dayElement);
             });
         }
 
-        // Base de conhecimento - parse dos dados JSON do backend
-        let faqData = [];
-        let contactsData = [];
-        
-        if (bot.knowledge_faq) {
-            try {
-                faqData = typeof bot.knowledge_faq === 'string' ? 
-                         JSON.parse(bot.knowledge_faq) : 
-                         bot.knowledge_faq;
-            } catch (e) {
-                console.error('Erro ao fazer parse do knowledge_faq:', e);
-                faqData = [];
-            }
-        }
-        
-        if (bot.knowledge_contacts) {
-            try {
-                contactsData = typeof bot.knowledge_contacts === 'string' ? 
-                              JSON.parse(bot.knowledge_contacts) : 
-                              bot.knowledge_contacts;
-            } catch (e) {
-                console.error('Erro ao fazer parse do knowledge_contacts:', e);
-                contactsData = [];
-            }
-        }
-
-        populateEditFAQ(faqData);
-        populateEditContacts(contactsData);
+        // --- Base de Conhecimento ---
+        populateEditFAQ(bot.knowledge_faq || []);
+        populateEditContacts(bot.knowledge_contacts || []);
         populateEditFiles(bot.knowledge_files || []);
     }
 
@@ -2080,63 +2095,37 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = await getAuthToken();
             const botId = document.getElementById('edit-bot-id').value;
             
-            // Coleta dados do formulário de edição
-            let functionValue = document.getElementById('edit-bot-function').value;
+            // --- Coleta dados dos novos componentes ---
+            let functionValue = document.querySelector('#edit-function-options .option-card.selected')?.dataset.value || 'Suporte ao Cliente';
             if (functionValue === 'Personalizado') {
-                functionValue = document.getElementById('edit-bot-function-custom').value;
+                functionValue = document.getElementById('edit-bot-function-custom').value.trim();
             }
             
-            let toneValue = document.getElementById('edit-bot-tone').value;
+            let toneValue = document.querySelector('#edit-tone-options .option-card.selected')?.dataset.value || 'Amigável';
             let toneCustom = '';
             if (toneValue === 'Personalizado') {
-                toneCustom = document.getElementById('edit-bot-tone-custom').value;
+                toneCustom = document.getElementById('edit-bot-tone-custom').value.trim();
             }
 
-            // Coleta dados de horário usando nomes corretos que o backend espera
             const scheduleEnabled = document.getElementById('edit-schedule-enabled').checked;
             const scheduleData = [];
-            
-            // Backend espera estes nomes específicos de dias
             const dayNames = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
             
-            const editDays = document.querySelectorAll('#edit-schedule-details .schedule-day');
-            
-            editDays.forEach((dayElement, index) => {
+            document.querySelectorAll('#edit-schedule-details .schedule-day').forEach((dayElement, index) => {
                 const toggle = dayElement.querySelector('input[type="checkbox"]');
                 const openTime = dayElement.querySelector('input[type="time"]:first-of-type');
                 const closeTime = dayElement.querySelector('input[type="time"]:last-of-type');
                 
                 scheduleData.push({
-                    day: dayNames[index], // Usa os nomes corretos que o backend espera
+                    day: dayNames[index],
                     active: toggle ? toggle.checked : false,
                     open: openTime ? openTime.value : '09:00',
                     close: closeTime ? closeTime.value : '18:00'
                 });
             });
 
-            // Coleta FAQs
-            const faqItems = [];
-            document.querySelectorAll('#edit-faq-list .knowledge-item').forEach(item => {
-                const inputs = item.querySelectorAll('input');
-                if (inputs[0] && inputs[1] && inputs[0].value.trim() && inputs[1].value.trim()) {
-                    faqItems.push({
-                        question: inputs[0].value.trim(),
-                        answer: inputs[1].value.trim()
-                    });
-                }
-            });
-
-            // Coleta contatos
-            const contactItems = [];
-            document.querySelectorAll('#edit-contacts-list .knowledge-item').forEach(item => {
-                const inputs = item.querySelectorAll('input');
-                if (inputs[0] && inputs[1] && inputs[0].value.trim() && inputs[1].value.trim()) {
-                    contactItems.push({
-                        sector: inputs[0].value.trim(),
-                        contact: inputs[1].value.trim()
-                    });
-                }
-            });
+            const faqItems = collectFaqDataFromEdit();
+            const contactItems = collectContactsDataFromEdit();
 
             const botData = {
                 name: document.getElementById('edit-bot-name').value,
@@ -2151,10 +2140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(botData)
             });
 
@@ -2169,10 +2155,32 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             submitButton.disabled = false;
             submitButton.textContent = 'Salvar Alterações';
-            isEditMode = false; // <-- CORREÇÃO: Reseta o modo de edição ao finalizar
+            isEditMode = false;
             editingBotId = null;
         }
     }
+
+    function collectFaqDataFromEdit() {
+        const faqItems = [];
+        document.querySelectorAll('#edit-faq-list .knowledge-item').forEach(item => {
+            const inputs = item.querySelectorAll('input');
+            if (inputs[0]?.value.trim() && inputs[1]?.value.trim()) {
+                faqItems.push({ question: inputs[0].value.trim(), answer: inputs[1].value.trim() });
+            }
+        });
+        return faqItems;
+    }
+
+    function collectContactsDataFromEdit() {
+        const contactItems = [];
+        document.querySelectorAll('#edit-contacts-list .knowledge-item').forEach(item => {
+            const inputs = item.querySelectorAll('input');
+            if (inputs[0]?.value.trim() && inputs[1]?.value.trim()) {
+                contactItems.push({ sector: inputs[0].value.trim(), contact: inputs[1].value.trim() });
+            }
+        });
+        return contactItems;
+    }    
 
     // === INICIALIZAÇÃO ===
     function initializeApp() {
