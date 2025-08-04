@@ -1193,11 +1193,20 @@ input:checked + .toggle-slider:before {
     margin-bottom: 1rem;
 }
 
-/* QR Loading State */
 .qr-loading {
+    display: flex; /* Habilita flexbox */
+    flex-direction: column; /* Organiza os itens em coluna */
+    align-items: center; /* Centraliza horizontalmente */
+    justify-content: center; /* Centraliza verticalmente */
     text-align: center;
     padding: 2rem;
-    color: var(--text-primary);
+    width: 100%;
+    height: 100%;
+    color: var(--text-primary); /* Garante cor escura por padrão */
+}
+
+.wizard-main .qr-display .qr-loading {
+    color: var(--text-muted); /* Usa um cinza legível em fundo branco */
 }
 
 .qr-loading .loading-animation {
@@ -1205,24 +1214,34 @@ input:checked + .toggle-slider:before {
 }
 
 .qr-loading h3 {
-    color: var(--text-primary);
+    /* Herda a cor do pai (.qr-loading) */
     font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
 }
 
 .qr-loading p {
-    color: var(--text-secondary);
+    /* Herda a cor do pai (.qr-loading) */
     font-size: 0.95rem;
     max-width: 300px;
     margin: 0 auto;
     line-height: 1.5;
 }
 
+.qr-loading .loading-spinner {
+    margin-bottom: 1.5rem; /* Adiciona espaço entre o spinner e o texto */
+}
+
 /* QR Error State */
 .qr-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     padding: 2rem;
+    width: 100%;
+    height: 100%;
 }
 
 .qr-error .error-icon {
@@ -1231,7 +1250,7 @@ input:checked + .toggle-slider:before {
 }
 
 .qr-error h3 {
-    color: var(--text-primary);
+    color: var(--danger);
     font-size: 1.25rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
@@ -1239,22 +1258,22 @@ input:checked + .toggle-slider:before {
 
 .qr-error p {
     color: var(--text-secondary);
-    margin-bottom: 1.5rem;
 }
 
-/* FOOTER DO WIZARD */
+
 .wizard-footer {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding: 2rem 3rem;
     border-top: 1px solid var(--border);
     background-color: var(--bg-secondary);
 }
 
+/* ADICIONE esta nova regra para o .wizard-actions */
 .wizard-actions {
     display: flex;
     gap: 1rem;
+    margin-left: auto; /* A MÁGICA ACONTECE AQUI */
 }
 
 /* VIEW: SUCESSO */
@@ -1653,4 +1672,37 @@ input:checked + .toggle-slider:before {
 }
 .btn-connect.disconnect-action:hover:not(:disabled) {
     background-color: #D97706; /* Um laranja um pouco mais escuro */
+}
+/* ESTILOS PARA O NOVO MODAL DE QR CODE */
+.qr-modal-container {
+    max-width: 450px;
+}
+
+#qr-modal-content {
+    padding: 2rem;
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#qr-modal .qr-display {
+    width: 280px;
+    height: 280px;
+    background-color: white;
+    padding: 16px; /* Adiciona uma borda branca para o QR code */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#qr-modal .qr-display canvas,
+#qr-modal .qr-display img {
+    border-radius: 4px;
+}
+/* EM: style.css (pode adicionar perto dos outros estilos de modal) */
+.bot-name-highlight {
+    color: var(--accent);
+    font-weight: 700;
 }

@@ -747,12 +747,10 @@
             
             <div class="modal-content">
                 <div class="warning-icon">⚠️</div>
-                <h4>Tem certeza que deseja deletar este assistente?</h4>
+                <!-- A MENSAGEM AGORA INCLUI UM SPAN PARA O NOME DO BOT -->
+                <h4>Tem certeza que deseja deletar o assistente <span id="delete-bot-name-modal" class="bot-name-highlight"></span>?</h4>
                 <p>Esta ação é <strong>permanente</strong> e não pode ser desfeita. Todos os dados, conversas e configurações serão perdidos.</p>
                 
-                <div class="bot-preview">
-                    <span class="bot-preview-name" id="delete-bot-name">Nome do Bot</span>
-                </div>
             </div>
             
             <div class="modal-footer">
@@ -767,5 +765,21 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script src="app.js"></script>
+
+<!-- NOVO MODAL: CONEXÃO QR CODE -->
+<div id="qr-modal" class="modal-overlay">
+    <div class="modal-container qr-modal-container">
+        <div class="modal-header">
+            <h3>Conectar ao WhatsApp</h3>
+            <button class="modal-close" onclick="cancelConnection()">×</button>
+        </div>
+        <div class="modal-content" id="qr-modal-content">
+            <!-- O conteúdo (loading, QR code, sucesso, erro) será injetado aqui -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" onclick="cancelConnection()">Cancelar</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
