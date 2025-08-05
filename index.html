@@ -53,7 +53,7 @@
     </header>
 
     <!-- LOADING INICIAL -->
-    <div id="app-loading" class="app-loading">
+    <<div id="app-loading" class="app-loading">
         <div class="loading-spinner"></div>
     </div>
 
@@ -88,27 +88,33 @@
                                     <line x1="8" y1="13" x2="14" y2="13"/>
                                 </svg>
                             </div>
-                            <h2>Configure seu assistente virtual de forma fácil e rápida.</h2>
-                            <p>Proporcione uma experiência de atendimento eficiente para os seus clientes!</p>
+                            <h2>Crie seu assistente virtual em poucos minutos.</h2>
+                            <p>Ofereça um atendimento rápido, inteligente e eficiente para seus clientes.</p><br>                        
                             <button id="start-wizard-btn" class="btn-primary">Começar agora</button>
                         </div>
                     </div>
+                    <!-- SUBSTITUA PELO NOVO CÓDIGO ABAIXO -->
                     <div class="sidebar-content">
+                        <!-- Card 1: Tutorial -->
                         <div class="promo-card">
-                            <h3>Conheça nossos planos e preços.</h3>
-                            <p>Benefícios exclusivos em cada um de nossos planos.</p>
-                            <button class="btn-secondary">Conhecer planos</button>
+                            <h3>Guia de Atendimento com IA</h3>
+                            <p>Aprenda como criar seu assistente, conectar ao WhatsApp e começar a automatizar seus atendimentos.</p>
+                            <button class="btn-secondary">Assistir tutorial</button>
                         </div>
+                        <!-- Card 2: Dicas -->
                         <div class="promo-card">
-                            <h3>Veja Nossa IA de atendimento em ação!</h3>
-                            <p>Descubra como nossa Inteligência Artificial pode revolucionar o seu atendimento ao cliente.</p>
-                            <button class="btn-link">Ver demonstração →</button>
+                            <h3>Dicas para Vender Mais</h3>
+                            <p>Aumente suas vendas com mensagens estratégicas. Veja exemplos prontos de abordagens, gatilhos mentais e scripts para usar com seu atendente virtual.</p>
+                            <button class="btn-link">Ver dicas e exemplos</button>
+                        </div>
+                        <!-- Card 3: Upgrade de Plano (com o estilo especial que vamos arrumar) -->
+                        <div class="promo-card">
+                            <h3>Vá ao topo com o Plano Pro</h3>
+                            <p>Tenha acesso a recursos avançados, mais assistentes e mais resultados. Seu sucesso começa com quem leva atendimento a sério.</p>
+                            <button class="btn-link">Conhecer planos</button>
                         </div>
                     </div>
                 </div>
-
-<!-- EM: index.html -->
-<!-- NOVA ESTRUTURA MELHORADA -->
 
                 <!-- ESTADO 2: COM BOTS -->
                 <div id="bots-state" class="bots-state" style="display: none;">
@@ -116,7 +122,7 @@
                     <!-- NOVO WRAPPER PARA O CONTEÚDO PRINCIPAL -->
                     <div class="dashboard-main-content">
                         <div class="bots-header">
-                            <h2>Seus Assistentes</h2>
+                            <h2>Seus assistentes</h2>
                             <button id="create-bot-btn" class="btn-primary">+ Criar assistente virtual</button>
                         </div>
                         <div id="bots-list" class="bots-list">
@@ -125,16 +131,25 @@
                     </div>
                     <!-- FIM DO NOVO WRAPPER -->
 
+                    <!-- SUBSTITUA PELO NOVO CÓDIGO ABAIXO -->
                     <div class="sidebar-content">
+                        <!-- Card 1: Tutorial -->
                         <div class="promo-card">
-                            <h3>Conheça nossos planos e preços.</h3>
-                            <p>Benefícios exclusivos em cada um de nossos planos.</p>
-                            <button class="btn-secondary">Conhecer planos</button>
+                            <h3>Guia de Atendimento com IA</h3>
+                            <p>Aprenda a configurar e usar sua IA de forma prática e eficiente. Veja como criar seu assistente, conectar ao WhatsApp e começar a automatizar.</p>
+                            <button class="btn-secondary">Assistir tutorial</button>
                         </div>
+                        <!-- Card 2: Dicas -->
                         <div class="promo-card">
-                            <h3>Veja Nossa IA de atendimento em ação!</h3>
-                            <p>Descubra como nossa Inteligência Artificial pode revolucionar o seu atendimento ao cliente.</p>
-                            <button class="btn-link">Ver demonstração →</button>
+                            <h3>Dicas Rápidas para Vender Mais</h3>
+                            <p>Aumente suas vendas com mensagens estratégicas. Veja exemplos prontos de abordagens, gatilhos mentais e scripts para usar com seu atendente virtual.</p>
+                            <button class="btn-link">Ver dicas e exemplos</button>
+                        </div>
+                        <!-- Card 3: Upgrade de Plano (com o estilo especial que vamos arrumar) -->
+                        <div class="promo-card">
+                            <h3>Desbloqueie seu Potencial com o Plano Pro</h3>
+                            <p>Tenha acesso a recursos avançados, mais assistentes e mais resultados. Suba de nível com quem leva atendimento a sério.</p>
+                            <button class="btn-link">Conhecer planos</button>
                         </div>
                     </div>
                 </div>
@@ -160,8 +175,8 @@
                                 </svg>
                             </div>
                             <div class="step-content">
-                                <h4>Identidade do Bot</h4>
-                                <p>Nome, função e tom de voz</p>
+                                <h4>Criação de Assistente</h4>
+                                <p>nome, função e tom de voz</p>
                             </div>
                         </div>
                         
@@ -212,14 +227,14 @@
                         <!-- PASSO 1: IDENTIDADE -->
                         <div id="step-1" class="wizard-step active">
                             <div class="step-header">
-                                <h2>Configure a Identidade do Bot</h2>
-                                <p>Isso definirá como ele interage com seus clientes.</p>
+                                <h2>Defina uma identidade para seu assistente</h2>
+                                <p>Escolha a maneira que seu assistente vai tratar com seus clientes.</p>
                             </div>
                             
                             <form class="step-form">
                                 <div class="form-group">
-                                    <label for="bot-name">Nome do Bot</label>
-                                    <input type="text" id="bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                                    <label for="bot-name">Nome do Aassistente</label>
+                                    <input type="text" id="bot-name" placeholder="Escolha um " required>
                                 </div>
 
                                 <div class="form-group">
@@ -551,7 +566,7 @@
 
                         <!-- Seção de Identidade -->
                         <div class="edit-section">
-                            <h3>Identidade do Bot</h3>
+                            <h3>Identidade</h3>
                             <div class="form-grid">
                                 <!-- MODIFICADO: Campo de nome agora em uma coluna -->
                                 <div class="form-group grid-col-span-2">

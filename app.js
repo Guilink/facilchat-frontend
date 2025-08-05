@@ -134,23 +134,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
         // === AUTENTICAÇÃO ===
-    function handleAuthStateChange(user) {
+    async function handleAuthStateChange(user) {
         if (user) {
             // --- O USUÁRIO ESTÁ LOGADO ---
             console.log('✅ Usuário autenticado:', user.email);
 
-            // Mostra o header antes de qualquer outra coisa
+            // Mostra o header
             elements.header.style.display = 'block';
             
-            // Sincroniza o usuário com o backend e busca seus dados
-            syncUserWithBackend();
-            fetchBots();
-            initializeSocket();
-
-            // Finalmente, esconde a tela de loading...
-            appLoading.classList.add('hidden');
-            // ...e mostra o painel.
-            showView('dashboard');
+            // Mantém loading ativo enquanto carrega dados
+            try {
+                // Sincroniza o usuário com o backend e busca seus dados
+                await syncUserWithBackend();
+                await fetchBots();
+                initializeSocket();
+                
+                // Só depois de carregar tudo, esconde loading e mostra dashboard
+                appLoading.classList.add('hidden');
+                showView('dashboard');
+            } catch (error) {
+                console.error('Erro durante inicialização:', error);
+                // Mesmo com erro, mostra o dashboard
+                appLoading.classList.add('hidden');
+                showView('dashboard');
+            }
             
         } else {
             // --- O USUÁRIO NÃO ESTÁ LOGADO ---
@@ -216,7 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Passo 3: INICIA a conexão com o WhatsApp e pede o QR Code
-            // Esta chamada é a que estava faltando.
             await startWhatsAppConnection(newBot.id);
 
         } catch (error) {
@@ -272,23 +278,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderDashboard() {
+        // PASSO 1: SEMPRE limpa a lista de bots para evitar "fantasmas".
+        elements.botsList.innerHTML = '';
+
+        // PASSO 2: Decide qual container principal mostrar.
         if (userBots.length === 0) {
-            elements.welcomeState.style.display = ''; // Remove o estilo inline para que o CSS assuma.
+            // Se NÃO há bots: mostra o container de boas-vindas e esconde o de bots.
+            elements.welcomeState.style.display = 'contents'; // 'contents' para funcionar com o novo grid
             elements.botsState.style.display = 'none';
         } else {
+            // Se HÁ bots: esconde o de boas-vindas e mostra o container de bots.
             elements.welcomeState.style.display = 'none';
-            elements.botsState.style.display = ''; // Remove o estilo inline para que o CSS assuma.
+            elements.botsState.style.display = 'contents'; // 'contents' para funcionar com o novo grid
+            
+            // PASSO 3: Apenas se houver bots, renderiza os cards.
             renderBots();
         }
     }
 
+    let isInitialLoad = true;
+    
     function renderBots() {
         elements.botsList.innerHTML = '';
         
         userBots.forEach(bot => {
             const botCard = createBotCard(bot);
+            // Aplica animação apenas no carregamento inicial
+            if (isInitialLoad) {
+                botCard.classList.add('initial-load');
+            }
             elements.botsList.appendChild(botCard);
         });
+        
+        // Após o primeiro carregamento, desabilita as animações
+        if (isInitialLoad) {
+            isInitialLoad = false;
+        }
     }
 
     function createBotCard(bot) {
@@ -353,19 +378,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="bot-info">
                     <div class="bot-name">${bot.name}</div>
                     <div class="bot-phone">${phoneDisplay}</div>
-                    <div class="bot-status">
-                        <label class="status-toggle ${toggleDisabled ? 'disabled' : ''}" 
-                            title="${toggleDisabled ? 'Conecte o bot para ativar' : 'Alternar status Ativo/Inativo'}">
-                            <input type="checkbox" ${toggleChecked} ${onchangeAction} ${toggleDisabled ? 'disabled' : ''}>
-                            <span class="toggle-slider"></span>
-                        </label>
-                        <span class="status-text ${statusClass}">
-                            ${toggleDisabled ? 'Desconectado' : statusText}
-                        </span>
-                    </div>
                 </div>
-                <div class="bot-main-action">
-                    ${connectionButtonHTML}
+                <div class="bot-toggle-area">
+                    <label class="status-toggle ${toggleDisabled ? 'disabled' : ''}" 
+                        title="${toggleDisabled ? 'Conecte o bot para ativar' : 'Alternar status Ativo/Inativo'}">
+                        <input type="checkbox" ${toggleChecked} ${onchangeAction} ${toggleDisabled ? 'disabled' : ''}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="status-text ${statusClass}">
+                        ${toggleDisabled ? 'Desconectado' : statusText}
+                    </span>
                 </div>
             </div>
             
@@ -374,10 +396,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="stat-number">0</div>
                     <div class="stat-label">Conversas</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">0</div>
+                
+                <!-- Novo Bloco de Volume -->
+                <div class="stat-item volume-stats" title="Mensagens enviadas e recebidas">
+                    <div class="volume-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                        <span>0</span>
+                    </div>
+                    <div class="volume-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                        <span>0</span>
+                    </div>
                     <div class="stat-label">Volume</div>
                 </div>
+                
                 <div class="stat-item">
                     <div class="stat-number">0</div>
                     <div class="stat-label">Leads</div>
@@ -385,21 +417,25 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             
             <div class="bot-actions">
-                <a href="#" class="bot-config" onclick="openBotSettings('${bot.id}')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
-                    Configurações
-                </a>
-                <button class="bot-delete" onclick="handleDeleteBot('${bot.id}')" title="Deletar bot">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3,6 5,6 21,6"/>
-                        <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                        <line x1="10" y1="11" x2="10" y2="17"/>
-                        <line x1="14" y1="11" x2="14" y2="17"/>
-                    </svg>
-                </button>
+                <div class="bot-actions-left">
+                    ${connectionButtonHTML}
+                </div>
+                <div class="bot-actions-right">
+                    <button class="bot-config" onclick="openBotSettings('${bot.id}')" title="Configurações">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </button>
+                    <button class="bot-delete" onclick="handleDeleteBot('${bot.id}')" title="Deletar bot">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"/>
+                            <path d="m19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                            <line x1="10" y1="11" x2="10" y2="17"/>
+                            <line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         `;
 
@@ -680,7 +716,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // NOVA FUNÇÃO: Configura validação em tempo real do wizard
     function setupWizardValidation() {
         // Event listener para o campo nome do bot (passo 1)
         const botNameInput = document.getElementById('bot-name');
@@ -719,8 +754,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
 
-                // --- ADICIONE ESTA LINHA AQUI ---
-                // Após um card ser clicado, precisamos rodar a validação novamente.
                 validateWizardStep(currentWizardStep);
             });
         });
@@ -770,8 +803,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // CORRIGE BUG WIZARD: Valida o passo atual após mudança
         validateWizardStep(step);
     }
-
-    // NOVA FUNÇÃO: Valida se o passo atual está completo para habilitar botão
 
     function validateWizardStep(step) {
         let isValid = false;
@@ -855,10 +886,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setWizardStep(currentWizardStep + 1);
         }
     }
-
-    // SUBSTITUA A FUNÇÃO createBot INTEIRA POR ESTA VERSÃO CORRIGIDA
-
-// SUBSTITUA A FUNÇÃO createBot INTEIRA POR ESTA VERSÃO CORRIGIDA
 
     async function createBot() {
         try {
@@ -1178,8 +1205,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // EM: app.js
-    // SUBSTITUA A FUNÇÃO resetWizard INTEIRA
     function resetWizard() {
         console.log('🔄 Resetando wizard...');
         
@@ -1215,7 +1240,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // CORREÇÃO: Garante que o botão de upload do wizard estará visível
         updateUploadButtonState('files-list', 'file-upload');
         
         setWizardStep(1);
@@ -1374,8 +1398,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     showQrModal(errorHTML);
                 }
 
-                // O botão de "Cancelar" no modal já vai funcionar para fechar.
-                // O dashboard será atualizado para 'offline' pelo evento 'bot_status_changed' que o backend já emite.
             }
         });
 
@@ -1459,7 +1481,6 @@ document.addEventListener('DOMContentLoaded', () => {
         contactsList.appendChild(item);
     }
 
-    // SUBSTITUA A FUNÇÃO handleFileUpload INTEIRA POR ESTA
     function handleFileUpload(event) {
         const files = event.target.files;
         if (!files.length) return;
@@ -1579,9 +1600,6 @@ document.addEventListener('DOMContentLoaded', () => {
             default: return '📄 Arquivo';
         }
     }
-
-    // EM: app.js
-    // ADICIONE ESTA NOVA FUNÇÃO AUXILIAR
 
     function updateEditSaveButtonState() {
         // Seleciona o botão de salvar do formulário de edição
@@ -1830,8 +1848,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // EM: app.js
-    // SUBSTITUA A FUNÇÃO setupEditKnowledgeBase INTEIRA
     function setupEditKnowledgeBase() {
         // FAQ
         const addFaqBtn = document.getElementById('edit-add-faq');
@@ -2177,9 +2193,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return contactItems;
     }    
 
-
-    // SUBSTITUA A FUNÇÃO setupThemeToggle INTEIRA PELA VERSÃO CORRIGIDA ABAIXO
-
     function setupThemeToggle() {
         const themeToggleButton = document.getElementById('theme-toggle');
         const sunIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
@@ -2214,8 +2227,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-// EM: app.js (dentro da função initializeApp)
-
     function initializeApp() {
         console.log('🚀 Inicializando FacilChat...');
         console.log('🔧 Versão: Anti-Race-Condition v3.0');
@@ -2243,6 +2254,102 @@ document.addEventListener('DOMContentLoaded', () => {
         
         console.log('✅ Inicialização configurada. App aguardando autenticação...');
     }
+    
+    // === NOVAS FUNCIONALIDADES VISUAIS ===
+    
+    // Toast Notifications
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        // Trigger animation
+        setTimeout(() => toast.classList.add('show'), 100);
+        
+        // Auto remove
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 4000);
+    }
+    
+    // Skeleton Loader
+    function showSkeletonLoader(containerId, count = 3) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        for (let i = 0; i < count; i++) {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'skeleton-loader';
+            skeleton.innerHTML = `
+                <div class="skeleton-card">
+                    <div class="skeleton-header"></div>
+                    <div class="skeleton-content"></div>
+                    <div class="skeleton-footer"></div>
+                </div>
+            `;
+            container.appendChild(skeleton);
+        }
+    }
+    
+    // Improved Loading States
+    function setLoadingState(element, isLoading) {
+        if (isLoading) {
+            element.classList.add('loading');
+            element.style.pointerEvents = 'none';
+        } else {
+            element.classList.remove('loading');
+            element.style.pointerEvents = 'auto';
+        }
+    }
+    
+    // Enhanced Animation Utilities
+    function animateElement(element, animationName, duration = '0.6s') {
+        element.style.animation = `${animationName} ${duration} ease-out`;
+        element.addEventListener('animationend', () => {
+            element.style.animation = '';
+        }, { once: true });
+    }
+    
+    // Staggered Animation for Lists
+    function animateList(containerSelector, itemSelector, delay = 100) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+        
+        const items = container.querySelectorAll(itemSelector);
+        items.forEach((item, index) => {
+            item.style.animationDelay = `${index * delay}ms`;
+        });
+    }
+    
+    // Removed enhanced fetchBots to fix loading issues
+    
+    // Enhanced success messages
+    const originalCreateBot = createBot;
+    createBot = async function() {
+        try {
+            const result = await originalCreateBot();
+            showToast('Bot criado com sucesso!', 'success');
+            return result;
+        } catch (error) {
+            showToast('Erro ao criar bot', 'error');
+            throw error;
+        }
+    };
+    
+    // Make functions globally available
+    window.showToast = showToast;
+    window.showSkeletonLoader = showSkeletonLoader;
+    window.setLoadingState = setLoadingState;
+    window.animateElement = animateElement;
     
     initializeApp();
 });
