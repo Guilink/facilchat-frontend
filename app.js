@@ -324,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- NOVA LÓGICA DE STATUS ---
         const isConnected = bot.status === 'online' || bot.status === 'paused';
         const isActive = bot.status === 'online';
-        const phoneDisplay = bot.connected_phone || '(XX) X XXXX-XXXX';
+        const phoneDisplay = bot.connected_phone || '';
 
         // --- LÓGICA DO TOGGLE ATIVO/INATIVO ---
         const toggleDisabled = !isConnected; // Desabilita se não estiver 'online' ou 'paused'

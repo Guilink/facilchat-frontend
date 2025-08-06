@@ -86,7 +86,7 @@ body {
 
 html.light-theme {
     /* --- VARIÁVEIS OTIMIZADAS PARA TEMA CLARO (REMOVIDAS REDEFINIÇÕES DESNECESSÁRIAS) --- */
-    --bg-primary: #FFFFFF;
+    --bg-primary: #e2e2e2;
     --bg-secondary: #F8FAFC; 
     --bg-tertiary: #F1F5F9;
     --text-primary: #0F172A;

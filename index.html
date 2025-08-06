@@ -234,7 +234,7 @@
                             <form class="step-form">
                                 <div class="form-group">
                                     <label for="bot-name">Nome do Aassistente</label>
-                                    <input type="text" id="bot-name" placeholder="Escolha um " required>
+                                    <input type="text" id="bot-name" placeholder="Exemplo: 'Atendente da Pizzaria', 'Recepcionista', 'Luna' etc.." required>
                                 </div>
 
                                 <div class="form-group">
@@ -254,14 +254,14 @@
                                         </div>
                                         <div class="option-card" data-value="Personalizado">
                                             <h4>Personalizado</h4>
-                                            <p>Crie uma função única e específica para o seu bot.</p>
+                                            <p>Explique em poucas palavras qual é a função do seu assistente.</p>
                                         </div>
                                     </div>
                                     <textarea id="bot-function-custom" placeholder="Descreva a função personalizada do seu bot..." style="display: none;"></textarea>
                                 </div>
 
                                 <div class="form-group">
-                                    <label>Tom de Atendimento</label>
+                                    <label>Como você quer que seu assistente converse com seus clientes?</label>
                                     <div class="option-grid" id="tone-option-grid">
                                         <div class="option-card selected" data-value="Amigável">
                                             <h4>Amigável</h4>
@@ -277,7 +277,7 @@
                                         </div>
                                         <div class="option-card" data-value="Personalizado">
                                             <h4>Personalizado</h4>
-                                            <p>Defina você mesmo o tom de voz do bot.</p>
+                                            <p>Você mesmo define o tom de atendimento desejado.</p>
                                         </div>
                                     </div>
                                     <textarea id="bot-tone-custom" placeholder="Descreva o tom personalizado do seu bot..." style="display: none;"></textarea>
@@ -403,13 +403,13 @@
                         <div id="step-3" class="wizard-step">
                             <div class="step-header">
                                 <h2>Base de Conhecimento</h2>
-                                <p>Alimente seu bot com as informações essenciais. Quanto mais dados, mais inteligente ele será.</p>
+                                <p>Alimente seu assistente com as informações essenciais. Quanto mais dados, mais inteligente ele será.</p>
                             </div>
 
                             <div class="knowledge-sections">
                                 <div class="knowledge-section">
                                     <h3>Perguntas Frequentes (FAQ)</h3>
-                                    <p>Insira as dúvidas mais comuns dos seus clientes para respostas instantâneas.</p>
+                                    <p>Insira as dúvidas mais comuns dos seus clientes para respostas instantâneas.<br>Por exemplo "Qual é a localização?" ou "Vocês possuem Wi-fi?"</p>
                                     <div id="faq-list" class="knowledge-list">
                                         <!-- FAQs serão adicionadas dinamicamente -->
                                     </div>
@@ -418,7 +418,7 @@
 
                                 <div class="knowledge-section">
                                     <h3>Documentos adicionais</h3>
-                                    <p>Envie arquivos como PDF, planilhas, JPG ou PNG para enriquecer o conhecimento do bot.</p>
+                                    <p>Envie arquivos em PDF ou imagens em JPG/PNG para enriquecer o conhecimento do bot.</p>
                                     <div id="files-list" class="files-list">
                                         <!-- Arquivos aparecerão aqui -->
                                     </div>
@@ -436,8 +436,8 @@
                                 </div>
 
                                 <div class="knowledge-section">
-                                    <h3>Encaminhamento humano</h3>
-                                    <p>Defina contatos para transferir a conversa quando o bot não souber a resposta.</p>
+                                    <h3>Contatos para encaminhamento?</h3>
+                                    <p>Defina contatos para que o assistente passe o contato quando o bot não souber a resposta ou for solicitado.</p>
                                     <div id="contacts-list" class="knowledge-list">
                                         <!-- Contatos serão adicionados dinamicamente -->
                                     </div>
@@ -450,7 +450,7 @@
                         <div id="step-4" class="wizard-step">
                             <div class="step-header">
                                 <h2>Vinculação de telefone</h2>
-                                <p>Abra o WhatsApp e conecte seu número</p>
+                                <p>Abra o WhatsApp e conecte seu número.</p>
                             </div>
 
                             <div class="whatsapp-connection">
@@ -462,7 +462,7 @@
                                                 <line x1="12" y1="18" x2="12.01" y2="18"/>
                                             </svg>
                                         </div>
-                                        <p>Acesse o whatsapp pelo celular</p>
+                                        <p>1. Acesse o whatsapp pelo celular</p>
                                     </div>
 
                                     <div class="instruction-item">
@@ -473,7 +473,7 @@
                                                 <circle cx="12" cy="19" r="1"/>
                                             </svg>
                                         </div>
-                                        <p>Toque nos três pontinhos no canto superior direito (Android) ou vá em Configurações (iPhone).</p>
+                                        <p>2. Toque nos três pontinhos no canto superior direito (Android) ou vá em Configurações (iPhone).</p>
                                     </div>
 
                                     <div class="instruction-item">
@@ -484,7 +484,7 @@
                                                 <line x1="12" y1="17" x2="12" y2="21"/>
                                             </svg>
                                         </div>
-                                        <p>Selecione WhatsApp Web ou Aparelhos conectados.</p>
+                                        <p>3. Selecione WhatsApp Web ou Aparelhos conectados.</p>
                                     </div>
 
                                     <div class="instruction-item">
@@ -570,7 +570,7 @@
                             <div class="form-grid">
                                 <!-- MODIFICADO: Campo de nome agora em uma coluna -->
                                 <div class="form-group grid-col-span-2">
-                                    <label for="edit-bot-name">Nome do Bot</label>
+                                    <label for="edit-bot-name">Nome do Assistente</label>
                                     <input type="text" id="edit-bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
                                 </div>
                                 
@@ -675,7 +675,7 @@
                                 <button type="button" id="edit-add-faq" class="btn-add">+ Adicionar pergunta</button>
                             </div>
                             <div class="knowledge-subsection">
-                                <h4>Encaminhamento Humano</h4>
+                                <h4>Encaminhamento de Contatos</h4>
                                 <div id="edit-contacts-list" class="knowledge-list"></div>
                                 <button type="button" id="edit-add-contact" class="btn-add">+ Adicionar contato</button>
                             </div>
@@ -713,8 +713,8 @@
             <div class="modal-content">
                 <div class="warning-icon">⚠️</div>
                 <!-- A MENSAGEM AGORA INCLUI UM SPAN PARA O NOME DO BOT -->
-                <h4>Tem certeza que deseja deletar o assistente <span id="delete-bot-name-modal" class="bot-name-highlight"></span>?</h4>
-                <p>Esta ação é <strong>permanente</strong> e não pode ser desfeita. Todos os dados, conversas e configurações serão perdidos.</p>
+                <h4>Tem certeza que deseja EXCLUIR o assistente?<br> <span id="delete-bot-name-modal" class="bot-name-highlight"></span></h4>
+                <p>Esta ação é <strong>permanente</strong> e não pode ser desfeita.<br>Todos os dados, estatísticas e configurações serão perdidos.</p>
                 
             </div>
             
