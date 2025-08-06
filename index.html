@@ -324,6 +324,22 @@
                                 <div class="schedule-day" data-day="sunday"><span class="day-name">Domingo</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
                             </div>
                         </div>
+
+                        <div class="edit-section">
+                            <h3>Funcionalidades Inteligentes</h3>
+                            <div class="form-group">
+                                <label>Soneca Inteligente (Smart Snooze)</label>
+                                <div class="schedule-toggle-container" style="justify-content: space-between; max-width: 400px;">
+                                    <span class="day-name" style="font-size: 0.95rem;">Pausar bot ao responder manualmente</span>
+                                    <label class="day-toggle"><input type="checkbox" id="edit-smart-snooze-enabled"><span class="toggle-slider"></span></label>
+                                </div>
+                                <div id="edit-smart-snooze-details" style="display: none; margin-top: 1rem;">
+                                    <label for="edit-smart-snooze-minutes">Pausar por (minutos):</label>
+                                    <input type="number" id="edit-smart-snooze-minutes" value="30" min="1" max="1440" style="max-width: 120px;">
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="edit-section">
                             <h3>Base de Conhecimento</h3>
                             <div class="knowledge-subsection"><h4>Perguntas Frequentes (FAQ)</h4><div id="edit-faq-list" class="knowledge-list"></div><button type="button" id="edit-add-faq" class="btn-add">+ Adicionar pergunta</button></div>
@@ -338,6 +354,89 @@
                 </div>
             </div>
         </div>
+ <!-- COLE ESTE BLOCO INTEIRO NO SEU index.html -->
+
+        <!-- VIEW 6: PLANOS -->
+        <div id="plans-view" class="view">
+            <div class="plans-container">
+                <header class="plans-header">
+                    <h1>Planos flexíveis para seu negócio</h1>
+                    <p>Escolha o plano que melhor se adapta às suas necessidades de atendimento. Sem contratos, cancele quando quiser.</p>
+                    <div class="plan-toggle">
+                        <span class="glider"></span>
+                        <button class="toggle-btn active" data-period="monthly">Mensal</button>
+                        <button class="toggle-btn" data-period="annual">Anual</button>
+                    </div>
+                </header>
+
+                <div class="pricing-grid">
+                    <!-- PLANO BÁSICO -->
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <h3>Básico</h3>
+                            <div class="discount-tag" style="display: none;">40% OFF</div>
+                        </div>
+                        <p class="plan-description">Ideal para quem está começando e quer validar a ideia.</p>
+                        <div class="plan-price">
+                            <span class="price-currency">R$</span>
+                            <span class="price-amount" data-monthly="97" data-annual="57">97</span>
+                            <span class="price-period">/mês</span>
+                        </div>
+                        <p class="annual-price-details" style="display: none;">total de R$ R$ 684,00</p>
+                        
+                        <ul class="plan-features">
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>1 assistente incluso</li>
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>Faça upload de até 2 arquivos em cada assistente</li>
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>Processa até 500 mensagens por mês</li>
+                        </ul>
+                        
+                        <button class="btn-ghost plan-cta" data-plan="basic">Escolher Plano</button>
+                    </div>
+
+                    <!-- PLANO PREMIUM (DESTAQUE) -->
+                    <div class="plan-card highlighted">
+                        <div class="popular-tag">Mais Popular</div>
+                        <div class="plan-header">
+                            <h3>Premium</h3>
+                             <div class="discount-tag" style="display: none;">50% OFF</div>
+                        </div>
+                        <p class="plan-description">Para empresas que precisam de mais volume e funcionalidades.</p>
+                        <div class="plan-price">
+                            <span class="price-currency">R$</span>
+                            <span class="price-amount" data-monthly="247" data-annual="123">247</span>
+                            <span class="price-period">/mês</span>
+                        </div>
+                         <p class="annual-price-details" style="display: none;">total de R$ 1.476,00</p>
+                        
+                        <ul class="plan-features">
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>Até 3 assistentes incluso</li>
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>Faça upload de até 5 arquivos em cada assistente</li>
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>Processa até 3.000 mensagens por mês</li>
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>Permite coletar de leads</li>
+                        </ul>
+                        
+                        <button class="btn-primary plan-cta" data-plan="premium">Escolher Plano</button>
+                    </div>
+                    
+                    <!-- PLANO EMPRESARIAL -->
+                    <div class="plan-card plan-card--contact">
+                         <div class="plan-header">
+                            <h3>Empresarial</h3>
+                        </div>
+                        <p class="plan-description">Soluções sob medida para escalar seu negócio.</p>
+                        <div class="plan-price">
+                           <span class="price-amount">Consulte</span>
+                        </div>
+                        
+                        <ul class="plan-features">
+                            <li><svg width="16" height="16"><use xlink:href="#icon-check-circle"></use></svg>Plano Personalizado</li>
+                        </ul>
+                        
+                        <a href="LINK_PARA_SEU_WHATSAPP" target="_blank" class="btn-ghost plan-cta">Fale Conosco</a>
+                    </div>
+                </div>
+            </div>
+        </div>       
     </div>    
 
     <!-- MODAL DE CONFIRMAÇÃO PARA DELETAR BOT -->

@@ -10,7 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
         appId: "1:473078468134:web:b74df1f1461093bab920e7"
     };
     
-    const API_BASE_URL = 'https://facilchat-backend-production.up.railway.app';
+    //const API_BASE_URL = 'https://facilchat-backend-production.up.railway.app';
+    const API_BASE_URL = 'http://localhost:3000';
+
+
     
     // === INICIALIZAÇÃO ===
     firebase.initializeApp(firebaseConfig);
@@ -35,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
         dashboard: document.getElementById('dashboard-view'),
         wizard: document.getElementById('wizard-view'),
         success: document.getElementById('success-view'),
-        edit: document.getElementById('edit-view')
+        edit: document.getElementById('edit-view'),
+        plans: document.getElementById('plans-view')
     };
     
     const appLoading = document.getElementById('app-loading');
@@ -251,10 +255,15 @@ document.addEventListener('DOMContentLoaded', () => {
     async function syncUserWithBackend() {
         try {
             const token = await getAuthToken();
-            await fetch(`${API_BASE_URL}/api/users/sync`, {
+            const response = await fetch(`${API_BASE_URL}/api/users/sync`, { // Adicionado 'response ='
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            if (!response.ok) throw new Error("Falha ao sincronizar usuário");
+            
+            const user = await response.json(); // Pega os dados do usuário
+            updateHeaderPlanInfo(user); // Chama a nova função para atualizar o header
+
         } catch (error) {
             console.error("Erro em syncUserWithBackend:", error);
         }
@@ -276,6 +285,35 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Erro em fetchBots:", error);
         }
     }
+
+    // COLE ESTA NOVA FUNÇÃO NO SEU app.js
+
+    async function fetchBotStats(botId) {
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/stats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) return; // Se falhar, simplesmente não atualiza os stats
+
+            const stats = await response.json();
+
+            // Agora, atualiza a interface (o card específico do bot)
+            const card = document.querySelector(`.bot-card[data-bot-id="${botId}"]`);
+            if (card) {
+                const conversationsEl = card.querySelector('.stat-item:nth-child(1) .stat-number');
+                const sentEl = card.querySelector('.volume-item:nth-child(1) span');
+                const receivedEl = card.querySelector('.volume-item:nth-child(2) span');
+
+                if (conversationsEl) conversationsEl.textContent = stats.conversations;
+                if (sentEl) sentEl.textContent = stats.messagesSent;
+                if (receivedEl) receivedEl.textContent = stats.messagesReceived;
+            }
+        } catch (error) {
+            console.error(`Falha ao buscar stats para o bot ${botId}:`, error);
+        }
+    }    
 
     function renderDashboard() {
         // PASSO 1: SEMPRE limpa a lista de bots para evitar "fantasmas".
@@ -308,6 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 botCard.classList.add('initial-load');
             }
             elements.botsList.appendChild(botCard);
+            fetchBotStats(bot.id); //
         });
         
         // Após o primeiro carregamento, desabilita as animações
@@ -1770,6 +1809,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setupEditScheduleControls();
         setupEditKnowledgeBase();
         setupEditOptionCards();
+
+        // Lógica para o novo toggle de Soneca Inteligente
+        const snoozeEnabledCheckbox = document.getElementById('edit-smart-snooze-enabled');
+        const snoozeDetails = document.getElementById('edit-smart-snooze-details');
+        if (snoozeEnabledCheckbox && snoozeDetails) {
+            snoozeEnabledCheckbox.addEventListener('change', () => {
+                snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
+            });
+        }        
     }
 
     function setupEditEventListeners() {
@@ -1991,10 +2039,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        // Preenche os dados da Soneca Inteligente
+        const snoozeEnabledCheckbox = document.getElementById('edit-smart-snooze-enabled');
+        const snoozeMinutesInput = document.getElementById('edit-smart-snooze-minutes');
+        const snoozeDetails = document.getElementById('edit-smart-snooze-details');
+
+        if (snoozeEnabledCheckbox && snoozeMinutesInput && snoozeDetails) {
+            snoozeEnabledCheckbox.checked = bot.smart_snooze_enabled || false;
+            snoozeMinutesInput.value = bot.smart_snooze_minutes || 30;
+            snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
+        }        
+
         // --- Base de Conhecimento ---
         populateEditFAQ(bot.knowledge_faq || []);
         populateEditContacts(bot.knowledge_contacts || []);
         populateEditFiles(bot.knowledge_files || []);
+
     }
 
     function populateEditFAQ(faqs) {
@@ -2095,6 +2155,36 @@ document.addEventListener('DOMContentLoaded', () => {
         event.target.value = '';
     }
 
+    function updateHeaderPlanInfo(user) {
+        const planInfoEl = document.querySelector('.plan-info');
+        if (!planInfoEl) return;
+
+        let text = '';
+        planInfoEl.classList.remove('trial-ending', 'trial-expired');
+
+        if (user.plan === 'trial') {
+            const now = new Date();
+            const trialEndDate = new Date(user.trial_ends_at);
+            const diffTime = trialEndDate - now;
+
+            if (diffTime <= 0) {
+                text = 'Seu teste gratuito expirou!';
+                planInfoEl.classList.add('trial-expired'); // Para estilizar com cor de erro
+            } else {
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                text = `Plano Trial (restam ${diffDays} dia${diffDays > 1 ? 's' : ''})`;
+                if (diffDays <= 2) {
+                    planInfoEl.classList.add('trial-ending'); // Para estilizar com cor de alerta
+                }
+            }
+        } else {
+            // Lógica para planos pagos (ex: 'Básico', 'Premium')
+            text = `Plano atual: ${user.plan.charAt(0).toUpperCase() + user.plan.slice(1)}`;
+        }
+        
+        planInfoEl.textContent = text;
+    }
+
     async function handleEditFormSubmit(event) {
         event.preventDefault();
         
@@ -2106,7 +2196,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = await getAuthToken();
             const botId = document.getElementById('edit-bot-id').value;
             
-            // --- Coleta dados dos novos componentes ---
+            // --- Coleta dados dos componentes ---
             let functionValue = document.querySelector('#edit-function-options .option-card.selected')?.dataset.value || 'Suporte ao Cliente';
             if (functionValue === 'Personalizado') {
                 functionValue = document.getElementById('edit-bot-function-custom').value.trim();
@@ -2138,6 +2228,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const faqItems = collectFaqDataFromEdit();
             const contactItems = collectContactsDataFromEdit();
 
+            // *** LINHAS QUE FALTAVAM NA INSTRUÇÃO ANTERIOR ***
+            const smartSnoozeEnabled = document.getElementById('edit-smart-snooze-enabled').checked;
+            const smartSnoozeMinutes = document.getElementById('edit-smart-snooze-minutes').value || 30;
+            // *** FIM DAS LINHAS QUE FALTAVAM ***
+
             const botData = {
                 name: document.getElementById('edit-bot-name').value,
                 function_type: functionValue,
@@ -2146,7 +2241,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 schedule_enabled: scheduleEnabled,
                 schedule_data: JSON.stringify(scheduleData),
                 knowledge_faq: JSON.stringify(faqItems),
-                knowledge_contacts: JSON.stringify(contactItems)
+                knowledge_contacts: JSON.stringify(contactItems),
+                // Agora as variáveis existem e podem ser usadas aqui
+                smart_snooze_enabled: smartSnoozeEnabled,
+                smart_snooze_minutes: parseInt(smartSnoozeMinutes, 10)
             };
             
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}`, {
@@ -2170,7 +2268,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editingBotId = null;
         }
     }
-
+    
     function collectFaqDataFromEdit() {
         const faqItems = [];
         document.querySelectorAll('#edit-faq-list .knowledge-item').forEach(item => {
@@ -2245,6 +2343,9 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeWizard();
         initializeEditView();
         setupThemeToggle();
+        setupPricingToggle();
+        setupNavigation();
+        setupPlanButtons();
         
         // O Firebase Auth State agora é a ÚNICA fonte de verdade para o que é exibido.
         auth.onAuthStateChanged((user) => {
@@ -2252,8 +2353,141 @@ document.addEventListener('DOMContentLoaded', () => {
             handleAuthStateChange(user);
         });
         
-        console.log('✅ Inicialização configurada. App aguardando autenticação...');
+        console.log('✅ Inicialização configurada. App aguardando autenticação...');      
     }
+
+    // COLE ESTA NOVA FUNÇÃO INTEIRA NO SEU app.js
+
+    function setupNavigation() {
+        const navContainer = document.querySelector('.header-nav');
+        if (!navContainer) return;
+
+        // Usamos delegação de evento, que é mais eficiente.
+        navContainer.addEventListener('click', (e) => {
+            // Impede a ação padrão do link
+            e.preventDefault();
+            
+            // Verifica se o clique foi realmente em um link (<a>)
+            const targetLink = e.target.closest('a.nav-link');
+            if (!targetLink) return;
+
+            // Pega o texto do link para decidir qual view mostrar
+            const linkText = targetLink.textContent.trim();
+            let viewToShow = 'dashboard'; // Padrão
+
+            if (linkText === 'Planos') {
+                viewToShow = 'plans';
+            } else if (linkText === 'Painel') {
+                viewToShow = 'dashboard';
+            }
+            // Você pode adicionar mais 'else if' aqui no futuro para outras páginas
+
+            // Remove a classe 'active' de todos os links e a adiciona apenas no clicado
+            navContainer.querySelectorAll('a.nav-link').forEach(link => link.classList.remove('active'));
+            targetLink.classList.add('active');
+
+            // Mostra a view correspondente
+            showView(viewToShow);
+        });
+    }    
+
+    function setupPricingToggle() {
+        const toggleContainer = document.querySelector('.plan-toggle');
+        if (!toggleContainer) return;
+
+        const monthlyBtn = toggleContainer.querySelector('[data-period="monthly"]');
+        const annualBtn = toggleContainer.querySelector('[data-period="annual"]');
+        const glider = toggleContainer.querySelector('.glider');
+
+        toggleContainer.addEventListener('click', (e) => {
+            const clickedButton = e.target.closest('.toggle-btn');
+            if (!clickedButton) return;
+
+            const isAnnual = clickedButton.dataset.period === 'annual';
+
+            // Atualiza a aparência do toggle
+            monthlyBtn.classList.toggle('active', !isAnnual);
+            annualBtn.classList.toggle('active', isAnnual);
+            glider.style.transform = isAnnual ? 'translateX(100%)' : 'translateX(0)';
+            
+            // Atualiza os cards de preço
+            updatePricingCards(isAnnual);
+        });        
+    }
+
+    function setupPlanButtons() {
+        const pricingGrid = document.querySelector('.pricing-grid');
+        if (!pricingGrid) return;
+
+        pricingGrid.addEventListener('click', async (e) => {
+            const button = e.target.closest('.plan-cta[data-plan]');
+            if (!button) return;
+
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner"></span> Gerando...';
+
+            try {
+                const plan = button.dataset.plan;
+                const periodToggle = document.querySelector('.plan-toggle .toggle-btn.active');
+                const period = periodToggle.dataset.period; // 'monthly' ou 'annual'
+
+                const token = await getAuthToken();
+                const response = await fetch(`${API_BASE_URL}/api/payments/generate-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plan, period })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Falha ao gerar o link.');
+                }
+
+                // Redireciona o usuário para a página de pagamento do Asaas
+                window.location.href = data.paymentLink;
+
+            } catch (error) {
+                console.error("Erro ao gerar link:", error);
+                showToast(error.message, 'error');
+                button.disabled = false;
+                button.textContent = 'Escolher Plano';
+            }
+        });
+    }
+    
+
+    function updatePricingCards(isAnnual) {
+        const pricingGrid = document.querySelector('.pricing-grid');
+        if (!pricingGrid) return;
+        
+        pricingGrid.querySelectorAll('.plan-card').forEach(card => {
+            const priceEl = card.querySelector('.price-amount');
+            const annualDetailsEl = card.querySelector('.annual-price-details');
+            const discountTagEl = card.querySelector('.discount-tag');
+            const ctaButton = card.querySelector('.plan-cta');
+
+            // Se o elemento não existir no card (ex: card Empresarial), pula
+            if (!priceEl || !priceEl.dataset.monthly) return;
+
+            if (isAnnual) {
+                priceEl.textContent = priceEl.dataset.annual;
+                if (annualDetailsEl) annualDetailsEl.style.display = 'block';
+                if (discountTagEl) discountTagEl.style.display = 'block';
+                // Aqui você mudaria o link de checkout para o anual
+                // Ex: ctaButton.href = "LINK_CHECKOUT_ANUAL";
+            } else {
+                priceEl.textContent = priceEl.dataset.monthly;
+                if (annualDetailsEl) annualDetailsEl.style.display = 'none';
+                if (discountTagEl) discountTagEl.style.display = 'none';
+                // Aqui você mudaria o link de checkout para o mensal
+                // Ex: ctaButton.href = "LINK_CHECKOUT_MENSAL";
+            }
+        });
+    }    
     
     // === NOVAS FUNCIONALIDADES VISUAIS ===
     
