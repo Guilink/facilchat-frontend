@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
         appId: "1:473078468134:web:b74df1f1461093bab920e7"
     };
     
-    //const API_BASE_URL = 'https://facilchat-backend-production.up.railway.app';
-    const API_BASE_URL = 'http://localhost:3000';
+    const API_BASE_URL = 'https://facilchat-backend-production.up.railway.app';
+    //const API_BASE_URL = 'http://localhost:3000';
 
 
     
