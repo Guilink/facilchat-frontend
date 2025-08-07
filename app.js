@@ -146,38 +146,41 @@ document.addEventListener('DOMContentLoaded', () => {
             // Mostra o header
             elements.header.style.display = 'block';
             
-            // Mantém loading ativo enquanto carrega dados
             try {
-                // Sincroniza o usuário com o backend e busca seus dados
-                await syncUserWithBackend();
+                // Sincroniza e AGUARDA a confirmação de que o usuário existe no nosso DB
+                const syncedUser = await syncUserWithBackend();
+                
+                if (!syncedUser) {
+                    // Verificação extra de segurança caso a função retorne algo inesperado
+                    throw new Error("Sincronização do usuário não retornou dados.");
+                }
+                
+                // Só continua o carregamento se a sincronização foi bem-sucedida
                 await fetchBots();
                 initializeSocket();
                 
-                // Só depois de carregar tudo, esconde loading e mostra dashboard
+                // Agora sim, esconde o loading e mostra o dashboard
                 appLoading.classList.add('hidden');
                 showView('dashboard');
+
             } catch (error) {
-                console.error('Erro durante inicialização:', error);
-                // Mesmo com erro, mostra o dashboard
-                appLoading.classList.add('hidden');
-                showView('dashboard');
+                console.error('ERRO CRÍTICO DURANTE A INICIALIZAÇÃO:', error);
+                // Se a sincronização falhar, não podemos deixar o usuário prosseguir.
+                // A melhor ação é deslogá-lo para forçar um novo ciclo de login/sincronização.
+                showToast("Erro ao sincronizar sua conta. Por favor, tente logar novamente.", "error");
+                auth.signOut();
             }
             
         } else {
             // --- O USUÁRIO NÃO ESTÁ LOGADO ---
             console.log('❌ Usuário não autenticado.');
-
-            // Esconde o header
             elements.header.style.display = 'none';
             if (socket) socket.disconnect();
-            
-            // Esconde a tela de loading...
             appLoading.classList.add('hidden');
-            // ...e mostra a tela de login.
             showView('login');
         }
     }
-
+    
     function hasActiveView() {
         return Object.values(views).some(view => view.classList.contains('active'));
     }
@@ -255,17 +258,26 @@ document.addEventListener('DOMContentLoaded', () => {
     async function syncUserWithBackend() {
         try {
             const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/users/sync`, { // Adicionado 'response ='
+            const response = await fetch(`${API_BASE_URL}/api/users/sync`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!response.ok) throw new Error("Falha ao sincronizar usuário");
+
+            if (!response.ok) {
+                // Se a resposta não for OK, tentamos ler a mensagem de erro do backend
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || "Falha ao sincronizar usuário com o servidor.");
+            }
             
-            const user = await response.json(); // Pega os dados do usuário
-            updateHeaderPlanInfo(user); // Chama a nova função para atualizar o header
+            const user = await response.json(); // Pega os dados do usuário do backend
+            updateHeaderPlanInfo(user); // Atualiza o header com as informações do plano
+            
+            return user; // Retorna os dados do usuário para a função que a chamou
 
         } catch (error) {
-            console.error("Erro em syncUserWithBackend:", error);
+            console.error("Erro em syncUserWithBackend:", error.message);
+            // Propaga o erro para que a função `handleAuthStateChange` possa tratá-lo
+            throw error; 
         }
     }
 
