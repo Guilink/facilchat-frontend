@@ -327,7 +327,8 @@
 
                         <div class="edit-section">
                             <h3>Funcionalidades Inteligentes</h3>
-                            <div class="form-group">
+                            <!-- Soneca Inteligente (já existente) -->
+                            <div class="form-group" style="padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
                                 <label>Soneca Inteligente (Smart Snooze)</label>
                                 <div class="schedule-toggle-container" style="justify-content: space-between; max-width: 400px;">
                                     <span class="day-name" style="font-size: 0.95rem;">Pausar bot ao responder manualmente</span>
@@ -336,6 +337,23 @@
                                 <div id="edit-smart-snooze-details" style="display: none; margin-top: 1rem;">
                                     <label for="edit-smart-snooze-minutes">Pausar por (minutos):</label>
                                     <input type="number" id="edit-smart-snooze-minutes" value="30" min="1" max="1440" style="max-width: 120px;">
+                                </div>
+                            </div>
+
+                            <!-- Captura de Leads (NOVO) -->
+                            <div class="form-group" style="margin-top: 2rem;">
+                                <label>Captura de Leads</label>
+                                <div class="schedule-toggle-container" style="justify-content: space-between;">
+                                    <span class="day-name" style="font-size: 0.95rem;">Perguntar a origem de novos contatos</span>
+                                    <label class="day-toggle"><input type="checkbox" id="edit-lead-collection-enabled"><span class="toggle-slider"></span></label>
+                                </div>
+                                <div id="edit-lead-collection-details" style="display: none; margin-top: 1rem;">
+                                    <label for="edit-lead-collection-prompt">Mensagem da pergunta:</label>
+                                    <textarea id="edit-lead-collection-prompt" rows="3"></textarea>
+                                    <button type="button" id="download-leads-btn" class="btn-secondary" style="margin-top: 1.5rem; width: auto;">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        Baixar Lista de Leads
+                                    </button>
                                 </div>
                             </div>
                         </div>

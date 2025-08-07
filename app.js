@@ -1818,7 +1818,73 @@ document.addEventListener('DOMContentLoaded', () => {
                 snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
             });
         }        
+
+        const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
+        const leadDetails = document.getElementById('edit-lead-collection-details');
+        if (leadEnabledCheckbox && leadDetails) {
+            leadEnabledCheckbox.addEventListener('change', () => {
+                leadDetails.style.display = leadEnabledCheckbox.checked ? 'block' : 'none';
+            });
+        }   
+        
+        // Lógica para o botão de download de leads
+        const downloadBtn = document.getElementById('download-leads-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                // 'editingBotId' é a nossa variável global que guarda o ID do bot em edição
+                if(editingBotId) {
+                    handleDownloadLeads(editingBotId);
+                }
+            });
+        }
     }
+
+    async function handleDownloadLeads(botId) {
+        const button = document.getElementById('download-leads-btn');
+        if (!button) return;
+
+        const originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner"></span> Baixando...';
+
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/leads`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || "Não foi possível baixar os leads.");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            // Pega o nome do arquivo do header da resposta
+            const contentDisposition = response.headers.get('content-disposition');
+            let fileName = `leads_bot_${botId}.csv`;
+            if (contentDisposition && contentDisposition.indexOf('attachment') !== -1) {
+                const fileNameMatch = contentDisposition.match(/filename="(.+)"/);
+                if (fileNameMatch.length === 2) fileName = fileNameMatch[1];
+            }
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            showToast("Lista de leads baixada com sucesso!", "success");
+
+        } catch (error) {
+            console.error("Erro ao baixar leads:", error);
+            showToast(error.message, "error");
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    }    
 
     function setupEditEventListeners() {
         const closeEditBtn = document.getElementById('close-edit');
@@ -2050,6 +2116,17 @@ document.addEventListener('DOMContentLoaded', () => {
             snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
         }        
 
+        // Preenche os dados da Captura de Leads
+        const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
+        const leadPromptTextarea = document.getElementById('edit-lead-collection-prompt');
+        const leadDetails = document.getElementById('edit-lead-collection-details');
+
+        if (leadEnabledCheckbox && leadPromptTextarea && leadDetails) {
+            leadEnabledCheckbox.checked = bot.lead_collection_enabled || false;
+            leadPromptTextarea.value = bot.lead_collection_prompt || 'Olá! Para podermos iniciar, poderia me dizer como você nos encontrou? (Ex: Instagram, Google, Indicação)';
+            leadDetails.style.display = leadEnabledCheckbox.checked ? 'block' : 'none';
+        }        
+
         // --- Base de Conhecimento ---
         populateEditFAQ(bot.knowledge_faq || []);
         populateEditContacts(bot.knowledge_contacts || []);
@@ -2228,10 +2305,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const faqItems = collectFaqDataFromEdit();
             const contactItems = collectContactsDataFromEdit();
 
-            // *** LINHAS QUE FALTAVAM NA INSTRUÇÃO ANTERIOR ***
             const smartSnoozeEnabled = document.getElementById('edit-smart-snooze-enabled').checked;
             const smartSnoozeMinutes = document.getElementById('edit-smart-snooze-minutes').value || 30;
-            // *** FIM DAS LINHAS QUE FALTAVAM ***
+            // Coleta os novos dados da Captura de Leads
+            const leadCollectionEnabled = document.getElementById('edit-lead-collection-enabled').checked;
+            const leadCollectionPrompt = document.getElementById('edit-lead-collection-prompt').value.trim();
+            
 
             const botData = {
                 name: document.getElementById('edit-bot-name').value,
@@ -2244,7 +2323,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 knowledge_contacts: JSON.stringify(contactItems),
                 // Agora as variáveis existem e podem ser usadas aqui
                 smart_snooze_enabled: smartSnoozeEnabled,
-                smart_snooze_minutes: parseInt(smartSnoozeMinutes, 10)
+                smart_snooze_minutes: parseInt(smartSnoozeMinutes, 10),
+                lead_collection_enabled: leadCollectionEnabled,
+                lead_collection_prompt: leadCollectionPrompt                
             };
             
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}`, {
