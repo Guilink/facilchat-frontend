@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showView('login');
         }
     }
-    
+
     function hasActiveView() {
         return Object.values(views).some(view => view.classList.contains('active'));
     }
@@ -1464,15 +1464,26 @@ document.addEventListener('DOMContentLoaded', () => {
             auth.signOut();
         });
         
-        elements.startWizardBtn.addEventListener('click', () => {
-            resetWizard();
-            showView('wizard');
+        elements.startWizardBtn.addEventListener('click', async () => {
+            try {
+                await syncUserWithBackend(); // Garante que o usuário existe no DB
+                resetWizard();
+                showView('wizard');
+            } catch (error) {
+                showToast("Erro de sincronização. Por favor, recarregue a página.", "error");
+            }
         });
         
-        elements.createBotBtn.addEventListener('click', () => {
-            resetWizard();
-            showView('wizard');
+        elements.createBotBtn.addEventListener('click', async () => {
+            try {
+                await syncUserWithBackend(); // Garante que o usuário existe no DB
+                resetWizard();
+                showView('wizard');
+            } catch (error) {
+                showToast("Erro de sincronização. Por favor, recarregue a página.", "error");
+            }
         });
+
         
         elements.closeWizard.addEventListener('click', () => {
             console.log('Wizard fechado pelo botão "X".');
