@@ -1391,10 +1391,6 @@ input:checked + .toggle-slider:before {
     color: var(--text-primary);
 }
 
-.wizard-main .qr-display .qr-loading {
-    color: var(--text-muted);
-}
-
 .qr-loading .loading-spinner {
     margin-bottom: 1.5rem;
 }
@@ -1974,15 +1970,17 @@ input:checked + .toggle-slider:before {
     justify-content: center;
 }
 
-#qr-modal .qr-display {
+.qr-display {
     width: 280px;
     height: 280px;
-    background-color: white;
-    padding: 16px; /* Adiciona uma borda branca para o QR code */
+    background-color: transparent; /* <<-- MUDANÇA IMPORTANTE */
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: none; /* <<-- MUDANÇA IMPORTANTE */
+    padding: 0; /* <<-- MUDANÇA IMPORTANTE */
+    transition: background-color var(--transition-normal);
 }
 
 #qr-modal .qr-display canvas,
@@ -1990,9 +1988,50 @@ input:checked + .toggle-slider:before {
     border-radius: 4px;
 }
 
+.qr-code-wrapper {
+    background-color: white;
+    padding: 1rem; /* Cria a "zona de silêncio" branca */
+    border-radius: var(--radius-lg); /* Bordas mais arredondadas */
+    display: inline-flex; /* Faz o wrapper se ajustar ao conteúdo */
+    box-shadow: var(--shadow-lg);
+}
+
+/* Garante que a imagem do QR code não tenha bordas estranhas */
+.qr-code-wrapper > * { 
+    border-radius: 4px;
+}
+
 .bot-name-highlight {
     color: var(--accent);
     font-weight: 700;
+}
+
+.qr-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    width: 100%;
+    height: 100%;
+}
+
+.qr-success svg {
+    color: var(--success);
+}
+
+.qr-success h3 {
+    color: var(--success);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.qr-success p {
+    color: var(--text-secondary);
+    max-width: 90%;
+    margin: 0 auto;
 }
 
 /* ===============================================

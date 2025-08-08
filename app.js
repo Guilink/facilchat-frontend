@@ -209,7 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.qrDisplay.innerHTML = `
                 <div class="qr-loading">
                     <div class="loading-spinner"></div>
-                    <h3>1/3: Criando assistente...</h3>
+                    <h3>Criando assistente...</h3>
+                    <p>Aguarde um momento.</p>
                 </div>
             `;
             
@@ -1194,12 +1195,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Atualiza a UI para mostrar que está gerando o QR Code
             elements.qrDisplay.innerHTML = `
-                <div class="qr-loading">
-                    <div class="loading-spinner"></div>
-                    <h3>Gerando QR Code...</h3>
-                    <p>Aguarde enquanto preparamos a conexão com o WhatsApp.</p>
-                </div>
-            `;
+                    <div class="qr-loading">
+                        <div class="loading-spinner"></div>
+                        <h3>Gerando QR Code...</h3>
+                        <p>Aguarde enquanto preparamos a conexão com o WhatsApp.</p>
+                    </div>
+                `;
             
             // Faz a chamada à API para o backend iniciar o processo
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/connect`, {
@@ -1361,18 +1362,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Limpa o conteúdo e renderiza o QR Code
-            targetDisplayElement.innerHTML = "";
-            const qrContainer = document.createElement('div');
-            // Se for no modal, adiciona a classe para estilização correta
-            qrContainer.className = qrModalIsActive ? 'qr-display' : ''; 
-            targetDisplayElement.appendChild(qrContainer);
+            targetDisplayElement.innerHTML = ""; // Limpa a área
+            const qrWrapper = document.createElement('div');
+            qrWrapper.className = 'qr-code-wrapper'; // Nova classe para o fundo branco
+            targetDisplayElement.appendChild(qrWrapper);
 
-            new QRCode(qrContainer, {
+            new QRCode(qrWrapper, { // Gera o QR code dentro do wrapper branco
                 text: data.qrString,
-                width: 250,
-                height: 250,
+                width: 240, // Ligeiramente menor para caber no padding
+                height: 240,
                 colorDark: "#000000",
-                colorLight: "#ffffff"
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H // Nível de correção mais alto, melhora a leitura
             });
         });
 
@@ -1415,13 +1416,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Mostra a mensagem de sucesso
             const successHTML = `
-                <div class="qr-placeholder" style="border: 2px solid var(--success); padding: 2rem; border-radius: 8px;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2">
+                <div class="qr-success">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                         <polyline points="22,4 12,14.01 9,11.01"/>
                     </svg>
-                    <p style="color: var(--success); font-weight: 600; margin-top: 1rem;">Conectado com sucesso!</p>
-                </div>`;
+                    <h3 style="margin-top: 1.5rem;">Conexão Bem-Sucedida!</h3>
+                    <p>Seu assistente foi conectado.</p>
+                </div>
+            `;
 
             if (wizardViewIsActive) {
                 elements.qrDisplay.innerHTML = successHTML;
@@ -1491,24 +1494,32 @@ document.addEventListener('DOMContentLoaded', () => {
             auth.signOut();
         });
         
-        elements.startWizardBtn.addEventListener('click', async () => {
-            try {
-                await syncUserWithBackend(); // Garante que o usuário existe no DB
-                resetWizard();
-                showView('wizard');
-            } catch (error) {
-                showToast("Erro de sincronização. Por favor, recarregue a página.", "error");
-            }
+        elements.startWizardBtn.addEventListener('click', () => { // Removido o 'async' daqui
+            // 1. Mostra a nova tela IMEDIATAMENTE.
+            resetWizard();
+            showView('wizard');
+
+            // 2. Faz a verificação no servidor em segundo plano.
+            syncUserWithBackend().catch(error => {
+                console.error("Falha na sincronização em segundo plano:", error);
+                // 3. Se der erro, avisa o usuário e volta para a tela de login/painel.
+                showToast("Ocorreu um erro de conexão. Tente novamente.", "error");
+                showView('dashboard'); // Ou 'login', dependendo do erro. Dashboard é mais seguro.
+            });
         });
         
-        elements.createBotBtn.addEventListener('click', async () => {
-            try {
-                await syncUserWithBackend(); // Garante que o usuário existe no DB
-                resetWizard();
-                showView('wizard');
-            } catch (error) {
-                showToast("Erro de sincronização. Por favor, recarregue a página.", "error");
-            }
+        elements.createBotBtn.addEventListener('click', () => { // Removido o 'async' daqui
+            // 1. Mostra a nova tela IMEDIATAMENTE.
+            resetWizard();
+            showView('wizard');
+
+            // 2. Faz a verificação no servidor em segundo plano.
+            syncUserWithBackend().catch(error => {
+                console.error("Falha na sincronização em segundo plano:", error);
+                // 3. Se der erro, avisa o usuário e volta para o painel.
+                showToast("Ocorreu um erro de conexão. Tente novamente.", "error");
+                showView('dashboard'); 
+            });
         });
 
         
