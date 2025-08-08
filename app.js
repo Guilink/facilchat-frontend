@@ -140,35 +140,36 @@ document.addEventListener('DOMContentLoaded', () => {
         // === AUTENTICAÇÃO ===
     async function handleAuthStateChange(user) {
         if (user) {
-            // --- O USUÁRIO ESTÁ LOGADO ---
+            // --- USUÁRIO ESTÁ LOGADO ---
             console.log('✅ Usuário autenticado:', user.email);
 
-            // Mostra o header
-            elements.header.style.display = 'block';
-            
+            // ETAPA 1: PREPARAÇÃO VISUAL (Loading Ativo)
+            // Garante que o loading está visível e nenhuma outra tela esteja ativa.
+            appLoading.classList.remove('hidden'); // MOSTRA o loading
+            Object.values(views).forEach(view => view.classList.remove('active')); // LIMPA todas as views ativas
+            elements.header.style.display = 'none'; // GARANTE que o header comece escondido
+
             try {
-                // Sincroniza e AGUARDA a confirmação de que o usuário existe no nosso DB
+                // ETAPA 2: OPERAÇÕES DE BACKEND (enquanto o loading está na tela)
                 const syncedUser = await syncUserWithBackend();
-                
                 if (!syncedUser) {
-                    // Verificação extra de segurança caso a função retorne algo inesperado
                     throw new Error("Sincronização do usuário não retornou dados.");
                 }
                 
-                // Só continua o carregamento se a sincronização foi bem-sucedida
                 await fetchBots();
                 initializeSocket();
                 
-                // Agora sim, esconde o loading e mostra o dashboard
-                appLoading.classList.add('hidden');
-                showView('dashboard');
+                // ETAPA 3: TRANSIÇÃO VISUAL FINAL (Após tudo carregar)
+                elements.header.style.display = 'block'; // AGORA sim, mostra o header
+                showView('dashboard');                   // MOSTRA o dashboard
 
             } catch (error) {
                 console.error('ERRO CRÍTICO DURANTE A INICIALIZAÇÃO:', error);
-                // Se a sincronização falhar, não podemos deixar o usuário prosseguir.
-                // A melhor ação é deslogá-lo para forçar um novo ciclo de login/sincronização.
-                showToast("Erro ao sincronizar sua conta. Por favor, tente logar novamente.", "error");
+                showToast("Erro ao carregar sua conta. Deslogando.", "error");
                 auth.signOut();
+            } finally {
+                // ETAPA 4: SEMPRE esconde o loading no final, seja sucesso ou falha.
+                appLoading.classList.add('hidden');
             }
             
         } else {
@@ -176,7 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('❌ Usuário não autenticado.');
             elements.header.style.display = 'none';
             if (socket) socket.disconnect();
-            appLoading.classList.add('hidden');
+            
+            // Garante que o loading seja escondido antes de mostrar o login
+            appLoading.classList.add('hidden'); 
             showView('login');
         }
     }
@@ -1374,10 +1377,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         socket.on("client_ready", async (data) => {
-            // Se a conexão não for do bot que estamos esperando, ignora.
             if (data.botId != editingBotId) return;
 
             console.log("✅ Cliente WhatsApp conectado!", data.botId);
+            
+            // ATUALIZA O BOT LOCALMENTE
+            const bot = userBots.find(b => b.id == data.botId);
+            if(bot) {
+                bot.status = 'online';
+                bot.connected_phone = data.connected_phone;
+            }
 
             const wizardViewIsActive = views.wizard.classList.contains('active');
             const qrModalIsActive = document.getElementById('qr-modal').classList.contains('active');
@@ -1403,7 +1412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showQrModal(successHTML);
                 setTimeout(() => {
                     hideQrModal();
-                    fetchBots(); // Apenas atualiza o dashboard
+                    renderBots(); // Apenas atualiza o dashboard
                 }, 2000);
             }
             
@@ -1424,31 +1433,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         socket.on("connection_failure", (data) => {
-            // Apenas reage se a falha for do bot que estamos tentando conectar
-            if (data.botId == editingBotId) {
-                console.error("❌ Falha na conexão recebida do backend:", data.message);
+            if (data.botId != editingBotId) return; // Mantém a verificação
 
-                // Monta o HTML do erro
-                const errorHTML = `
-                    <div class="qr-error">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="15" y1="9" x2="9" y2="15"/>
-                            <line x1="9" y1="9" x2="15" y2="15"/>
-                        </svg>
-                        <h3 style="margin-top: 1rem;">Falha na Conexão</h3>
-                        <p>${data.message || 'Ocorreu um erro inesperado.'}</p>
-                    </div>
-                `;
-                
-                // Exibe a mensagem de erro no modal ou no wizard, onde quer que o usuário esteja
-                const wizardViewIsActive = views.wizard.classList.contains('active');
-                if (wizardViewIsActive) {
-                    elements.qrDisplay.innerHTML = errorHTML;
-                } else {
-                    showQrModal(errorHTML);
-                }
+            console.error("❌ Falha na conexão recebida do backend:", data.message);
 
+            const errorHTML = `
+                <div class="qr-error">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="15" y1="9" x2="9" y2="15"/>
+                        <line x1="9" y1="9" x2="15" y2="15"/>
+                    </svg>
+                    <h3 style="margin-top: 1rem;">Falha na Conexão</h3>
+                    <p style="max-width: 90%; margin: 0 auto;">${data.message || 'Não foi possível conectar. Tente novamente.'}</p>
+                </div>
+            `;
+            
+            const wizardViewIsActive = views.wizard.classList.contains('active');
+            if (wizardViewIsActive) {
+                elements.qrDisplay.innerHTML = errorHTML;
+            } else {
+                showQrModal(errorHTML);
             }
         });
 
@@ -1518,8 +1523,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         item.innerHTML = `
             <div class="knowledge-item-inputs">
-                <input type="text" placeholder="Pergunta" value="${question}">
-                <input type="text" placeholder="Resposta" value="${answer}">
+                <input type="text" placeholder="Pergunta" value="${question}" maxlength="150">
+                <input type="text" placeholder="Resposta" value="${answer}" maxlength="500">
             </div>
             <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
         `;
@@ -1532,17 +1537,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('div');
         item.className = 'knowledge-item';
         
+        // ESTRUTURA HORIZONTAL E COM LIMITES DE CARACTERES
         item.innerHTML = `
-            <div class="knowledge-item-inputs">
-                <input type="text" placeholder="Para quem encaminhar?" value="${sector}">
-                <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}">
-            </div>
+            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="50" style="flex-basis: 200px; flex-shrink: 0;">
+            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="150" style="flex-grow: 1;">
             <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
         `;
         
         contactsList.appendChild(item);
     }
-
     function handleFileUpload(event) {
         const files = event.target.files;
         if (!files.length) return;
@@ -2196,8 +2199,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         item.innerHTML = `
             <div class="knowledge-item-inputs">
-                <input type="text" placeholder="Pergunta" value="${question}">
-                <input type="text" placeholder="Resposta" value="${answer}">
+                <input type="text" placeholder="Pergunta" value="${question}" maxlength="150">
+                <input type="text" placeholder="Resposta" value="${answer}" maxlength="500">
             </div>
             <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
         `;
@@ -2210,11 +2213,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('div');
         item.className = 'knowledge-item';
         
+        // ESTRUTURA HORIZONTAL E COM LIMITES DE CARACTERES
         item.innerHTML = `
-            <div class="knowledge-item-inputs">
-                <input type="text" placeholder="Para quem encaminhar?" value="${sector}">
-                <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}">
-            </div>
+            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="50" style="flex-basis: 200px; flex-shrink: 0;">
+            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="150" style="flex-grow: 1;">
             <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
         `;
         
@@ -2269,12 +2271,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (diffTime <= 0) {
                 text = 'Seu teste gratuito expirou!';
-                planInfoEl.classList.add('trial-expired'); // Para estilizar com cor de erro
+                planInfoEl.classList.add('trial-expired');
             } else {
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                // --- AQUI ESTÁ A CORREÇÃO ---
+                // Se o cálculo resultar em mais de 3 dias, nós o limitamos a 3 para exibição.
+                if (diffDays > 3) {
+                    diffDays = 3;
+                }
+                
                 text = `Plano Trial (restam ${diffDays} dia${diffDays > 1 ? 's' : ''})`;
                 if (diffDays <= 2) {
-                    planInfoEl.classList.add('trial-ending'); // Para estilizar com cor de alerta
+                    planInfoEl.classList.add('trial-ending');
                 }
             }
         } else {

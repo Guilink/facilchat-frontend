@@ -179,7 +179,7 @@
                             <form class="step-form">
                                 <div class="form-group">
                                     <label for="bot-name">Nome do Aassistente</label>
-                                    <input type="text" id="bot-name" placeholder="Exemplo: 'Atendente da Pizzaria', 'Recepcionista', 'Luna' etc.." required>
+                                    <input type="text" id="bot-name" class="input-medium" placeholder="Exemplo: 'Atendente da Pizzaria', 'Recepcionista', 'Luna' etc.." required maxlength="32">
                                 </div>
                                 <div class="form-group">
                                     <label>Qual vai ser a função principal desse assistente?</label>
@@ -189,7 +189,7 @@
                                         <div class="option-card" data-value="Agendamentos"><h4>Agendamentos</h4><p>Marca, confirma e cancela compromissos e horários.</p></div>
                                         <div class="option-card" data-value="Personalizado"><h4>Personalizado</h4><p>Explique em poucas palavras qual é a função do seu assistente.</p></div>
                                     </div>
-                                    <textarea id="bot-function-custom" placeholder="Descreva a função personalizada do seu bot..." style="display: none;"></textarea>
+                                    <textarea id="bot-function-custom" maxlength="500" placeholder="Descreva a função personalizada do seu bot..." style="display: none;"></textarea>
                                 </div>
                                 <div class="form-group">
                                     <label>Como você quer que seu assistente converse com seus clientes?</label>
@@ -199,7 +199,7 @@
                                         <div class="option-card" data-value="Profissional"><h4>Profissional</h4><p>Usa uma linguagem formal, polida e respeitosa.</p></div>
                                         <div class="option-card" data-value="Personalizado"><h4>Personalizado</h4><p>Você mesmo define o tom de atendimento desejado.</p></div>
                                     </div>
-                                    <textarea id="bot-tone-custom" placeholder="Descreva o tom personalizado do seu bot..." style="display: none;"></textarea>
+                                    <textarea id="bot-tone-custom" maxlength="500" placeholder="Descreva o tom personalizado do seu bot..." style="display: none;"></textarea>
                                 </div>
                             </form>
                         </div>
@@ -212,13 +212,62 @@
                                 <button type="button" class="schedule-preset" data-preset="night">Período Noturno</button>
                             </div>
                             <div class="schedule-details">
-                                <div class="schedule-day" data-day="monday"><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label><span class="day-name">Segunda</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div></div>
-                                <div class="schedule-day" data-day="tuesday"><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label><span class="day-name">Terça</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div></div>
-                                <div class="schedule-day" data-day="wednesday"><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label><span class="day-name">Quarta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div></div>
-                                <div class="schedule-day" data-day="thursday"><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label><span class="day-name">Quinta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div></div>
-                                <div class="schedule-day" data-day="friday"><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label><span class="day-name">Sexta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div></div>
-                                <div class="schedule-day" data-day="saturday"><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label><span class="day-name">Sábado</span><div class="time-inputs"><label>Abre</label><input type="time" value="00:00"><label>Fecha</label><input type="time" value="23:59"></div></div>
-                                <div class="schedule-day" data-day="sunday"><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label><span class="day-name">Domingo</span><div class="time-inputs"><label>Abre</label><input type="time" value="00:00"><label>Fecha</label><input type="time" value="23:59"></div></div>
+                                <div class="schedule-day" data-day="monday">
+                                    <span class="day-name">Segunda</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label><input type="time" value="09:00">
+                                        <label>Fecha</label><input type="time" value="18:00">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="schedule-day" data-day="tuesday">
+                                    <span class="day-name">Terça</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label><input type="time" value="09:00">
+                                        <label>Fecha</label><input type="time" value="18:00">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="schedule-day" data-day="wednesday">
+                                    <span class="day-name">Quarta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label><input type="time" value="09:00">
+                                        <label>Fecha</label><input type="time" value="18:00">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="schedule-day" data-day="thursday">
+                                    <span class="day-name">Quinta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label><input type="time" value="09:00">
+                                        <label>Fecha</label><input type="time" value="18:00">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="schedule-day" data-day="friday">
+                                    <span class="day-name">Sexta</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label><input type="time" value="09:00">
+                                        <label>Fecha</label><input type="time" value="18:00">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="schedule-day" data-day="saturday">
+                                    <span class="day-name">Sábado</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label><input type="time" value="00:00">
+                                        <label>Fecha</label><input type="time" value="23:59">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
+                                <div class="schedule-day" data-day="sunday">
+                                    <span class="day-name">Domingo</span>
+                                    <div class="time-inputs">
+                                        <label>Abre</label><input type="time" value="00:00">
+                                        <label>Fecha</label><input type="time" value="23:59">
+                                    </div>
+                                    <label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+                                </div>
                             </div>
                         </div>
                         <!-- PASSO 3: BASE DE CONHECIMENTO -->
@@ -284,7 +333,7 @@
                             <div class="form-grid">
                                 <div class="form-group grid-col-span-2">
                                     <label for="edit-bot-name">Nome do Assistente</label>
-                                    <input type="text" id="edit-bot-name" placeholder="Ex: Assistente de Vendas da Loja X" required>
+                                    <input type="text" id="edit-bot-name" class="input-medium" placeholder="Nome do seu Assistente." required>
                                 </div>
                                 <div class="form-group">
                                     <label>Função Principal</label>
