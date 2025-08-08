@@ -1624,7 +1624,6 @@ input:checked + .toggle-slider:before {
     }
 }
 
-/* Tablet e abaixo (<= 1024px) */
 @media (max-width: 1024px) {
     .dashboard-container {
         display: flex;
@@ -1633,7 +1632,6 @@ input:checked + .toggle-slider:before {
         padding: 2rem;
     }
     
-    /* Remove o `display: contents` para que os wrappers voltem a funcionar como containers flex */
     .welcome-state,
     .bots-state {
         display: flex;
@@ -1641,15 +1639,12 @@ input:checked + .toggle-slider:before {
         gap: 2rem;
     }
     
-    /* Ordem dos elementos no tablet */
-    .main-content, .dashboard-main-content { order: 2; }
-    .sidebar-content { order: 1; }
-
-    /* Exceção para a tela de bots, onde o conteúdo principal vem primeiro */
-    .bots-state .dashboard-main-content { order: 1; }
-    .bots-state .sidebar-content {
+    /* --- CORREÇÃO DA ORDEM DOS CARDS --- */
+    /* Garante que o conteúdo principal (bots) venha ANTES da sidebar (propagandas) */
+    .dashboard-main-content { order: 1; }
+    .sidebar-content { 
         order: 2;
-        flex-direction: row; /* Sidebar horizontal no tablet */
+        flex-direction: row; /* Mantém a sidebar horizontal em tablets */
         flex-wrap: wrap;
         width: 100%;
     }
@@ -1671,35 +1666,93 @@ input:checked + .toggle-slider:before {
     
     .bot-card, .welcome-card, .promo-card { padding: 1.5rem; }
     .bot-card { min-height: auto; }
-    .bot-stats { gap: 0.5rem; }
-    .stat-item { padding: 0.5rem; }
-    .stat-number { font-size: 1.1rem; }
-    .stat-label { font-size: 0.7rem; }
 
-    /* Wizard responsivo */
+    /* --- INÍCIO DA CORREÇÃO DE RESPONSIVIDADE --- */
+
+    /* 1. NOVO DESIGN PARA O COMPONENTE DE HORÁRIOS (Wizard e Edição) */
+    #step-2 .schedule-day,
+    #modal-schedule-details .schedule-day {
+        flex-direction: row;      /* Mantém a direção de linha */
+        flex-wrap: wrap;          /* Permite que os itens quebrem para a próxima linha */
+        align-items: center;      /* Alinha verticalmente o nome do dia e o toggle */
+        justify-content: space-between; /* Espaça os itens */
+        background-color: var(--bg-tertiary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-lg);
+        gap: var(--space-md);
+        border-bottom: none;      /* Remove a linha separadora antiga */
+    }
+
+    #step-2 .schedule-details,
+    #modal-schedule-details .schedule-details {
+        background: none;
+        border: none;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem; /* Espaço entre os cards de cada dia */
+    }
+
+    #step-2 .schedule-day .day-name,
+    #modal-schedule-details .schedule-day .day-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        flex-grow: 1; /* Faz o nome do dia ocupar o espaço à esquerda */
+        text-align: left;
+        padding: 0; margin: 0; border: none;
+    }
+
+    #step-2 .schedule-day .time-inputs,
+    #modal-schedule-details .schedule-day .time-inputs {
+        flex-basis: 100%; /* Força os inputs a quebrarem para a linha de baixo */
+        order: 3;         /* Garante que fiquem por último */
+        justify-content: space-around;
+        background: var(--bg-primary);
+        padding: var(--space-lg);
+        border-radius: var(--radius-md);
+    }
+    
+    /* 2. CORREÇÃO PARA ENCAMINHAMENTO HUMANO (Wizard e Edição) */
+    #contacts-list .knowledge-item,
+    #edit-contacts-list .knowledge-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    #contacts-list .knowledge-item input,
+    #edit-contacts-list .knowledge-item input {
+        flex-basis: auto !important;
+        width: 100%;
+    }
+
+    /* 3. CORREÇÃO PARA BOTÃO DO WIZARD */
+    .wizard-actions {
+        justify-content: center; /* Centraliza os botões */
+    }
+    .wizard-actions > button {
+        flex-grow: 1;
+        max-width: 250px; /* Limita a largura máxima em telas pequenas */
+    }
+    
+    /* --- FIM DA CORREÇÃO DE RESPONSIVIDADE --- */
+
+    /* Outras regras responsivas que você já tinha */
     .wizard-container { flex-direction: column; }
     .wizard-sidebar {
-        width: 100%;
-        height: auto;
-        padding: 1rem;
-        background: var(--gradient-glass);
-        backdrop-filter: blur(20px);
+        width: 100%; height: auto; padding: 1rem;
+        background: var(--gradient-glass); backdrop-filter: blur(20px);
     }
     .wizard-steps { flex-direction: row; overflow-x: auto; gap: 0.5rem; padding-bottom: 0.5rem; }
     .step { flex-shrink: 0; min-width: 200px; padding: 0.75rem; }
     .wizard-content { padding: 2rem 1rem; }
     .wizard-footer { padding: 1rem; flex-direction: column; gap: 1rem; }
-    .wizard-actions { margin-left: 0; width: 100%; justify-content: space-between; }
     .option-grid { grid-template-columns: 1fr; gap: 0.75rem; }
     .whatsapp-connection { grid-template-columns: 1fr; gap: 2rem; }
     .qr-display { width: 240px; height: 240px; }
     
-    /* Edição responsiva */
     .edit-container { padding: 1rem; }
     .form-grid { grid-template-columns: 1fr; gap: 1.5rem; }
     .grid-col-span-2 { grid-column: span 1; }
-    .edit-section .schedule-day { flex-wrap: wrap; gap: 0.5rem; padding: 1rem; }
-    .edit-section .schedule-day .day-name { width: 100%; text-align: center; margin-bottom: 0.5rem; }
 }
 
 /* Mobile (480px) */
