@@ -2873,3 +2873,78 @@ input:checked + .toggle-slider:before {
     resize: none;     /* Remove a alça de redimensionamento do canto */
     min-height: 90px; /* Reduz um pouco a altura mínima */
 }
+
+/* Usamos max-width: 768px para aplicar estas regras em tablets (vertical) e celulares */
+@media (max-width: 768px) {
+
+    /* --- PROBLEMA 1: HORÁRIOS QUE ESTICAM A TELA --- */
+    /* Solução: Empilhar os elementos de cada dia verticalmente. */
+
+    /* Alvo: A linha de cada dia, tanto no Wizard quanto no Modal de Edição */
+    #step-2 .schedule-day,
+    #modal-schedule-details .schedule-day {
+        flex-direction: column;   /* A MÁGICA: Muda a direção de linha para coluna */
+        align-items: stretch;     /* Faz os itens internos ocuparem 100% da largura */
+        gap: 1rem;                /* Adiciona um bom espaçamento vertical */
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+
+    /* Transforma o nome do dia em um título centralizado */
+    #step-2 .schedule-day .day-name,
+    #modal-schedule-details .schedule-day .day-name {
+        width: 100%;
+        text-align: center;
+        font-weight: 600;
+        padding-bottom: 1rem;
+        margin-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    /* Centraliza os campos de "Abre" e "Fecha" */
+    #step-2 .schedule-day .time-inputs,
+    #modal-schedule-details .schedule-day .time-inputs {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    /* Centraliza o botão de toggle (ligar/desligar o dia) */
+    #step-2 .schedule-day .day-toggle,
+    #modal-schedule-details .schedule-day .day-toggle {
+        align-self: center; /* Centraliza o switch na horizontal */
+    }
+
+
+    /* --- PROBLEMA 2: ENCAMINHAMENTO HUMANO QUE ESTICA A TELA --- */
+    /* Solução: Empilhar os campos de input verticalmente. */
+
+    /* Alvo: O container de cada item de contato, no Wizard e na Edição */
+    #contacts-list .knowledge-item,
+    #edit-contacts-list .knowledge-item {
+        flex-direction: column;   /* Empilha os inputs */
+        align-items: stretch;     /* Estica para ocupar a largura total */
+        gap: 0.75rem;             /* Adiciona espaço entre os inputs */
+    }
+
+    /* Remove as larguras fixas dos inputs que só fazem sentido no desktop */
+    #contacts-list .knowledge-item input,
+    #edit-contacts-list .knowledge-item input {
+        flex-basis: auto !important; /* Reseta a base de largura do desktop */
+        width: 100%;                 /* Força a largura total no mobile */
+    }
+
+
+    /* --- PROBLEMA 3: BOTÃO "FAZER ISSO DEPOIS" DESALINHADO --- */
+    /* Solução: Centralizar o container dos botões de ação no rodapé. */
+    
+    /* Alvo: O container que segura os botões no final do Wizard */
+    .wizard-actions {
+        justify-content: center; /* Altera o alinhamento para o centro */
+    }
+
+    /* Garante que o botão ocupe um espaço razoável e seja centralizado */
+    .wizard-actions #wizard-continue {
+        flex-grow: 1;      /* Permite que o botão cresça */
+        max-width: 300px;  /* Mas limita o crescimento para não ficar gigante */
+    }
+}
