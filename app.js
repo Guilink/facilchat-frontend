@@ -1382,7 +1382,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             console.log(`[Smart Refresh] Recebido pedido do backend para gerar novo QR para o bot ${data.botId}`);
             
-            // Mostra um feedback visual imediato
+            // Define a mensagem de "Atualizando..."
             const loadingHTML = `
                 <div class="qr-loading">
                     <div class="loading-spinner"></div>
@@ -1391,20 +1391,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             
+            // --- AQUI ESTÁ A LÓGICA CORRIGIDA ---
             const wizardViewIsActive = views.wizard.classList.contains('active');
+
+            // 1. PRIMEIRO, mostra o feedback visual no lugar certo
             if (wizardViewIsActive) {
                 elements.qrDisplay.innerHTML = loadingHTML;
             } else {
                 showQrModal(loadingHTML);
             }
 
-            // Chama a função que já conhecemos para reiniciar a conexão
-            // Adicionamos um pequeno delay para a mensagem de "Atualizando" ser visível
+            // 2. DEPOIS, chama a função para reiniciar a conexão
+            // Isso garante que o feedback visual apareça antes da nova chamada de API
             setTimeout(() => {
+                // A função handleConnectionToggle já está correta, pois ela só INICIA
+                // o processo no backend. O backend então envia o novo QR,
+                // que será renderizado no lugar certo (modal ou wizard).
                 handleConnectionToggle(data.botId, 'offline');
-            }, 1000);
+            }, 500); // Pequeno delay para a UI atualizar
         });        
-        
+                
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
 
