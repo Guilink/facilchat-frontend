@@ -1377,40 +1377,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         socket.on("request_new_qr", (data) => {
-            // Apenas reage se o pedido for para o bot que estamos conectando
+            // Apenas reage se o pedido for para o bot que estamos conectando no momento
             if (data.botId != editingBotId) return;
 
             console.log(`[Smart Refresh] Recebido pedido do backend para gerar novo QR para o bot ${data.botId}`);
-            
-            // Define a mensagem de "Atualizando..."
-            const loadingHTML = `
-                <div class="qr-loading">
-                    <div class="loading-spinner"></div>
-                    <h3>Atualizando QR Code...</h3>
-                    <p>O código anterior expirou, gerando um novo.</p>
-                </div>
-            `;
-            
-            // --- AQUI ESTÁ A LÓGICA CORRIGIDA ---
-            const wizardViewIsActive = views.wizard.classList.contains('active');
 
-            // 1. PRIMEIRO, mostra o feedback visual no lugar certo
-            if (wizardViewIsActive) {
-                elements.qrDisplay.innerHTML = loadingHTML;
+            // A VERIFICAÇÃO CRUCIAL: Onde o usuário está agora?
+            const isUserInWizard = views.wizard.classList.contains('active');
+
+            if (isUserInWizard) {
+                // CONTEXTO: Usuário está no WIZARD.
+                // Ação: Chame a função que atualiza a UI dentro do wizard.
+                console.log("--> Atualizando QR Code DENTRO do Wizard.");
+                startWhatsAppConnection(data.botId); // Esta função já atualiza o qrDisplay do wizard
             } else {
-                showQrModal(loadingHTML);
-            }
-
-            // 2. DEPOIS, chama a função para reiniciar a conexão
-            // Isso garante que o feedback visual apareça antes da nova chamada de API
-            setTimeout(() => {
-                // A função handleConnectionToggle já está correta, pois ela só INICIA
-                // o processo no backend. O backend então envia o novo QR,
-                // que será renderizado no lugar certo (modal ou wizard).
+                // CONTEXTO: Usuário está no PAINEL (e o modal está aberto).
+                // Ação: Chame a função que lida com o fluxo do modal.
+                console.log("--> Atualizando QR Code DENTRO do Modal.");
                 handleConnectionToggle(data.botId, 'offline');
-            }, 500); // Pequeno delay para a UI atualizar
-        });        
-                
+            }
+        });                
+        
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
 
