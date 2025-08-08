@@ -1375,6 +1375,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 colorLight: "#ffffff"
             });
         });
+
+        socket.on("request_new_qr", (data) => {
+            // Apenas reage se o pedido for para o bot que estamos conectando
+            if (data.botId != editingBotId) return;
+
+            console.log(`[Smart Refresh] Recebido pedido do backend para gerar novo QR para o bot ${data.botId}`);
+            
+            // Mostra um feedback visual imediato
+            const loadingHTML = `
+                <div class="qr-loading">
+                    <div class="loading-spinner"></div>
+                    <h3>Atualizando QR Code...</h3>
+                    <p>O código anterior expirou, gerando um novo.</p>
+                </div>
+            `;
+            
+            const wizardViewIsActive = views.wizard.classList.contains('active');
+            if (wizardViewIsActive) {
+                elements.qrDisplay.innerHTML = loadingHTML;
+            } else {
+                showQrModal(loadingHTML);
+            }
+
+            // Chama a função que já conhecemos para reiniciar a conexão
+            // Adicionamos um pequeno delay para a mensagem de "Atualizando" ser visível
+            setTimeout(() => {
+                handleConnectionToggle(data.botId, 'offline');
+            }, 1000);
+        });        
         
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
