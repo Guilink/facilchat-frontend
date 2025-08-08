@@ -3001,3 +3001,88 @@ input:checked + .toggle-slider:before {
         max-width: 300px;  /* Mas limita o crescimento para não ficar gigante */
     }
 }
+
+/* ===============================================
+   POLIMENTO FINAL DA RESPONSIVIDADE MOBILE
+   =============================================== */
+
+@media (max-width: 768px) {
+
+    /* --- 1. NOVO LAYOUT PARA "HORÁRIO DE ATENDIMENTO" --- */
+    /* Aplica-se tanto ao Wizard quanto ao Modal de Edição */
+
+    /* Reseta o estilo do container principal dos dias */
+    #step-2 .schedule-details,
+    #modal-schedule-details .schedule-details {
+        background: none;
+        border: none;
+        padding: 0;
+        gap: 0; /* Remove o espaçamento antigo */
+    }
+
+    /* Transforma cada dia em um item de lista separado */
+    #step-2 .schedule-day,
+    #modal-schedule-details .schedule-day {
+        flex-direction: row;      /* Itens na horizontal */
+        flex-wrap: wrap;          /* Permite que quebrem a linha */
+        align-items: center;      /* Alinha verticalmente */
+        justify-content: space-between; /* Espaça o nome do dia e o toggle */
+        
+        background: none;         /* Remove o fundo de card antigo */
+        border-radius: 0;
+        padding: 1rem 0;          /* Apenas espaçamento vertical */
+        border-bottom: 1px solid var(--border); /* A linha separadora que você queria */
+    }
+    
+    #modal-schedule-details .schedule-day:last-child {
+        border-bottom: none; /* Remove a linha do último item no modal */
+    }
+    
+    /* Estilo para o nome do dia */
+    #step-2 .schedule-day .day-name,
+    #modal-schedule-details .schedule-day .day-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: none;
+        margin: 0; padding: 0;
+    }
+    
+    /* O container dos inputs de tempo */
+    #step-2 .schedule-day .time-inputs,
+    #modal-schedule-details .schedule-day .time-inputs {
+        flex-basis: 100%;       /* OCUPE 100% DA LARGURA, forçando a quebra de linha */
+        order: 3;               /* Garante que ele fique por último na ordem visual */
+        margin-top: 1rem;       /* Espaço do topo (linha com nome do dia) */
+        padding: 0;
+        background: none;
+        border-radius: 0;
+        
+        /* A MÁGICA: Usa Grid para o layout "Abre/Fecha" */
+        display: grid;
+        grid-template-columns: auto 1fr; /* Coluna 1 (label) se ajusta, Coluna 2 (input) ocupa o resto */
+        gap: 0.75rem 1rem; /* Espaçamento vertical e horizontal */
+        align-items: center;
+    }
+
+    /* --- 2. CONSISTÊNCIA DOS BOTÕES DO WIZARD --- */
+    /* Garante que o rodapé sempre se comporte como uma linha de botões */
+    .wizard-footer {
+        flex-direction: row;
+        gap: 1rem;
+    }
+
+    /* Faz com que os botões (Voltar, Pular, Continuar) dividam o espaço igualmente */
+    .wizard-footer > button,
+    .wizard-footer .wizard-actions {
+        flex: 1; /* Faz os containers dos botões crescerem igualmente */
+    }
+
+    .wizard-footer .wizard-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .wizard-footer .wizard-actions > button {
+        flex: 1; /* Faz os botões internos também dividirem o espaço */
+    }
+}
