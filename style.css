@@ -2605,3 +2605,271 @@ input:checked + .toggle-slider:before {
     margin-left: auto;
     margin-right: auto;
 }
+
+.edit-form-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-3xl);
+}
+
+.edit-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3xl);
+    padding-bottom: var(--space-2xl);
+    border-bottom: 1px solid var(--border);
+}
+
+.edit-page-header h2 {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+}
+.edit-page-header p {
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+}
+
+.header-actions {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.edit-layout-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* Coluna principal 2x mais larga que a sidebar */
+    gap: var(--space-3xl);
+    align-items: start;
+}
+
+.edit-main-content,
+.edit-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+}
+
+.edit-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2xl);
+}
+
+.edit-card h3 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: var(--space-xs);
+}
+
+.edit-card > p {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-2xl);
+    font-size: var(--text-sm);
+}
+
+.edit-card .form-group {
+    margin-bottom: var(--space-2xl);
+}
+.edit-card .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.edit-card label {
+    font-size: var(--text-base);
+    font-weight: 500;
+    margin-bottom: var(--space-sm);
+    display: block;
+}
+
+/* Estilos para a sidebar de operações */
+.operation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border);
+}
+.operation-item:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.operation-item:first-of-type {
+    padding-top: 0;
+}
+
+.operation-item label {
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.operation-details {
+    padding: var(--space-lg);
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+.operation-details textarea {
+    min-height: 80px;
+}
+.operation-details input {
+    max-width: 100px;
+}
+.operation-details .btn-secondary {
+    align-self: flex-start;
+}
+
+/* Estilos para o resumo de horário */
+.schedule-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.schedule-summary p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+/* Estilos para o Modal de Horários */
+.schedule-modal-container {
+    max-width: 700px;
+}
+.schedule-modal-container .modal-content {
+    padding: var(--space-2xl);
+}
+.schedule-modal-container .schedule-details {
+    margin-top: var(--space-xl);
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+/* Responsividade para a nova tela de edição */
+@media (max-width: 1024px) {
+    .edit-layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 768px) {
+    .edit-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-lg);
+    }
+}
+
+/* 1. Estiliza o Textarea de Coleta de Leads */
+#edit-lead-collection-details textarea {
+    background-color: var(--bg-primary); /* Fundo igual aos outros inputs */
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    resize: vertical; /* Permite redimensionar apenas na vertical */
+    min-height: 100px;
+    max-height: 180px;
+}
+#edit-lead-collection-details textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* 2. Centraliza o botão "Baixar Leads" */
+.operation-action-center {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-sm);
+}
+.operation-action-center .btn-secondary {
+    gap: 0.5rem; /* Espaço entre o ícone e o texto */
+}
+
+/* 3. Estiliza o input de minutos do Descanso Inteligente */
+#edit-smart-snooze-details {
+    align-items: flex-start; /* Alinha os itens no começo */
+    flex-direction: column;
+}
+#edit-smart-snooze-details input[type="number"] {
+    max-width: 120px; /* Largura menor para o campo de número */
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+}
+
+/* 1. Transforma o modal em um container Flexbox de coluna */
+.schedule-modal-container {
+    display: flex; /* ATIVA O FLEXBOX */
+    flex-direction: column; /* Organiza os filhos (header, content, footer) em coluna */
+    max-height: 85vh; /* Altura máxima para o modal não sair da tela */
+}
+
+/* 2. Permite que APENAS o conteúdo do meio role */
+#schedule-modal .modal-content {
+    flex-grow: 1; /* Faz esta área crescer e ocupar o espaço disponível */
+    overflow-y: auto; /* Adiciona a barra de rolagem APENAS aqui */
+    padding-right: var(--space-sm); /* Espaço para a barra de rolagem */
+}
+
+/* 3. Garante que o rodapé com os botões fique sempre fixo e visível */
+#schedule-modal .modal-footer {
+    flex-shrink: 0; /* Impede que o rodapé seja esmagado ou encolha */
+    border-top: 1px solid var(--border); /* Garante a linha de separação */
+}
+
+/* 4. Corrige o layout do texto "Ativar horário..." */
+#schedule-modal .schedule-toggle-container {
+    display: flex;
+    align-items: center; /* Alinha verticalmente */
+    justify-content: space-between; /* Empurra o texto para a esquerda e o toggle para a direita */
+    padding: var(--space-lg);
+    background-color: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+}
+
+.schedule-toggle-label {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
+    padding-right: var(--space-lg); /* Adiciona espaço para não colar no toggle */
+}
+
+#schedule-modal .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-xl);
+    border-top: 1px solid var(--border);
+    background-color: var(--bg-secondary); /* Garante um fundo sólido */
+}
+
+/* 
+  Regra específica para o botão secundário (Cancelar) e primário (Salvar)
+  Garante que AMBOS tenham o mesmo estilo base.
+*/
+#schedule-modal .modal-footer .btn-secondary,
+#schedule-modal .modal-footer .btn-primary {
+    margin: 0;
+    font-size: 0.95rem; /* Harmoniza o tamanho da fonte */
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+    line-height: 1.5; /* Garante a mesma altura de linha */
+    border-radius: 8px; /* Garante o mesmo raio de borda */
+}
+
+#edit-lead-collection-details textarea#edit-lead-collection-prompt {
+    width: 100%;      /* Força a largura total do container pai */
+    resize: none;     /* Remove a alça de redimensionamento do canto */
+    min-height: 90px; /* Reduz um pouco a altura mínima */
+}

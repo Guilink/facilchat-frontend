@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let editingBotId = null;
     let wizardBotId = null; // <-- NOVA VARIÁVEL DE CONTROLE
     let wizardFilesToUpload = []; // <-- NOVA VARIÁVEL
+    let isWizardInitialized = false;
+    let isEditViewInitialized = false;
 
 
     
@@ -104,32 +106,37 @@ document.addEventListener('DOMContentLoaded', () => {
     // EM: app.js
 
     function showView(viewName) {
-        // A lógica de log e validação permanece, pois é ótima!
         const timestamp = new Date().toISOString();
-        const stack = new Error().stack.split('\n')[2].trim();
         console.log(`🔄 [${timestamp}] MUDANÇA DE VIEW: ${lastViewChange || 'nenhuma'} → ${viewName}`);
-        console.log(`📍 Chamado por:`, stack);
         
         if (viewName === 'login' && auth.currentUser) {
             console.log('🚫 BLOQUEADO: Tentativa de mostrar login com usuário autenticado!');
             return;
         }
         
-        // ATENÇÃO: A linha que escondia o "appLoading" foi REMOVIDA daqui.
-        
-        // Atualiza views
+        // Esconde todas as views
         Object.values(views).forEach(view => view.classList.remove('active'));
         
         if (views[viewName]) {
+            // Mostra a view correta
             views[viewName].classList.add('active');
             lastViewChange = viewName;
             
-            // Controla header
-            if (viewName === 'login') {
-                elements.header.style.display = 'none';
-            } else {
-                elements.header.style.display = 'block';
+            // Controla o header
+            elements.header.style.display = (viewName === 'login') ? 'none' : 'block';
+
+            // --- LÓGICA DE INICIALIZAÇÃO SOB DEMANDA ---
+            // Inicializa os scripts da view específica APENAS quando ela for exibida pela primeira vez.
+            switch (viewName) {
+                case 'wizard':
+                    initializeWizardView();
+                    break;
+                case 'edit':
+                    initializeEditView();
+                    break;
             }
+            // --- FIM DA LÓGICA DE INICIALIZAÇÃO ---
+
         } else {
             console.error('❌ View não encontrada:', viewName);
         }
@@ -686,16 +693,34 @@ document.addEventListener('DOMContentLoaded', () => {
         openDeleteModal(botId, botName);
     };
 
+    window.openBotSettings = function(botId) {
+        const bot = userBots.find(b => b.id == botId);
+        if (!bot) {
+            console.error("Bot não encontrado para o ID:", botId);
+            showToast("Erro: Assistente não encontrado.", "error");
+            return;
+        }
+
+        isEditMode = true;
+        editingBotId = botId;
+        
+        populateEditFormWithBotData(bot); 
+        
+        showView('edit');
+    };    
+
     // Adiciona funções globais para o modal
     window.closeDeleteModal = closeDeleteModal;
 
     // === WIZARD ===
     function initializeWizard() {
-        setupWizardEventListeners();
-        setupOptionCards();
-        setupScheduleControls();
-        setupKnowledgeBase();
-        setupWizardValidation(); // NOVA FUNÇÃO para validação em tempo real
+        const wizardView = views.wizard; // <-- Ponto de referência para o Wizard
+
+        setupWizardEventListeners(wizardView);
+        setupOptionCards(wizardView);
+        setupScheduleControls(wizardView);
+        setupKnowledgeBase(wizardView);
+        setupWizardValidation(wizardView);
     }
 
     function setupWizardEventListeners() {
@@ -787,10 +812,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // EM: app.js
-
-    function setupOptionCards() {
-        document.querySelectorAll('.option-card').forEach(card => {
+    function setupOptionCards(viewElement) {
+        // Agora, a busca por '.option-card' acontece apenas dentro do elemento fornecido
+        viewElement.querySelectorAll('.option-card').forEach(card => {
             card.addEventListener('click', () => {
                 const container = card.closest('.form-group');
                 const cards = container.querySelectorAll('.option-card');
@@ -805,11 +829,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         customTextarea.focus();
                     } else {
                         customTextarea.style.display = 'none';
-                        customTextarea.value = '';
+                        // A linha que apagava o valor foi removida para segurança,
+                        // mas a lógica de esconder já previne a submissão do valor.
                     }
                 }
-
-                validateWizardStep(currentWizardStep);
+                // A validação do wizard não deve ser chamada na tela de edição
+                if (viewElement.id === 'wizard-view') {
+                    validateWizardStep(currentWizardStep);
+                }
             });
         });
     }
@@ -942,11 +969,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function createBot() {
+async function createBot() {
         try {
             const token = await getAuthToken();
             
-            // A lógica de coleta de dados permanece a mesma
             const selectedFunctionCard = document.querySelector('#function-option-grid .option-card.selected');
             const selectedToneCard = document.querySelector('#tone-option-grid .option-card.selected');
             let functionType = selectedFunctionCard ? selectedFunctionCard.dataset.value : 'Suporte ao Cliente';
@@ -958,17 +984,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (toneType === 'Personalizado') {
                 toneCustomDescription = document.getElementById('bot-tone-custom').value.trim();
             }
-            const scheduleData = collectScheduleData();
+
+            const scheduleDataResult = collectScheduleData('#step-2'); 
             const faqData = collectFaqData();
             const contactsData = collectContactsData();
             
+            // --- INÍCIO DA CORREÇÃO DEFINITIVA ---
+            // O wizard não tem um toggle 'schedule_enabled' global.
+            // A forma correta de determinar se o agendamento está ativo é verificar
+            // se o usuário ativou pelo menos UM dia na configuração.
+            const scheduleEnabled = scheduleDataResult.data.some(day => day.active);
+            // --- FIM DA CORREÇÃO DEFINITIVA ---
+
             const botData = {
                 name: document.getElementById('bot-name').value || 'Novo Bot',
                 function_type: functionType,
                 tone_type: toneType,
                 tone_custom_description: toneCustomDescription,
-                schedule_enabled: scheduleData.enabled,
-                schedule_data: JSON.stringify(scheduleData.data),
+                schedule_enabled: scheduleEnabled, // <-- Agora usa a variável corrigida (true/false)
+                schedule_data: JSON.stringify(scheduleDataResult.data),
                 knowledge_faq: JSON.stringify(faqData),
                 knowledge_contacts: JSON.stringify(contactsData)
             };
@@ -989,17 +1023,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const newBot = await response.json();
             
-            // Apenas definimos os IDs aqui. A conexão será iniciada em outro lugar.
             editingBotId = newBot.id; 
             
-            return newBot; // Retorna o bot recém-criado
+            return newBot;
             
         } catch (error) {
             console.error('Erro em createBot:', error);
             throw error; 
         }
     }
-
+    
     async function updateBot() {
         try {
             elements.wizardContinue.disabled = true;
@@ -1129,25 +1162,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Função para coletar dados de horário no formato que o backend espera
-    function collectScheduleData() {
-        // Verifica se algum dia está habilitado
-        const days = document.querySelectorAll('.schedule-day');
+    function collectScheduleData(contextSelector) {
+        const container = document.querySelector(contextSelector);
+        if (!container) {
+            console.error("Contexto do horário não encontrado:", contextSelector);
+            return { enabled: false, data: [] };
+        }
+
+        const scheduleEnabledCheckbox = container.querySelector('input[type="checkbox"][id*="schedule-enabled"]');
+        const enabled = scheduleEnabledCheckbox ? scheduleEnabledCheckbox.checked : false;
+
+        const data = [];
         const dayNames = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
         
-        let enabled = false;
-        const data = [];
-        
-        days.forEach((dayElement, index) => {
+        container.querySelectorAll('.schedule-day').forEach((dayElement, index) => {
             const toggle = dayElement.querySelector('input[type="checkbox"]');
             const openTime = dayElement.querySelector('input[type="time"]:first-of-type');
             const closeTime = dayElement.querySelector('input[type="time"]:last-of-type');
             
-            const isActive = toggle ? toggle.checked : false;
-            if (isActive) enabled = true;
-            
             data.push({
                 day: dayNames[index],
-                active: isActive,
+                active: toggle ? toggle.checked : false,
                 open: openTime ? openTime.value : '09:00',
                 close: closeTime ? closeTime.value : '18:00'
             });
@@ -1262,7 +1297,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetWizard() {
         console.log('🔄 Resetando wizard...');
-        
+        const wizardView = views.wizard; // <-- Ponto de referência
+
         wizardFilesToUpload = [];
         isEditMode = false;
         editingBotId = null;
@@ -1270,27 +1306,28 @@ document.addEventListener('DOMContentLoaded', () => {
         wizardBotData = {};
         currentWizardStep = 1;
         
-        document.getElementById('bot-name').value = '';
-        document.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
-        document.querySelectorAll('textarea').forEach(textarea => {
+        wizardView.querySelector('#bot-name').value = '';
+        wizardView.querySelectorAll('.option-card').forEach(card => card.classList.remove('selected'));
+        wizardView.querySelectorAll('textarea').forEach(textarea => {
             textarea.style.display = 'none';
             textarea.value = '';
         });
         
-        const faqList = document.getElementById('faq-list');
-        const contactsList = document.getElementById('contacts-list');
-        const filesList = document.getElementById('files-list');
+        const faqList = wizardView.querySelector('#faq-list');
+        const contactsList = wizardView.querySelector('#contacts-list');
+        const filesList = wizardView.querySelector('#files-list');
         
         if (faqList) faqList.innerHTML = '';
         if (contactsList) contactsList.innerHTML = '';
         if (filesList) filesList.innerHTML = '';
         
-        resetScheduleToDefault();
+        // As funções abaixo já são escopadas para o wizard, então estão seguras
+        resetScheduleToDefault(); 
         setDefaultSelections();
         
         elements.qrDisplay.innerHTML = `
             <div class="qr-placeholder">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></svg>
+                <svg width="48" height="48"><use xlink:href="#icon-qr-placeholder"/></svg>
                 <p>QR Code aparecerá aqui</p>
             </div>
         `;
@@ -1330,6 +1367,16 @@ document.addEventListener('DOMContentLoaded', () => {
             applySchedulePreset('always');
         }
     }
+    
+    function initializeWizardView() {
+        // Roda a inicialização apenas uma vez para evitar duplicar listeners
+        if (isWizardInitialized) return;
+
+        console.log('🔧 Inicializando a View do Wizard pela primeira vez...');
+        initializeWizard(); // Esta função você já tem
+
+        isWizardInitialized = true;
+    }    
 
     // === SOCKET.IO ===
     function initializeSocket() {
@@ -1342,38 +1389,39 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         socket.on("qr_code", (data) => {
-            // Se o QR Code não for para o bot que estamos conectando, ignora.
             if (data.botId != editingBotId) return;
 
             console.log("📱 QR Code recebido para o bot:", data.botId);
             
-            // Verifica qual view está ativa para saber onde renderizar o QR Code
             const wizardViewIsActive = views.wizard.classList.contains('active');
             const qrModalIsActive = document.getElementById('qr-modal').classList.contains('active');
 
-            let targetDisplayElement;
-
-            if (wizardViewIsActive) {
-                targetDisplayElement = elements.qrDisplay; // O display dentro do wizard
-            } else if (qrModalIsActive) {
-                targetDisplayElement = document.getElementById('qr-modal-content'); // O display dentro do modal
-            } else {
-                return; // Se nenhuma view de QR estiver ativa, não faz nada.
+            if (!wizardViewIsActive && !qrModalIsActive) {
+                console.warn("QR code recebido, mas o usuário não está em uma tela de conexão. Ignorando evento.");
+                return;
             }
 
-            // Limpa o conteúdo e renderiza o QR Code
-            targetDisplayElement.innerHTML = ""; // Limpa a área
+            let targetDisplayElement;
+            if (wizardViewIsActive) {
+                targetDisplayElement = elements.qrDisplay;
+            } else if (qrModalIsActive) {
+                targetDisplayElement = document.getElementById('qr-modal-content');
+            } else {
+                return; 
+            }
+
+            targetDisplayElement.innerHTML = "";
             const qrWrapper = document.createElement('div');
-            qrWrapper.className = 'qr-code-wrapper'; // Nova classe para o fundo branco
+            qrWrapper.className = 'qr-code-wrapper';
             targetDisplayElement.appendChild(qrWrapper);
 
-            new QRCode(qrWrapper, { // Gera o QR code dentro do wrapper branco
+            new QRCode(qrWrapper, {
                 text: data.qrString,
-                width: 240, // Ligeiramente menor para caber no padding
+                width: 240,
                 height: 240,
                 colorDark: "#000000",
                 colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H // Nível de correção mais alto, melhora a leitura
+                correctLevel: QRCode.CorrectLevel.H
             });
         });
 
@@ -1864,19 +1912,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === EDIÇÃO DE BOT ===
     function initializeEditView() {
-        setupEditEventListeners();
-        setupEditScheduleControls();
-        setupEditKnowledgeBase();
-        setupEditOptionCards();
+        // Roda a inicialização apenas uma vez
+        if (isEditViewInitialized) return;
 
-        // Lógica para o novo toggle de Soneca Inteligente
-        const snoozeEnabledCheckbox = document.getElementById('edit-smart-snooze-enabled');
-        const snoozeDetails = document.getElementById('edit-smart-snooze-details');
-        if (snoozeEnabledCheckbox && snoozeDetails) {
-            snoozeEnabledCheckbox.addEventListener('change', () => {
-                snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
+        console.log('🔧 Inicializando a View de Edição pela primeira vez...');
+        
+        const editView = views.edit; // Ponto de referência para a Tela de Edição
+        
+        const editScheduleBtn = document.getElementById('edit-schedule-btn');
+        const scheduleModal = document.getElementById('schedule-modal');
+
+        if (editScheduleBtn && scheduleModal) {
+            editScheduleBtn.addEventListener('click', () => {
+                scheduleModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
             });
-        }        
+        }
+
+        if (scheduleModal) {
+            const closeButtons = scheduleModal.querySelectorAll('[data-target-modal="schedule-modal"]');
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    scheduleModal.classList.remove('active');
+                    document.body.style.overflow = 'auto';
+                });
+            });
+        }
+        
+        const saveScheduleBtn = document.getElementById('save-schedule-btn');
+        if(saveScheduleBtn) {
+            saveScheduleBtn.addEventListener('click', () => {
+                scheduleModal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+                const scheduleEnabled = scheduleModal.querySelector('#modal-schedule-enabled').checked;
+                document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Bot sempre ativo.';
+            });
+        }
+
+        const modalScheduleDetails = document.getElementById('modal-schedule-details');
+        const modalScheduleEnabled = document.getElementById('modal-schedule-enabled');
+        if(modalScheduleEnabled && modalScheduleDetails){
+            modalScheduleEnabled.addEventListener('change', () => {
+                modalScheduleDetails.style.display = modalScheduleEnabled.checked ? 'block' : 'none';
+            });
+            modalScheduleDetails.querySelectorAll('.schedule-day').forEach(dayElement => {
+                const toggle = dayElement.querySelector('input[type="checkbox"]');
+                if (toggle) {
+                    toggle.addEventListener('change', () => updateDayScheduleState(dayElement));
+                }
+            });
+        }
 
         const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
         const leadDetails = document.getElementById('edit-lead-collection-details');
@@ -1884,18 +1969,237 @@ document.addEventListener('DOMContentLoaded', () => {
             leadEnabledCheckbox.addEventListener('change', () => {
                 leadDetails.style.display = leadEnabledCheckbox.checked ? 'block' : 'none';
             });
-        }   
+        }
+        const snoozeEnabledCheckbox = document.getElementById('edit-smart-snooze-enabled');
+        const snoozeDetails = document.getElementById('edit-smart-snooze-details');
+        if (snoozeEnabledCheckbox && snoozeDetails) {
+            snoozeEnabledCheckbox.addEventListener('change', () => {
+                snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
+            });
+        }
         
-        // Lógica para o botão de download de leads
+        const editForm = document.getElementById('edit-bot-form');
+        if (editForm) {
+            editForm.addEventListener('submit', handleEditFormSubmit);
+        }
+        const cancelEditBtn = document.getElementById('cancel-edit');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => {
+                isEditMode = false;
+                editingBotId = null;
+                showView('dashboard');
+            });
+        }
+        
+        setupEditKnowledgeBase();
+        
+        // --- AQUI ESTÁ A CORREÇÃO ---
+        // Removemos a chamada para a função antiga (setupEditOptionCards)
+        // e reutilizamos a função genérica e segura, passando o escopo correto.
+        setupOptionCards(editView);
+        // --- FIM DA CORREÇÃO ---
+
         const downloadBtn = document.getElementById('download-leads-btn');
         if (downloadBtn) {
             downloadBtn.addEventListener('click', () => {
-                // 'editingBotId' é a nossa variável global que guarda o ID do bot em edição
-                if(editingBotId) {
-                    handleDownloadLeads(editingBotId);
+                if(editingBotId) handleDownloadLeads(editingBotId);
+            });
+        }
+
+        isEditViewInitialized = true;
+    }
+    
+    async function handleEditFormSubmit(event) {
+        event.preventDefault();
+        
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<span class="spinner"></span> Salvando...';
+        
+        try {
+            const token = await getAuthToken();
+            const botId = document.getElementById('edit-bot-id').value;
+            
+            let functionValue = document.querySelector('#edit-function-options .option-card.selected')?.dataset.value || 'Suporte ao Cliente';
+            if (functionValue === 'Personalizado') {
+                functionValue = document.getElementById('edit-bot-function-custom').value.trim();
+            }
+            
+            let toneValue = document.querySelector('#edit-tone-options .option-card.selected')?.dataset.value || 'Amigável';
+            let toneCustom = '';
+            if (toneValue === 'Personalizado') {
+                toneCustom = document.getElementById('edit-bot-tone-custom').value.trim();
+            }
+
+            const scheduleDataResult = collectScheduleData('#schedule-modal');
+            const scheduleEnabled = scheduleDataResult.enabled;
+            const scheduleData = scheduleDataResult.data;
+            
+            const faqItems = collectFaqDataFromEdit();
+            const contactItems = collectContactsDataFromEdit();
+            const smartSnoozeEnabled = document.getElementById('edit-smart-snooze-enabled').checked;
+            const smartSnoozeMinutes = document.getElementById('edit-smart-snooze-minutes').value || 15;
+            const leadCollectionEnabled = document.getElementById('edit-lead-collection-enabled').checked;
+            const leadCollectionPrompt = document.getElementById('edit-lead-collection-prompt').value.trim();
+            const knowledgeInstructions = document.getElementById('edit-knowledge-instructions').value.trim();
+
+            const botData = {
+                name: document.getElementById('edit-bot-name').value,
+                function_type: functionValue,
+                tone_type: toneValue,
+                tone_custom_description: toneCustom,
+                schedule_enabled: scheduleEnabled,
+                schedule_data: JSON.stringify(scheduleData),
+                knowledge_faq: JSON.stringify(faqItems),
+                knowledge_contacts: JSON.stringify(contactItems),
+                knowledge_instructions: knowledgeInstructions,
+                smart_snooze_enabled: smartSnoozeEnabled,
+                smart_snooze_minutes: parseInt(smartSnoozeMinutes, 10),
+                lead_collection_enabled: leadCollectionEnabled,
+                lead_collection_prompt: leadCollectionPrompt                
+            };
+            
+            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(botData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Falha ao atualizar o bot.');
+            }
+            
+            showToast('Bot atualizado com sucesso!', 'success');
+            await fetchBots();
+            showView('dashboard');
+            
+        } catch (error) {
+            console.error('Erro ao atualizar bot:', error);
+            showToast(`Erro: ${error.message}`, 'error');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Salvar Alterações';
+            isEditMode = false;
+            editingBotId = null;
+        }
+    }
+
+    function populateEditFormWithBotData(bot) {
+        // --- Preenche o cabeçalho e campos de identidade ---
+        document.getElementById('editing-bot-name-header').textContent = bot.name || 'Bot sem nome';
+        document.getElementById('edit-bot-id').value = bot.id;
+        document.getElementById('edit-bot-name').value = bot.name || '';
+        
+        const functionOptionsContainer = document.getElementById('edit-function-options');
+        const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
+        functionOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        let functionCard = functionOptionsContainer.querySelector(`.option-card[data-value="${bot.function_type}"]`);
+        if (functionCard) {
+            functionCard.classList.add('selected');
+            functionCustomTextarea.style.display = 'none';
+            functionCustomTextarea.value = '';
+        } else {
+            functionCard = functionOptionsContainer.querySelector('.option-card[data-value="Personalizado"]');
+            if (functionCard) {
+                functionCard.classList.add('selected');
+                functionCustomTextarea.style.display = 'block';
+                functionCustomTextarea.value = bot.function_type || '';
+            }
+        }
+
+        const toneOptionsContainer = document.getElementById('edit-tone-options');
+        const toneCustomTextarea = document.getElementById('edit-bot-tone-custom');
+        toneOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        let toneCard = toneOptionsContainer.querySelector(`.option-card[data-value="${bot.tone_type}"]`);
+        if (toneCard) {
+            toneCard.classList.add('selected');
+            toneCustomTextarea.style.display = bot.tone_type === 'Personalizado' ? 'block' : 'none';
+            toneCustomTextarea.value = bot.tone_custom_description || '';
+        }
+        
+        // --- Preenche a Base de Conhecimento (INCLUINDO "OUTRAS INSTRUÇÕES") ---
+        const instructionsTextarea = document.getElementById('edit-knowledge-instructions');
+        instructionsTextarea.value = bot.knowledge_instructions || '';
+        instructionsTextarea.style.display = 'block'; // Garante que o campo esteja sempre visível
+
+        populateEditFAQ(bot.knowledge_faq || []);
+        populateEditFiles(bot.knowledge_files || []);
+        
+        // --- Preenche a Sidebar de Operações ---
+        const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
+        const leadDetails = document.getElementById('edit-lead-collection-details');
+        const leadPromptTextarea = document.getElementById('edit-lead-collection-prompt');
+
+        // Define o valor do textarea com o texto do bot ou o padrão
+        leadPromptTextarea.value = bot.lead_collection_prompt || 'Olá! Para podermos iniciar, poderia me dizer como você nos encontrou? (Ex: Instagram, Google, Indicação)';
+        
+        // Define o estado do toggle
+        leadEnabledCheckbox.checked = bot.lead_collection_enabled || false;
+        // Mostra ou esconde o container com base no estado do toggle
+        leadDetails.style.display = leadEnabledCheckbox.checked ? 'block' : 'none';
+
+        const snoozeEnabledCheckbox = document.getElementById('edit-smart-snooze-enabled');
+        const snoozeDetails = document.getElementById('edit-smart-snooze-details');
+        snoozeEnabledCheckbox.checked = bot.smart_snooze_enabled || false;
+        snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
+        document.getElementById('edit-smart-snooze-minutes').value = bot.smart_snooze_minutes || 15;
+
+        populateEditContacts(bot.knowledge_contacts || []);
+
+        // --- Preenche os dados de Horário (código anterior já estava correto) ---
+        const dayMapPtToEn = { 'segunda': 'monday', 'terca': 'tuesday', 'quarta': 'wednesday', 'quinta': 'thursday', 'sexta': 'friday', 'sabado': 'saturday', 'domingo': 'sunday' };
+        const scheduleEnabled = bot.schedule_enabled || false;
+        document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Bot sempre ativo.';
+        document.getElementById('modal-schedule-enabled').checked = scheduleEnabled;
+        document.getElementById('modal-schedule-details').style.display = scheduleEnabled ? 'block' : 'none';
+        let scheduleData = [];
+        try { scheduleData = Array.isArray(bot.schedule_data) ? bot.schedule_data : JSON.parse(bot.schedule_data || '[]'); } catch (e) { console.error('Erro no parse do schedule_data:', e); }
+        if (scheduleData.length > 0) {
+            scheduleData.forEach((dayData) => {
+                const dayInEnglish = dayMapPtToEn[dayData.day.toLowerCase()];
+                if (!dayInEnglish) return;
+                const dayElement = document.querySelector(`#modal-schedule-details .schedule-day[data-day="${dayInEnglish}"]`);
+                if (!dayElement) return;
+                const toggle = dayElement.querySelector('input[type="checkbox"]');
+                if (toggle) {
+                    toggle.checked = dayData.active;
+                    updateDayScheduleState(dayElement);
+                }
+                const openTimeInput = dayElement.querySelector('input[type="time"]:first-of-type');
+                const closeTimeInput = dayElement.querySelector('input[type="time"]:last-of-type');
+                if (dayData.active) {
+                    if (openTimeInput) openTimeInput.value = dayData.open;
+                    if (closeTimeInput) closeTimeInput.value = dayData.close;
                 }
             });
         }
+    }
+
+    function addEditFaqItem(question = '', answer = '') {
+        const faqList = document.getElementById('edit-faq-list');
+        const item = document.createElement('div');
+        item.className = 'knowledge-item';
+        item.innerHTML = `
+            <div class="knowledge-item-inputs">
+                <input type="text" placeholder="Pergunta" value="${question}" maxlength="100">
+                <input type="text" placeholder="Resposta" value="${answer}" maxlength="300">
+            </div>
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+        `;
+        faqList.appendChild(item);
+    }
+
+    function addEditContactItem(sector = '', contact = '') {
+        const contactsList = document.getElementById('edit-contacts-list');
+        const item = document.createElement('div');
+        item.className = 'knowledge-item';
+        item.innerHTML = `
+            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="100" style="flex-basis: 200px; flex-shrink: 0;">
+            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="300" style="flex-grow: 1;">
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+        `;
+        contactsList.appendChild(item);
     }
 
     async function handleDownloadLeads(botId) {
@@ -2046,36 +2350,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function setupEditOptionCards() {
-        // Delegação de evento para os cards de opção na tela de edição
-        const editContent = document.getElementById('edit-content');
-        if (!editContent) return;
-
-        editContent.addEventListener('click', (e) => {
-            if (!e.target.closest('.option-card')) return;
-
-            const card = e.target.closest('.option-card');
-            const container = card.closest('.form-group');
-            if (!container) return;
-
-            // Desseleciona outros cards no mesmo grupo
-            container.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-            // Seleciona o card clicado
-            card.classList.add('selected');
-
-            // Lógica para mostrar/esconder o textarea "Personalizado"
-            const customTextarea = container.querySelector('textarea');
-            if (customTextarea) {
-                if (card.dataset.value === 'Personalizado') {
-                    customTextarea.style.display = 'block';
-                    customTextarea.focus();
-                } else {
-                    customTextarea.style.display = 'none';
-                }
-            }
-        });
-    }    
-
     // ADICIONE ESTA NOVA FUNÇÃO junto com as outras funções do Wizard
     window.removeWizardFile = function(button) {
         const fileItem = button.closest('.file-item');
@@ -2091,107 +2365,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUploadButtonState('files-list', 'file-upload');
     }    
     
-    function populateEditFormWithBotData(bot) {
-        // --- Dados básicos ---
-        document.getElementById('edit-bot-id').value = bot.id;
-        document.getElementById('edit-bot-name').value = bot.name || '';
-        
-        // --- Função Principal ---
-        const functionOptionsContainer = document.getElementById('edit-function-options');
-        const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
-        
-        // Limpa seleções anteriores
-        functionOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-        
-        // Encontra o card correspondente ao valor do bot, ou o card "Personalizado"
-        let functionCard = functionOptionsContainer.querySelector(`.option-card[data-value="${bot.function_type}"]`);
-        if (functionCard) {
-            functionCard.classList.add('selected');
-            functionCustomTextarea.style.display = 'none';
-        } else {
-            // Se não encontrou, assume que é um valor personalizado
-            functionCard = functionOptionsContainer.querySelector('.option-card[data-value="Personalizado"]');
-            if (functionCard) {
-                functionCard.classList.add('selected');
-                functionCustomTextarea.style.display = 'block';
-                functionCustomTextarea.value = bot.function_type || '';
-            }
-        }
-        
-        // --- Tom de Atendimento ---
-        const toneOptionsContainer = document.getElementById('edit-tone-options');
-        const toneCustomTextarea = document.getElementById('edit-bot-tone-custom');
-
-        toneOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-        
-        let toneCard = toneOptionsContainer.querySelector(`.option-card[data-value="${bot.tone_type}"]`);
-        if (toneCard) {
-            toneCard.classList.add('selected');
-            toneCustomTextarea.style.display = bot.tone_type === 'Personalizado' ? 'block' : 'none';
-            toneCustomTextarea.value = bot.tone_custom_description || '';
-        }
-
-        // --- Horário ---
-        const scheduleEnabledCheckbox = document.getElementById('edit-schedule-enabled');
-        const scheduleDetails = document.getElementById('edit-schedule-details');
-        
-        scheduleEnabledCheckbox.checked = bot.schedule_enabled || false;
-        scheduleDetails.style.display = bot.schedule_enabled ? 'block' : 'none';
-
-        let scheduleData = [];
-        if (bot.schedule_data) {
-            try {
-                scheduleData = Array.isArray(bot.schedule_data) ? bot.schedule_data : JSON.parse(bot.schedule_data);
-            } catch (e) { console.error('Erro ao fazer parse do schedule_data:', e); }
-        }
-
-        if (scheduleData.length > 0) {
-            const dayMap = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-            scheduleData.forEach((dayData, index) => {
-                const dayName = dayMap[index];
-                const dayElement = scheduleDetails.querySelector(`.schedule-day[data-day="${dayName}"]`);
-                if(!dayElement) return;
-
-                const toggle = dayElement.querySelector('input[type="checkbox"]');
-                const openTimeInput = dayElement.querySelector('input[type="time"]:first-of-type');
-                const closeTimeInput = dayElement.querySelector('input[type="time"]:last-of-type');
-                
-                if (toggle) toggle.checked = dayData.active;
-                if (openTimeInput) openTimeInput.value = dayData.open;
-                if (closeTimeInput) closeTimeInput.value = dayData.close;
-                
-                updateDayScheduleState(dayElement);
-            });
-        }
-
-        // Preenche os dados da Soneca Inteligente
-        const snoozeEnabledCheckbox = document.getElementById('edit-smart-snooze-enabled');
-        const snoozeMinutesInput = document.getElementById('edit-smart-snooze-minutes');
-        const snoozeDetails = document.getElementById('edit-smart-snooze-details');
-
-        if (snoozeEnabledCheckbox && snoozeMinutesInput && snoozeDetails) {
-            snoozeEnabledCheckbox.checked = bot.smart_snooze_enabled || false;
-            snoozeMinutesInput.value = bot.smart_snooze_minutes || 30;
-            snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
-        }        
-
-        // Preenche os dados da Captura de Leads
-        const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
-        const leadPromptTextarea = document.getElementById('edit-lead-collection-prompt');
-        const leadDetails = document.getElementById('edit-lead-collection-details');
-
-        if (leadEnabledCheckbox && leadPromptTextarea && leadDetails) {
-            leadEnabledCheckbox.checked = bot.lead_collection_enabled || false;
-            leadPromptTextarea.value = bot.lead_collection_prompt || 'Olá! Para podermos iniciar, poderia me dizer como você nos encontrou? (Ex: Instagram, Google, Indicação)';
-            leadDetails.style.display = leadEnabledCheckbox.checked ? 'block' : 'none';
-        }        
-
-        // --- Base de Conhecimento ---
-        populateEditFAQ(bot.knowledge_faq || []);
-        populateEditContacts(bot.knowledge_contacts || []);
-        populateEditFiles(bot.knowledge_files || []);
-
-    }
 
     function populateEditFAQ(faqs) {
         const faqList = document.getElementById('edit-faq-list');
@@ -2225,36 +2398,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUploadButtonState('edit-files-list', 'edit-upload-btn');
     }
 
-    function addEditFaqItem(question = '', answer = '') {
-        const faqList = document.getElementById('edit-faq-list');
-        const item = document.createElement('div');
-        item.className = 'knowledge-item';
-        
-        item.innerHTML = `
-            <div class="knowledge-item-inputs">
-                <input type="text" placeholder="Pergunta" value="${question}" maxlength="150">
-                <input type="text" placeholder="Resposta" value="${answer}" maxlength="500">
-            </div>
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
-        `;
-        
-        faqList.appendChild(item);
-    }
-
-    function addEditContactItem(sector = '', contact = '') {
-        const contactsList = document.getElementById('edit-contacts-list');
-        const item = document.createElement('div');
-        item.className = 'knowledge-item';
-        
-        // ESTRUTURA HORIZONTAL E COM LIMITES DE CARACTERES
-        item.innerHTML = `
-            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="50" style="flex-basis: 200px; flex-shrink: 0;">
-            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="150" style="flex-grow: 1;">
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
-        `;
-        
-        contactsList.appendChild(item);
-    }
 
     function addEditFileToList(file) {
         const filesList = document.getElementById('edit-files-list');
@@ -2327,93 +2470,6 @@ document.addEventListener('DOMContentLoaded', () => {
         planInfoEl.textContent = text;
     }
 
-    async function handleEditFormSubmit(event) {
-        event.preventDefault();
-        
-        const submitButton = event.target.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
-        submitButton.innerHTML = '<span class="spinner"></span> Salvando...';
-        
-        try {
-            const token = await getAuthToken();
-            const botId = document.getElementById('edit-bot-id').value;
-            
-            // --- Coleta dados dos componentes ---
-            let functionValue = document.querySelector('#edit-function-options .option-card.selected')?.dataset.value || 'Suporte ao Cliente';
-            if (functionValue === 'Personalizado') {
-                functionValue = document.getElementById('edit-bot-function-custom').value.trim();
-            }
-            
-            let toneValue = document.querySelector('#edit-tone-options .option-card.selected')?.dataset.value || 'Amigável';
-            let toneCustom = '';
-            if (toneValue === 'Personalizado') {
-                toneCustom = document.getElementById('edit-bot-tone-custom').value.trim();
-            }
-
-            const scheduleEnabled = document.getElementById('edit-schedule-enabled').checked;
-            const scheduleData = [];
-            const dayNames = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
-            
-            document.querySelectorAll('#edit-schedule-details .schedule-day').forEach((dayElement, index) => {
-                const toggle = dayElement.querySelector('input[type="checkbox"]');
-                const openTime = dayElement.querySelector('input[type="time"]:first-of-type');
-                const closeTime = dayElement.querySelector('input[type="time"]:last-of-type');
-                
-                scheduleData.push({
-                    day: dayNames[index],
-                    active: toggle ? toggle.checked : false,
-                    open: openTime ? openTime.value : '09:00',
-                    close: closeTime ? closeTime.value : '18:00'
-                });
-            });
-
-            const faqItems = collectFaqDataFromEdit();
-            const contactItems = collectContactsDataFromEdit();
-
-            const smartSnoozeEnabled = document.getElementById('edit-smart-snooze-enabled').checked;
-            const smartSnoozeMinutes = document.getElementById('edit-smart-snooze-minutes').value || 30;
-            // Coleta os novos dados da Captura de Leads
-            const leadCollectionEnabled = document.getElementById('edit-lead-collection-enabled').checked;
-            const leadCollectionPrompt = document.getElementById('edit-lead-collection-prompt').value.trim();
-            
-
-            const botData = {
-                name: document.getElementById('edit-bot-name').value,
-                function_type: functionValue,
-                tone_type: toneValue,
-                tone_custom_description: toneCustom,
-                schedule_enabled: scheduleEnabled,
-                schedule_data: JSON.stringify(scheduleData),
-                knowledge_faq: JSON.stringify(faqItems),
-                knowledge_contacts: JSON.stringify(contactItems),
-                // Agora as variáveis existem e podem ser usadas aqui
-                smart_snooze_enabled: smartSnoozeEnabled,
-                smart_snooze_minutes: parseInt(smartSnoozeMinutes, 10),
-                lead_collection_enabled: leadCollectionEnabled,
-                lead_collection_prompt: leadCollectionPrompt                
-            };
-            
-            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(botData)
-            });
-
-            if (!response.ok) throw new Error('Falha ao atualizar o bot.');
-            
-            await fetchBots();
-            showView('dashboard');
-            
-        } catch (error) {
-            console.error('Erro ao atualizar bot:', error);
-            alert('Não foi possível salvar as alterações.');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = 'Salvar Alterações';
-            isEditMode = false;
-            editingBotId = null;
-        }
-    }
     
     function collectFaqDataFromEdit() {
         const faqItems = [];
@@ -2473,27 +2529,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initializeApp() {
         console.log('🚀 Inicializando FacilChat...');
-        console.log('🔧 Versão: Anti-Race-Condition v3.0');
+        console.log('🔧 Versão: Estrutura Estável v1.0');
         
-        // Mostra a tela de loading. Ela FICARÁ visível até o Firebase responder.
         appLoading.classList.remove('hidden');
         console.log('⏳ Aguardando estado de autenticação...');
         
-        // Garante que nenhuma view está ativa inicialmente
         Object.values(views).forEach(view => view.classList.remove('active'));
-        
-        // Esconde o header inicialmente
         elements.header.style.display = 'none';
         
+        // Configura apenas os listeners globais que existem em todas as telas
         setupEventListeners();
-        initializeWizard();
-        initializeEditView();
         setupThemeToggle();
         setupPricingToggle();
         setupNavigation();
         setupPlanButtons();
         
-        // O Firebase Auth State agora é a ÚNICA fonte de verdade para o que é exibido.
+        // As inicializações do Wizard e da tela de Edição foram REMOVIDAS daqui
+        // para serem chamadas pela função showView.
+        
         auth.onAuthStateChanged((user) => {
             console.log('🔐 Estado de autenticação DEFINIDO:', user ? `Logado: ${user.email}` : 'Não logado');
             handleAuthStateChange(user);

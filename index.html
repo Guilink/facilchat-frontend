@@ -318,110 +318,134 @@
             </div>
         </div>
 
-        <!-- VIEW 5: EDIÇÃO DE BOT -->
+        <!-- VIEW 5: EDIÇÃO DE BOT (NOVO LAYOUT) -->
         <div id="edit-view" class="view">
-            <div class="edit-container">
-                <div class="edit-header">
-                    <h2>Configurações do Assistente</h2>
-                    <button id="close-edit" class="close-btn">×</button>
+            <form id="edit-bot-form" class="edit-form-container">
+                <input type="hidden" id="edit-bot-id">
+                
+                <!-- CABEÇALHO DA PÁGINA DE EDIÇÃO -->
+                <div class="edit-page-header">
+                    <div>
+                        <h2>Editando: <span id="editing-bot-name-header">Bot de Teste</span></h2>
+                        <p>Ajuste todas as configurações do seu assistente em um só lugar.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button type="button" id="cancel-edit" class="btn-secondary">Cancelar</button>
+                        <button type="submit" class="btn-primary">Salvar Alterações</button>
+                    </div>
                 </div>
-                <div class="edit-content">
-                    <form id="edit-bot-form">
-                        <input type="hidden" id="edit-bot-id">
-                        <div class="edit-section">
-                            <h3>Identidade</h3>
-                            <div class="form-grid">
-                                <div class="form-group grid-col-span-2">
-                                    <label for="edit-bot-name">Nome do Assistente</label>
-                                    <input type="text" id="edit-bot-name" class="input-medium" placeholder="Nome do seu Assistente." required>
-                                </div>
-                                <div class="form-group">
-                                    <label>Função Principal</label>
-                                    <div class="option-grid" id="edit-function-options">
-                                        <div class="option-card" data-value="Produtos e Serviços"><h4>Produtos e Serviços</h4></div>
-                                        <div class="option-card" data-value="Suporte ao Cliente"><h4>Suporte ao Cliente</h4></div>
-                                        <div class="option-card" data-value="Agendamentos"><h4>Agendamentos</h4></div>
-                                        <div class="option-card" data-value="Personalizado"><h4>Personalizado</h4></div>
-                                    </div>
-                                    <textarea id="edit-bot-function-custom" placeholder="Descreva a função personalizada..." style="display: none; margin-top: 1rem;"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label>Tom de Atendimento</label>
-                                    <div class="option-grid" id="edit-tone-options">
-                                        <div class="option-card" data-value="Amigável"><h4>Amigável</h4></div>
-                                        <div class="option-card" data-value="Neutro"><h4>Neutro</h4></div>
-                                        <div class="option-card" data-value="Profissional"><h4>Profissional</h4></div>
-                                        <div class="option-card" data-value="Personalizado"><h4>Personalizado</h4></div>
-                                    </div>
-                                    <textarea id="edit-bot-tone-custom" placeholder="Descreva o tom personalizado..." style="display: none; margin-top: 1rem;"></textarea>
-                                </div>
+
+                <!-- GRID PRINCIPAL DO LAYOUT -->
+                <div class="edit-layout-grid">
+                    
+                    <!-- COLUNA PRINCIPAL (ESQUERDA) -->
+                    <div class="edit-main-content">
+                        <!-- Card de Identidade -->
+                        <div class="edit-card">
+                            <h3>Identidade do Assistente</h3>
+                            <p>Defina a personalidade e o propósito do seu assistente.</p>
+                            
+                            <div class="form-group">
+                                <label for="edit-bot-name">Nome do Bot</label>
+                                <input type="text" id="edit-bot-name" required maxlength="50">
                             </div>
-                        </div>
-                        <div class="edit-section">
-                            <h3>Horário de Atendimento</h3>
-                            <div class="schedule-toggle-container">
-                                <label for="edit-schedule-enabled" class="day-name">Ativar horário de funcionamento</label>
-                                <label class="day-toggle"><input type="checkbox" id="edit-schedule-enabled"><span class="toggle-slider"></span></label>
+
+                            <div class="form-group">
+                                <label>Função principal</label>
+                                <div class="option-grid" id="edit-function-options">
+                                    <div class="option-card option-card--compact" data-value="Produtos e Serviços"><h4>Produtos e Serviços</h4></div>
+                                    <div class="option-card option-card--compact" data-value="Suporte ao Cliente"><h4>Suporte ao Cliente</h4></div>
+                                    <div class="option-card option-card--compact" data-value="Agendamentos"><h4>Agendamentos</h4></div>
+                                    <div class="option-card option-card--compact" data-value="Personalizado"><h4>Personalizado</h4></div>
+                                </div>
+                                <textarea id="edit-bot-function-custom" placeholder="Descreva a função em poucas palavras..." maxlength="300" style="display: none;"></textarea>
                             </div>
-                            <div id="edit-schedule-details" class="schedule-details" style="display: none;">
-                                <div class="schedule-day" data-day="monday"><span class="day-name">Segunda</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-                                <div class="schedule-day" data-day="tuesday"><span class="day-name">Terça</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-                                <div class="schedule-day" data-day="wednesday"><span class="day-name">Quarta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-                                <div class="schedule-day" data-day="thursday"><span class="day-name">Quinta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-                                <div class="schedule-day" data-day="friday"><span class="day-name">Sexta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-                                <div class="schedule-day" data-day="saturday"><span class="day-name">Sábado</span><div class="time-inputs"><label>Abre</label><input type="time" value="00:00"><label>Fecha</label><input type="time" value="23:59"></div><label class="day-toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label></div>
-                                <div class="schedule-day" data-day="sunday"><span class="day-name">Domingo</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+
+                             <div class="form-group">
+                                <label>Tom de Atendimento</label>
+                                <div class="option-grid" id="edit-tone-options">
+                                    <div class="option-card option-card--compact" data-value="Amigável"><h4>Amigável</h4></div>
+                                    <div class="option-card option-card--compact" data-value="Neutro"><h4>Neutro</h4></div>
+                                    <div class="option-card option-card--compact" data-value="Profissional"><h4>Profissional</h4></div>
+                                    <div class="option-card option-card--compact" data-value="Personalizado"><h4>Personalizado</h4></div>
+                                </div>
+                                <textarea id="edit-bot-tone-custom" placeholder="Descreva o tom de voz desejado..." maxlength="300" style="display: none;"></textarea>
                             </div>
                         </div>
 
-                        <div class="edit-section">
-                            <h3>Funcionalidades Inteligentes</h3>
-                            <!-- Soneca Inteligente (já existente) -->
-                            <div class="form-group" style="padding-bottom: 2rem; border-bottom: 1px solid var(--border);">
-                                <label>Soneca Inteligente (Smart Snooze)</label>
-                                <div class="schedule-toggle-container" style="justify-content: space-between; max-width: 400px;">
-                                    <span class="day-name" style="font-size: 0.95rem;">Pausar bot ao responder manualmente</span>
-                                    <label class="day-toggle"><input type="checkbox" id="edit-smart-snooze-enabled"><span class="toggle-slider"></span></label>
-                                </div>
-                                <div id="edit-smart-snooze-details" style="display: none; margin-top: 1rem;">
-                                    <label for="edit-smart-snooze-minutes">Pausar por (minutos):</label>
-                                    <input type="number" id="edit-smart-snooze-minutes" value="30" min="1" max="1440" style="max-width: 120px;">
-                                </div>
-                            </div>
-
-                            <!-- Captura de Leads (NOVO) -->
-                            <div class="form-group" style="margin-top: 2rem;">
-                                <label>Captura de Leads</label>
-                                <div class="schedule-toggle-container" style="justify-content: space-between;">
-                                    <span class="day-name" style="font-size: 0.95rem;">Perguntar a origem de novos contatos</span>
-                                    <label class="day-toggle"><input type="checkbox" id="edit-lead-collection-enabled"><span class="toggle-slider"></span></label>
-                                </div>
-                                <div id="edit-lead-collection-details" style="display: none; margin-top: 1rem;">
-                                    <label for="edit-lead-collection-prompt">Mensagem da pergunta:</label>
-                                    <textarea id="edit-lead-collection-prompt" rows="3"></textarea>
-                                    <button type="button" id="download-leads-btn" class="btn-secondary" style="margin-top: 1.5rem; width: auto;">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                        Baixar Lista de Leads
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="edit-section">
+                        <!-- Card de Base de Conhecimento -->
+                        <div class="edit-card">
                             <h3>Base de Conhecimento</h3>
-                            <div class="knowledge-subsection"><h4>Perguntas Frequentes (FAQ)</h4><div id="edit-faq-list" class="knowledge-list"></div><button type="button" id="edit-add-faq" class="btn-add">+ Adicionar pergunta</button></div>
-                            <div class="knowledge-subsection"><h4>Encaminhamento de Contatos</h4><div id="edit-contacts-list" class="knowledge-list"></div><button type="button" id="edit-add-contact" class="btn-add">+ Adicionar contato</button></div>
-                            <div class="knowledge-subsection"><h4>Documentos</h4><div id="edit-files-list" class="files-list"></div><div class="upload-area"><button type="button" class="btn-upload" id="edit-upload-btn"><svg width="24" height="24"><use xlink:href="#icon-upload"/></svg>Carregar Arquivos</button><input type="file" id="edit-file-upload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display: none;" multiple></div></div>
+                            <p>Gerencie as informações que seu bot utiliza para responder.</p>
+
+                            <div class="form-group">
+                                <label for="edit-knowledge-instructions">Outras instruções</label>
+                                <textarea id="edit-knowledge-instructions" rows="4" placeholder="Aqui é o lugar ideal para você descrever seus produtos, serviços ou cardápio, além de outras informações importantes como formas de atendimento, horários e promoções. Tudo o que você escrever será usado pela IA para responder melhor seus clientes." maxlength="2000"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Documentos Adicionais</label>
+                                <div id="edit-files-list" class="files-list"></div>
+                                <div class="upload-area">
+                                    <button type="button" class="btn-upload" id="edit-upload-btn">
+                                        <svg width="24" height="24"><use xlink:href="#icon-upload"/></svg>Carregar Arquivos
+                                    </button>
+                                    <input type="file" id="edit-file-upload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display: none;" multiple>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Perguntas Frequentes (FAQ)</label>
+                                <div id="edit-faq-list" class="knowledge-list"></div>
+                                <button type="button" id="edit-add-faq" class="btn-add">+ Adicionar FAQ</button>
+                            </div>
                         </div>
-                        <div class="edit-actions">
-                            <button type="button" id="cancel-edit" class="btn-secondary">Cancelar</button>
-                            <button type="submit" class="btn-primary">Salvar Alterações</button>
+                    </div>
+                    
+                    <!-- COLUNA LATERAL (DIREITA) -->
+                    <div class="edit-sidebar">
+                        <!-- Card de Operação -->
+                        <div class="edit-card">
+                            <h3>Funções Inteligentes</h3>
+                            <div class="operation-item">
+                                <label for="edit-lead-collection-enabled">Coletar Leads</label>
+                                <label class="day-toggle"><input type="checkbox" id="edit-lead-collection-enabled"><span class="toggle-slider"></span></label>
+                            </div>
+                             <div id="edit-lead-collection-details" class="operation-details" style="display: none;">
+                                <textarea id="edit-lead-collection-prompt" rows="4" maxlength="250"></textarea>
+                                <button type="button" id="download-leads-btn" class="btn-secondary">Baixar Leads</button>
+                            </div>
+
+                            <div class="operation-item">
+                                <label for="edit-smart-snooze-enabled">Descanso Inteligente</label>
+                                <label class="day-toggle"><input type="checkbox" id="edit-smart-snooze-enabled"><span class="toggle-slider"></span></label>
+                            </div>
+                             <div id="edit-smart-snooze-details" class="operation-details" style="display: none;">
+                                 <label for="edit-smart-snooze-minutes">Quantos minutos a IA deve esperar após um humano assumir o atendimento?</label>
+                                 <input type="number" id="edit-smart-snooze-minutes" placeholder="15" min="1" max="120">
+                             </div>
                         </div>
-                    </form>
+
+                        <!-- Card de Encaminhamento -->
+                        <div class="edit-card">
+                            <h3>Encaminhamento Humano</h3>
+                            <div id="edit-contacts-list" class="knowledge-list"></div>
+                            <button type="button" id="edit-add-contact" class="btn-add">+ Adicionar</button>
+                        </div>
+                        
+                        <!-- Card de Horário -->
+                        <div class="edit-card">
+                           <h3>Horário de Atendimento</h3>
+                           <div class="schedule-summary">
+                               <p id="schedule-status-text">Horários configurados.</p>
+                               <button type="button" id="edit-schedule-btn" class="btn-secondary">Alterar</button>
+                           </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
- <!-- COLE ESTE BLOCO INTEIRO NO SEU index.html -->
+         <!-- COLE ESTE BLOCO INTEIRO NO SEU index.html -->
 
         <!-- VIEW 6: PLANOS -->
         <div id="plans-view" class="view">
@@ -525,6 +549,37 @@
             <div class="modal-footer"><button class="btn-secondary" onclick="cancelConnection()">Cancelar</button></div>
         </div>
     </div>
+
+    <!-- MODAL: EDIÇÃO DE HORÁRIOS -->
+    <div id="schedule-modal" class="modal-overlay">
+        <div class="modal-container schedule-modal-container">
+            <div class="modal-header">
+                <h3>Horário de Atendimento</h3>
+                <button type="button" class="modal-close" data-target-modal="schedule-modal">×</button>
+            </div>
+            <div class="modal-content">
+                 <div class="schedule-toggle-container">
+                    <!-- Texto agora envolvido em um span para melhor controle -->
+                    <span class="schedule-toggle-label">Ativar horário de funcionamento</span>
+                    <label class="day-toggle"><input type="checkbox" id="modal-schedule-enabled"><span class="toggle-slider"></span></label>
+                </div>
+                <div id="modal-schedule-details" class="schedule-details" style="display: none;">
+                    <div class="schedule-day" data-day="monday"><span class="day-name">Segunda</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                    <div class="schedule-day" data-day="tuesday"><span class="day-name">Terça</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                    <div class="schedule-day" data-day="wednesday"><span class="day-name">Quarta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                    <div class="schedule-day" data-day="thursday"><span class="day-name">Quinta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                    <div class="schedule-day" data-day="friday"><span class="day-name">Sexta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                    <div class="schedule-day" data-day="saturday"><span class="day-name">Sábado</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                    <div class="schedule-day" data-day="sunday"><span class="day-name">Domingo</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" data-target-modal="schedule-modal">Cancelar</button>
+                <button type="button" class="btn-primary" id="save-schedule-btn">Salvar Horários</button>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Scripts movidos para o final para carregamento otimizado da página -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
