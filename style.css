@@ -3003,86 +3003,128 @@ input:checked + .toggle-slider:before {
 }
 
 /* ===============================================
-   POLIMENTO FINAL DA RESPONSIVIDADE MOBILE
+   POLIMENTO FINAL DA RESPONSIVIDADE MOBILE (v2 - Centralizado)
    =============================================== */
 
 @media (max-width: 768px) {
 
-    /* --- 1. NOVO LAYOUT PARA "HORÁRIO DE ATENDIMENTO" --- */
-    /* Aplica-se tanto ao Wizard quanto ao Modal de Edição */
+    /* --- 1. LAYOUT DE HORÁRIOS CENTRALIZADO E ELEGANTE --- */
+    /* Aplica-se ao Wizard e ao Modal de Edição */
 
-    /* Reseta o estilo do container principal dos dias */
+    /* Reseta o container dos dias */
     #step-2 .schedule-details,
     #modal-schedule-details .schedule-details {
-        background: none;
-        border: none;
-        padding: 0;
-        gap: 0; /* Remove o espaçamento antigo */
+        background: none; border: none; padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem; /* Espaço entre os dias */
     }
 
-    /* Transforma cada dia em um item de lista separado */
+    /* Transforma cada dia em um container vertical centralizado */
     #step-2 .schedule-day,
     #modal-schedule-details .schedule-day {
-        flex-direction: row;      /* Itens na horizontal */
-        flex-wrap: wrap;          /* Permite que quebrem a linha */
-        align-items: center;      /* Alinha verticalmente */
-        justify-content: space-between; /* Espaça o nome do dia e o toggle */
-        
-        background: none;         /* Remove o fundo de card antigo */
-        border-radius: 0;
-        padding: 1rem 0;          /* Apenas espaçamento vertical */
-        border-bottom: 1px solid var(--border); /* A linha separadora que você queria */
-    }
-    
-    #modal-schedule-details .schedule-day:last-child {
-        border-bottom: none; /* Remove a linha do último item no modal */
-    }
-    
-    /* Estilo para o nome do dia */
-    #step-2 .schedule-day .day-name,
-    #modal-schedule-details .schedule-day .day-name {
-        font-size: 1.1rem;
-        font-weight: 600;
-        border: none;
-        margin: 0; padding: 0;
-    }
-    
-    /* O container dos inputs de tempo */
-    #step-2 .schedule-day .time-inputs,
-    #modal-schedule-details .schedule-day .time-inputs {
-        flex-basis: 100%;       /* OCUPE 100% DA LARGURA, forçando a quebra de linha */
-        order: 3;               /* Garante que ele fique por último na ordem visual */
-        margin-top: 1rem;       /* Espaço do topo (linha com nome do dia) */
-        padding: 0;
+        flex-direction: column;    /* A MÁGICA: Empilha tudo verticalmente */
+        align-items: center;       /* Centraliza tudo horizontalmente */
+        gap: 1rem;                 /* Espaço entre o nome, o toggle e os horários */
         background: none;
         border-radius: 0;
+        padding: 0;
+        border-bottom: 1px solid var(--border); /* Linha separadora */
+        padding-bottom: 1.5rem;
+    }
+
+    #step-2 .schedule-day:last-child,
+    #modal-schedule-details .schedule-day:last-child {
+        border-bottom: none; /* Remove a linha do último item */
+    }
+    
+    /* Centraliza o nome do dia */
+    #step-2 .schedule-day .day-name,
+    #modal-schedule-details .schedule-day .day-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        border: none; margin: 0; padding: 0;
+        order: 1; /* Garante que o nome do dia venha primeiro */
+    }
+    
+    /* Centraliza o toggle */
+    #step-2 .schedule-day .day-toggle,
+    #modal-schedule-details .schedule-day .day-toggle {
+        order: 2; /* Garante que o toggle venha em segundo */
+    }
+
+    /* Container dos inputs "Abre" e "Fecha" */
+    #step-2 .schedule-day .time-inputs,
+    #modal-schedule-details .schedule-day .time-inputs {
+        order: 3; /* Garante que os horários venham por último */
+        width: max-content; /* FAZ O CONTAINER ENCOLHER PARA O TAMANHO DO CONTEÚDO */
+        padding: 0;
+        background: none;
         
-        /* A MÁGICA: Usa Grid para o layout "Abre/Fecha" */
+        /* Mantém o grid interno para o alinhamento dos labels e inputs */
         display: grid;
-        grid-template-columns: auto 1fr; /* Coluna 1 (label) se ajusta, Coluna 2 (input) ocupa o resto */
-        gap: 0.75rem 1rem; /* Espaçamento vertical e horizontal */
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem 1rem;
         align-items: center;
     }
 
+
     /* --- 2. CONSISTÊNCIA DOS BOTÕES DO WIZARD --- */
-    /* Garante que o rodapé sempre se comporte como uma linha de botões */
+    /* Garante alinhamento e largura consistentes para os botões do rodapé */
     .wizard-footer {
         flex-direction: row;
         gap: 1rem;
     }
-
-    /* Faz com que os botões (Voltar, Pular, Continuar) dividam o espaço igualmente */
     .wizard-footer > button,
     .wizard-footer .wizard-actions {
-        flex: 1; /* Faz os containers dos botões crescerem igualmente */
+        flex: 1;
     }
-
     .wizard-footer .wizard-actions {
         display: flex;
         gap: 1rem;
     }
-
     .wizard-footer .wizard-actions > button {
-        flex: 1; /* Faz os botões internos também dividirem o espaço */
+        flex: 1;
     }
+
+
+    /* --- MANUTENÇÃO DAS OUTRAS CORREÇÕES --- */
+    /* (Estas regras já estavam corretas e foram mantidas) */
+    
+    /* Encaminhamento Humano */
+    #contacts-list .knowledge-item,
+    #edit-contacts-list .knowledge-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    #contacts-list .knowledge-item input,
+    #edit-contacts-list .knowledge-item input {
+        flex-basis: auto !important;
+        width: 100%;
+    }
+    
+    /* Layout geral do Wizard */
+    .wizard-container { flex-direction: column; }
+    .wizard-sidebar {
+        width: 100%; height: auto; padding: 1rem;
+        background: var(--gradient-glass); backdrop-filter: blur(20px);
+    }
+    .wizard-steps { flex-direction: row; overflow-x: auto; gap: 0.5rem; padding-bottom: 0.5rem; }
+    .step { flex-shrink: 0; min-width: 200px; padding: 0.75rem; }
+    .wizard-content { padding: 2rem 1rem; }
+    
+    /* Layout geral do Dashboard */
+    .header-container { padding: 0 1rem; gap: 1rem; }
+    .header-left { gap: 1rem; }
+    .plan-info { display: none; }
+    .dashboard-container { padding: 1.5rem; gap: 1.5rem; }
+    .bots-list { grid-template-columns: 1fr; gap: 1rem; }
+    .bot-card, .welcome-card, .promo-card { padding: 1.5rem; }
+    .bot-card { min-height: auto; }
+
+    /* Layout geral da Edição */
+    .edit-container { padding: 1rem; }
+    .form-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    .grid-col-span-2 { grid-column: span 1; }
 }
