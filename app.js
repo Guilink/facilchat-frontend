@@ -841,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function setWizardStep(step) {
+    function setWizardStep(step) {   
         currentWizardStep = step;
         
         document.querySelectorAll('.step').forEach((stepEl, index) => {
@@ -859,6 +859,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 stepContent.classList.add('active');
             }
         });
+
+        setTimeout(() => {
+            // Em vez de mirar em um elemento específico, rolamos a janela principal (window)
+            // para o topo. Isso funciona de forma confiável tanto no desktop quanto no mobile.
+            window.scrollTo(0, 0);
+        }, 0);        
         
         elements.wizardBack.style.display = step > 1 ? 'block' : 'none';
         
@@ -2008,7 +2014,7 @@ async function createBot() {
 
         isEditViewInitialized = true;
     }
-    
+
     async function handleEditFormSubmit(event) {
         event.preventDefault();
         
