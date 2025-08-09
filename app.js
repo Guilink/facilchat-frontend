@@ -347,15 +347,33 @@ document.addEventListener('DOMContentLoaded', () => {
         // PASSO 1: SEMPRE limpa a lista de bots para evitar "fantasmas".
         elements.botsList.innerHTML = '';
 
+        // --- AQUI ESTÁ A NOVA LÓGICA ---
+        // Seleciona o botão de criar novo bot
+        const createBotButton = document.getElementById('create-bot-btn');
+
+        // Verifica se a quantidade de bots atingiu o limite de 3
+        if (userBots.length >= 3) {
+            // Se sim, esconde o botão
+            if (createBotButton) {
+                createBotButton.style.display = 'none';
+            }
+        } else {
+            // Se não, garante que o botão esteja visível
+            if (createBotButton) {
+                createBotButton.style.display = 'block'; // Ou 'flex', dependendo do seu CSS
+            }
+        }
+        // --- FIM DA NOVA LÓGICA ---
+
         // PASSO 2: Decide qual container principal mostrar.
         if (userBots.length === 0) {
             // Se NÃO há bots: mostra o container de boas-vindas e esconde o de bots.
-            elements.welcomeState.style.display = 'contents'; // 'contents' para funcionar com o novo grid
+            elements.welcomeState.style.display = 'contents'; 
             elements.botsState.style.display = 'none';
         } else {
             // Se HÁ bots: esconde o de boas-vindas e mostra o container de bots.
             elements.welcomeState.style.display = 'none';
-            elements.botsState.style.display = 'contents'; // 'contents' para funcionar com o novo grid
+            elements.botsState.style.display = 'contents'; 
             
             // PASSO 3: Apenas se houver bots, renderiza os cards.
             renderBots();
