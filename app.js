@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isEditMode = false;
     let editingBotId = null;
     let wizardBotId = null; // <-- NOVA VARIÁVEL DE CONTROLE
+    let isActivelyConnecting = false;
     let wizardFilesToUpload = []; // <-- NOVA VARIÁVEL
     let isWizardInitialized = false;
     let isEditViewInitialized = false;
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // A função handleConnectionToggle já faz a chamada de disconnect correta
             handleConnectionToggle(editingBotId, 'connecting');
         }
+        isActivelyConnecting = false;
         hideQrModal();
         editingBotId = null; // Limpa o ID do bot em conexão
     }    
@@ -530,6 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`[Bot ${botId}] Iniciando conexão...`);
                 // Guarda o ID do bot que está tentando conectar para que os eventos do socket saibam qual modal atualizar
                 editingBotId = botId; 
+                isActivelyConnecting = true;
 
                 // 1. Abre o novo modal com um estado de "loading"
                 showQrModal(`
@@ -956,7 +959,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (editingBotId) {
                 handleConnectionToggle(editingBotId, 'connecting');
             }
-
+            isActivelyConnecting = false;
             resetWizard();
             showView('dashboard');
             fetchBots(); // Garante que a lista de bots (com o novo bot) seja carregada
@@ -1233,6 +1236,7 @@ async function createBot() {
             
             // O `editingBotId` é crucial para que o socket.io saiba qual QR Code exibir
             editingBotId = botId;
+            isActivelyConnecting = true; // <-- DEFINA COMO TRUE AQUI        
 
             // Atualiza a UI para mostrar que está gerando o QR Code
             elements.qrDisplay.innerHTML = `
@@ -1432,29 +1436,33 @@ async function createBot() {
         });
 
         socket.on("request_new_qr", (data) => {
-            // Apenas reage se o pedido for para o bot que estamos conectando no momento
-            if (data.botId != editingBotId) return;
+            // CONDIÇÃO DE GUARDA PRINCIPAL:
+            // Se o usuário não está ativamente tentando conectar, OU o pedido é para um bot diferente,
+            // simplesmente ignore este evento. Ele é um "fantasma" de uma tentativa anterior.
+            if (!isActivelyConnecting || data.botId != editingBotId) {
+                console.log(`[Smart Refresh] Evento ignorado para o bot ${data.botId} pois não há um fluxo de conexão ativo.`);
+                return;
+            }
 
+            // Se a guarda passar, significa que o usuário AINDA está na tela de conexão
+            // esperando por um QR code, e a lógica para atualizar é bem-vinda.
             console.log(`[Smart Refresh] Recebido pedido do backend para gerar novo QR para o bot ${data.botId}`);
-
-            // A VERIFICAÇÃO CRUCIAL: Onde o usuário está agora?
+            
             const isUserInWizard = views.wizard.classList.contains('active');
+            const qrModalIsActive = document.getElementById('qr-modal').classList.contains('active');
 
             if (isUserInWizard) {
-                // CONTEXTO: Usuário está no WIZARD.
-                // Ação: Chame a função que atualiza a UI dentro do wizard.
                 console.log("--> Atualizando QR Code DENTRO do Wizard.");
-                startWhatsAppConnection(data.botId); // Esta função já atualiza o qrDisplay do wizard
-            } else {
-                // CONTEXTO: Usuário está no PAINEL (e o modal está aberto).
-                // Ação: Chame a função que lida com o fluxo do modal.
+                startWhatsAppConnection(data.botId);
+            } else if (qrModalIsActive) {
                 console.log("--> Atualizando QR Code DENTRO do Modal.");
                 handleConnectionToggle(data.botId, 'offline');
             }
-        });                
-        
+        });
+
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
+            isActivelyConnecting = false;
 
             console.log("✅ Cliente WhatsApp conectado!", data.botId);
             
@@ -1513,6 +1521,7 @@ async function createBot() {
 
         socket.on("connection_failure", (data) => {
             if (data.botId != editingBotId) return; // Mantém a verificação
+            isActivelyConnecting = false;
 
             console.error("❌ Falha na conexão recebida do backend:", data.message);
 
@@ -1588,6 +1597,7 @@ async function createBot() {
                 handleConnectionToggle(botIdToCancel, 'connecting');
             }
 
+            isActivelyConnecting = false;
             // Reseta o estado do wizard.
             resetWizard();
             // Mostra o dashboard.
