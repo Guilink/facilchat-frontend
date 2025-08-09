@@ -1385,6 +1385,9 @@ async function createBot() {
         console.log('🔧 Inicializando a View do Wizard pela primeira vez...');
         initializeWizard(); // Esta função você já tem
 
+        document.getElementById('faq-list').addEventListener('click', handleKnowledgeItemRemove);
+        document.getElementById('contacts-list').addEventListener('click', handleKnowledgeItemRemove);        
+
         isWizardInitialized = true;
     }    
 
@@ -1620,14 +1623,15 @@ async function createBot() {
         
         item.innerHTML = `
             <div class="knowledge-item-inputs">
-                <input type="text" placeholder="Pergunta" value="${question}" maxlength="150">
-                <input type="text" placeholder="Resposta" value="${answer}" maxlength="500">
+                <input type="text" placeholder="Pergunta" value="${question}" maxlength="100">
+                <input type="text" placeholder="Resposta" value="${answer}" maxlength="300">
             </div>
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('faq-list', 'add-faq', 5)"">×</button>
+            <button type="button" class="remove-btn">×</button>
         `;
         
         faqList.appendChild(item);
-        updateAddButtonState('faq-list', 'add-faq', 5);
+        // Esta chamada garante que o botão some se o formulário for populado já no limite
+        updateAddButtonState('faq-list', 'add-faq', 5); 
     }
 
     function addContactItem(sector = '', contact = '') {
@@ -1635,11 +1639,10 @@ async function createBot() {
         const item = document.createElement('div');
         item.className = 'knowledge-item';
         
-        // ESTRUTURA HORIZONTAL E COM LIMITES DE CARACTERES
         item.innerHTML = `
-            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="50" style="flex-basis: 200px; flex-shrink: 0;">
-            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="150" style="flex-grow: 1;">
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('contacts-list', 'add-contact', 5)">×</button>
+            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="30" style="flex-basis: 200px; flex-shrink: 0;">
+            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="100" style="flex-grow: 1;">
+            <button type="button" class="remove-btn">×</button>
         `;
         
         contactsList.appendChild(item);
@@ -2040,6 +2043,9 @@ async function createBot() {
             });
         }
 
+        document.getElementById('edit-faq-list').addEventListener('click', handleKnowledgeItemRemove);
+        document.getElementById('edit-contacts-list').addEventListener('click', handleKnowledgeItemRemove);      
+
         isEditViewInitialized = true;
     }
 
@@ -2219,7 +2225,7 @@ async function createBot() {
                 <input type="text" placeholder="Pergunta" value="${question}" maxlength="100">
                 <input type="text" placeholder="Resposta" value="${answer}" maxlength="300">
             </div>
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('edit-faq-list', 'edit-add-faq', 5)">×</button>
+            <button type="button" class="remove-btn">×</button>
         `;
         faqList.appendChild(item);
         updateAddButtonState('edit-faq-list', 'edit-add-faq', 5);
@@ -2230,9 +2236,9 @@ async function createBot() {
         const item = document.createElement('div');
         item.className = 'knowledge-item';
         item.innerHTML = `
-            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="100" style="flex-basis: 200px; flex-shrink: 0;">
-            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="300" style="flex-grow: 1;">
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('edit-contacts-list', 'edit-add-contact', 5)">×</button>
+            <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="30" style="flex-basis: 200px; flex-shrink: 0;">
+            <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="100" style="flex-grow: 1;">
+            <button type="button" class="remove-btn">×</button>
         `;
         contactsList.appendChild(item);
         updateAddButtonState('edit-contacts-list', 'edit-add-contact', 5);
@@ -2284,6 +2290,34 @@ async function createBot() {
             button.innerHTML = originalText;
         }
     }    
+    
+    function handleKnowledgeItemRemove(event) {
+        // Verifica se o elemento clicado foi um botão de remover
+        const removeButton = event.target.closest('.remove-btn');
+        if (!removeButton) {
+            return; // Se não foi, não faz nada
+        }
+
+        const list = event.currentTarget; // O `currentTarget` é a lista (ul/div) onde o listener está
+        const itemToRemove = removeButton.closest('.knowledge-item');
+
+        if (list && itemToRemove) {
+            // 1. Remove o item da tela
+            itemToRemove.remove();
+
+            // 2. Reavalia o estado do botão "Adicionar" com base no ID da lista
+            if (list.id === 'faq-list') {
+                updateAddButtonState('faq-list', 'add-faq', 5);
+            } else if (list.id === 'contacts-list') {
+                updateAddButtonState('contacts-list', 'add-contact', 5);
+            } else if (list.id === 'edit-faq-list') {
+                updateAddButtonState('edit-faq-list', 'edit-add-faq', 5);
+            } else if (list.id === 'edit-contacts-list') {
+                updateAddButtonState('edit-contacts-list', 'edit-add-contact', 5);
+            }
+        }
+    }
+    
 
     function setupEditEventListeners() {
         const closeEditBtn = document.getElementById('close-edit');
@@ -2449,7 +2483,7 @@ async function createBot() {
                 <span>📄</span>
                 <span>${fileName}</span>
             </div>
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            <button type="button" class="remove-btn">×</button>
         `;
         
         filesList.appendChild(item);
