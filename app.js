@@ -1623,10 +1623,11 @@ async function createBot() {
                 <input type="text" placeholder="Pergunta" value="${question}" maxlength="150">
                 <input type="text" placeholder="Resposta" value="${answer}" maxlength="500">
             </div>
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('faq-list', 'add-faq', 5)"">×</button>
         `;
         
         faqList.appendChild(item);
+        updateAddButtonState('faq-list', 'add-faq', 5);
     }
 
     function addContactItem(sector = '', contact = '') {
@@ -1638,11 +1639,13 @@ async function createBot() {
         item.innerHTML = `
             <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="50" style="flex-basis: 200px; flex-shrink: 0;">
             <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="150" style="flex-grow: 1;">
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('contacts-list', 'add-contact', 5)">×</button>
         `;
         
         contactsList.appendChild(item);
+        updateAddButtonState('contacts-list', 'add-contact', 5);
     }
+
     function handleFileUpload(event) {
         const files = event.target.files;
         if (!files.length) return;
@@ -1762,6 +1765,21 @@ async function createBot() {
             default: return '📄 Arquivo';
         }
     }
+
+    function updateAddButtonState(listId, buttonId, limit) {
+    const list = document.getElementById(listId);
+    const button = document.getElementById(buttonId);
+    if (!list || !button) return;
+
+    const itemCount = list.querySelectorAll('.knowledge-item').length;
+
+    if (itemCount >= limit) {
+        button.style.display = 'none'; // Esconde o botão
+    } else {
+        button.style.display = 'block'; // Mostra o botão
+    }
+}
+
 
     function updateEditSaveButtonState() {
         // Seleciona o botão de salvar do formulário de edição
@@ -2201,9 +2219,10 @@ async function createBot() {
                 <input type="text" placeholder="Pergunta" value="${question}" maxlength="100">
                 <input type="text" placeholder="Resposta" value="${answer}" maxlength="300">
             </div>
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('edit-faq-list', 'edit-add-faq', 5)">×</button>
         `;
         faqList.appendChild(item);
+        updateAddButtonState('edit-faq-list', 'edit-add-faq', 5);
     }
 
     function addEditContactItem(sector = '', contact = '') {
@@ -2213,9 +2232,10 @@ async function createBot() {
         item.innerHTML = `
             <input type="text" placeholder="Para quem encaminhar?" value="${sector}" maxlength="100" style="flex-basis: 200px; flex-shrink: 0;">
             <input type="text" placeholder="Telefone, e-mail ou link de contato" value="${contact}" maxlength="300" style="flex-grow: 1;">
-            <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); updateAddButtonState('edit-contacts-list', 'edit-add-contact', 5)">×</button>
         `;
         contactsList.appendChild(item);
+        updateAddButtonState('edit-contacts-list', 'edit-add-contact', 5);
     }
 
     async function handleDownloadLeads(botId) {
@@ -2388,6 +2408,7 @@ async function createBot() {
         
         faqs.forEach(faq => {
             addEditFaqItem(faq.question, faq.answer);
+            updateAddButtonState('edit-faq-list', 'edit-add-faq', 5);
         });
     }
 
@@ -2397,6 +2418,7 @@ async function createBot() {
         
         contacts.forEach(contact => {
             addEditContactItem(contact.sector, contact.contact);
+            updateAddButtonState('edit-contacts-list', 'edit-add-contact', 5);
         });
     }
 
