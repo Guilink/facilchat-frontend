@@ -2538,9 +2538,9 @@ async function createBot() {
                 
                 // --- AQUI ESTÁ A CORREÇÃO ---
                 // Se o cálculo resultar em mais de 3 dias, nós o limitamos a 3 para exibição.
-                if (diffDays > 3) {
-                    diffDays = 3;
-                }
+                //if (diffDays > 3) {
+                //    diffDays = 3;
+                //}
                 
                 text = `Plano atual: Grátis (acaba em ${diffDays} dia${diffDays > 1 ? 's' : ''})`;
                 if (diffDays <= 2) {
