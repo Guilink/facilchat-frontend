@@ -1570,7 +1570,18 @@ async function createBot() {
         });
         
         elements.logoutBtn.addEventListener('click', () => {
-            auth.signOut();
+            // URL da sua landing page
+            const LANDING_PAGE_URL = 'https://facilchat.com.br';
+
+            auth.signOut().then(() => {
+                // Logout foi bem-sucedido. Agora podemos redirecionar.
+                console.log('Usuário deslogado. Redirecionando para a landing page.');
+                window.location.href = LANDING_PAGE_URL;
+            }).catch((error) => {
+                // Caso ocorra um erro improvável durante o logout
+                console.error('Erro ao fazer logout:', error);
+                alert('Ocorreu um erro ao tentar sair da sua conta.');
+            });
         });
         
         elements.startWizardBtn.addEventListener('click', () => { // Removido o 'async' daqui
