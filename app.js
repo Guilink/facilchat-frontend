@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(`Falha ao buscar stats para o bot ${botId}:`, error);
         }
     }
-    
+
     function renderDashboard() {
         // PASSO 1: SEMPRE limpa a lista de bots para evitar "fantasmas".
         elements.botsList.innerHTML = '';
@@ -1977,7 +1977,7 @@ async function createBot() {
                 scheduleModal.classList.remove('active');
                 document.body.style.overflow = 'auto';
                 const scheduleEnabled = scheduleModal.querySelector('#modal-schedule-enabled').checked;
-                document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Bot sempre ativo.';
+                document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Sem restrição, sempre ativo.';
             });
         }
 
@@ -2185,7 +2185,7 @@ async function createBot() {
         // --- Preenche os dados de Horário (código anterior já estava correto) ---
         const dayMapPtToEn = { 'segunda': 'monday', 'terca': 'tuesday', 'quarta': 'wednesday', 'quinta': 'thursday', 'sexta': 'friday', 'sabado': 'saturday', 'domingo': 'sunday' };
         const scheduleEnabled = bot.schedule_enabled || false;
-        document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Bot sempre ativo.';
+        document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Sem restrição, sempre ativo';
         document.getElementById('modal-schedule-enabled').checked = scheduleEnabled;
         document.getElementById('modal-schedule-details').style.display = scheduleEnabled ? 'block' : 'none';
         let scheduleData = [];
@@ -2524,7 +2524,7 @@ async function createBot() {
                     diffDays = 3;
                 }
                 
-                text = `Plano Trial (restam ${diffDays} dia${diffDays > 1 ? 's' : ''})`;
+                text = `Plano atual: Grátis (acaba em ${diffDays} dia${diffDays > 1 ? 's' : ''})`;
                 if (diffDays <= 2) {
                     planInfoEl.classList.add('trial-ending');
                 }

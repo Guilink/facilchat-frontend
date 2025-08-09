@@ -151,15 +151,15 @@
                     <div class="wizard-steps">
                         <div class="step" data-step="1">
                             <div class="step-icon"><svg width="24" height="24"><use xlink:href="#icon-user"/></svg></div>
-                            <div class="step-content"><h4>Criação de Assistente</h4><p>nome, função e tom de voz</p></div>
+                            <div class="step-content"><h4>Primeiros Passos</h4><p>Nome, função e tom de voz</p></div>
                         </div>
                         <div class="step" data-step="2">
                             <div class="step-icon"><svg width="24" height="24"><use xlink:href="#icon-settings"/></svg></div>
-                            <div class="step-content"><h4>Horário de Atendimento</h4><p>Quando o bot estará ativo</p></div>
+                            <div class="step-content"><h4>Horário de Atendimento</h4><p>Quando vai ficar ativo?</p></div>
                         </div>
                         <div class="step" data-step="3">
                             <div class="step-icon"><svg width="24" height="24"><use xlink:href="#icon-book-open"/></svg></div>
-                            <div class="step-content"><h4>Base de Conhecimento</h4><p>Treine com seus dados</p></div>
+                            <div class="step-content"><h4>Base de Conhecimento</h4><p>Alimente com seus dados</p></div>
                         </div>
                         <div class="step" data-step="4">
                             <div class="step-icon"><svg width="24" height="24"><use xlink:href="#icon-phone"/></svg></div>
@@ -205,7 +205,7 @@
                         </div>
                         <!-- PASSO 2: HORÁRIO -->
                         <div id="step-2" class="wizard-step">
-                            <div class="step-header"><h2>Configure seu horário.</h2><p>Defina o horário de funcionamento do seu bot.</p></div>
+                            <div class="step-header"><h2>Configure seu horário.</h2><p>Defina o horário de funcionamento para o seu assistente.</p></div>
                             <div class="schedule-options">
                                 <button type="button" class="schedule-preset active" data-preset="always">Sempre Ligado</button>
                                 <button type="button" class="schedule-preset" data-preset="commercial">Horário Comercial</button>
@@ -275,8 +275,8 @@
                             <div class="step-header"><h2>Base de Conhecimento</h2><p>Alimente seu assistente com as informações essenciais. Quanto mais dados, mais inteligente ele será.</p></div>
                             <div class="knowledge-sections">
                                 <div class="knowledge-section"><h3>Perguntas Frequentes (FAQ)</h3><p>Insira as dúvidas mais comuns dos seus clientes para respostas instantâneas.<br>Por exemplo "Qual é a localização?" ou "Vocês possuem Wi-fi?"</p><div id="faq-list" class="knowledge-list"></div><button type="button" id="add-faq" class="btn-add">+ Adicionar nova pergunta</button></div>
-                                <div class="knowledge-section"><h3>Documentos adicionais</h3><p>Envie arquivos em PDF ou imagens em JPG/PNG para enriquecer o conhecimento do bot.</p><div id="files-list" class="files-list"></div><div class="upload-area" id="upload-area"><button type="button" class="btn-upload"><svg width="24" height="24"><use xlink:href="#icon-upload"/></svg>Carregar Arquivos</button><input type="file" id="file-upload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display: none;" multiple></div></div>
-                                <div class="knowledge-section"><h3>Contatos para encaminhamento?</h3><p>Defina contatos para que o assistente passe o contato quando o bot não souber a resposta ou for solicitado.</p><div id="contacts-list" class="knowledge-list"></div><button type="button" id="add-contact" class="btn-add">+ Adicionar encaminhamento</button></div>
+                                <div class="knowledge-section"><h3>Documentos adicionais</h3><p>Envie arquivos em PDF ou imagens em JPG/PNG para enriquecer o conhecimento do assistente.</p><div id="files-list" class="files-list"></div><div class="upload-area" id="upload-area"><button type="button" class="btn-upload"><svg width="24" height="24"><use xlink:href="#icon-upload"/></svg>Carregar Arquivos</button><input type="file" id="file-upload" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display: none;" multiple></div></div>
+                                <div class="knowledge-section"><h3>Contatos para encaminhar</h3><p>Aqui você pode definir alguns contatos para a IA passar para seus clientes caso ela não saiba a resposta ou seja solicitado.</p><div id="contacts-list" class="knowledge-list"></div><button type="button" id="add-contact" class="btn-add">+ Adicionar encaminhamento</button></div>
                             </div>
                         </div>
                         <!-- PASSO 4: WHATSAPP -->
@@ -342,11 +342,11 @@
                     <div class="edit-main-content">
                         <!-- Card de Identidade -->
                         <div class="edit-card">
-                            <h3>Identidade do Assistente</h3>
-                            <p>Defina a personalidade e o propósito do seu assistente.</p>
+                            <h3>Informações Básicas</h3>
+                            <p>Defina um nome, função e tom de atendimento para seu assistente.</p>
                             
                             <div class="form-group">
-                                <label for="edit-bot-name">Nome do Bot</label>
+                                <label for="edit-bot-name">Nome do Assistente</label>
                                 <input type="text" id="edit-bot-name" required maxlength="30">
                             </div>
 
@@ -376,15 +376,15 @@
                         <!-- Card de Base de Conhecimento -->
                         <div class="edit-card">
                             <h3>Base de Conhecimento</h3>
-                            <p>Gerencie as informações que seu bot utiliza para responder.</p>
+                            <p>Gerencie as informações que seu assistente vai utilizar para responder.</p>
 
                             <div class="form-group">
-                                <label for="edit-knowledge-instructions">Outras instruções</label>
+                                <label for="edit-knowledge-instructions">Informações Gerais</label>
                                 <textarea id="edit-knowledge-instructions" rows="4" placeholder="Aqui é o lugar ideal para você descrever seus produtos, serviços ou cardápio, além de outras informações importantes como formas de atendimento, horários e promoções. Tudo o que você escrever será usado pela IA para responder melhor seus clientes." maxlength="2000"></textarea>
                             </div>
 
                             <div class="form-group">
-                                <label>Documentos Adicionais</label>
+                                <label>Documentos Adicionais (PDF e Imagens)</label>
                                 <div id="edit-files-list" class="files-list"></div>
                                 <div class="upload-area">
                                     <button type="button" class="btn-upload" id="edit-upload-btn">
@@ -397,7 +397,7 @@
                             <div class="form-group">
                                 <label>Perguntas Frequentes (FAQ)</label>
                                 <div id="edit-faq-list" class="knowledge-list"></div>
-                                <button type="button" id="edit-add-faq" class="btn-add">+ Adicionar FAQ</button>
+                                <button type="button" id="edit-add-faq" class="btn-add">+ Adicionar Pergunta</button>
                             </div>
                         </div>
                     </div>
@@ -421,14 +421,14 @@
                                 <label class="day-toggle"><input type="checkbox" id="edit-smart-snooze-enabled"><span class="toggle-slider"></span></label>
                             </div>
                              <div id="edit-smart-snooze-details" class="operation-details" style="display: none;">
-                                 <label for="edit-smart-snooze-minutes">Quantos minutos a IA deve esperar após um humano assumir o atendimento?</label>
+                                 <label for="edit-smart-snooze-minutes">Quantos minutos a IA deve descansar após um humano assumir o atendimento?</label>
                                  <input type="number" id="edit-smart-snooze-minutes" placeholder="15" min="1" max="120">
                              </div>
                         </div>
 
                         <!-- Card de Encaminhamento -->
                         <div class="edit-card">
-                            <h3>Encaminhamento Humano</h3>
+                            <h3>Contatos para Encaminhamento</h3>
                             <div id="edit-contacts-list" class="knowledge-list"></div>
                             <button type="button" id="edit-add-contact" class="btn-add">+ Adicionar</button>
                         </div>
