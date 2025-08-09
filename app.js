@@ -327,19 +327,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // Agora, atualiza a interface (o card específico do bot)
             const card = document.querySelector(`.bot-card[data-bot-id="${botId}"]`);
             if (card) {
+                // Seletores atualizados para o novo layout simples
                 const conversationsEl = card.querySelector('.stat-item:nth-child(1) .stat-number');
-                const sentEl = card.querySelector('.volume-item:nth-child(1) span');
-                const receivedEl = card.querySelector('.volume-item:nth-child(2) span');
+                const responsesEl = card.querySelector('.stat-item:nth-child(2) .stat-number');
+                const leadsEl = card.querySelector('.stat-item:nth-child(3) .stat-number');
 
+                // Popula os elementos com os dados corretos
                 if (conversationsEl) conversationsEl.textContent = stats.conversations;
-                if (sentEl) sentEl.textContent = stats.messagesSent;
-                if (receivedEl) receivedEl.textContent = stats.messagesReceived;
+                // "Respostas" agora pega o valor de "messagesSent"
+                if (responsesEl) responsesEl.textContent = stats.messagesSent; 
+                if (leadsEl) leadsEl.textContent = stats.leadsCollected;
             }
         } catch (error) {
             console.error(`Falha ao buscar stats para o bot ${botId}:`, error);
         }
-    }    
-
+    }
+    
     function renderDashboard() {
         // PASSO 1: SEMPRE limpa a lista de bots para evitar "fantasmas".
         elements.botsList.innerHTML = '';
@@ -461,17 +464,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="stat-label">Conversas</div>
                 </div>
                 
-                <!-- Novo Bloco de Volume -->
-                <div class="stat-item volume-stats" title="Mensagens enviadas e recebidas">
-                    <div class="volume-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-                        <span>0</span>
-                    </div>
-                    <div class="volume-item">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-                        <span>0</span>
-                    </div>
-                    <div class="stat-label">Volume</div>
+                <div class="stat-item">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Respostas</div>
                 </div>
                 
                 <div class="stat-item">
@@ -479,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="stat-label">Leads</div>
                 </div>
             </div>
-            
+
             <div class="bot-actions">
                 <div class="bot-actions-left">
                     ${connectionButtonHTML}
