@@ -2660,7 +2660,7 @@ async function createBot() {
             let viewToShow = 'dashboard'; // Padrão
 
             if (linkText === 'Planos') {
-                viewToShow = 'plans';
+            //  viewToShow = 'plans';
             } else if (linkText === 'Painel') {
                 viewToShow = 'dashboard';
             }
