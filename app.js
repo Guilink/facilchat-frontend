@@ -311,8 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // COLE ESTA NOVA FUNÇÃO NO SEU app.js
-
     async function fetchBotStats(botId) {
         try {
             const token = await getAuthToken();
@@ -2650,8 +2648,6 @@ async function createBot() {
         
         console.log('✅ Inicialização configurada. App aguardando autenticação...');      
     }
-
-    // COLE ESTA NOVA FUNÇÃO INTEIRA NO SEU app.js
 
     function setupNavigation() {
         const navContainer = document.querySelector('.header-nav');
