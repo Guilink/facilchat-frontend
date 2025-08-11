@@ -1450,16 +1450,25 @@ async function createBot() {
         });
 
         socket.on("request_new_qr", (data) => {
-            // CONDIÇÃO DE GUARDA PRINCIPAL:
-            // Se o usuário não está ativamente tentando conectar, OU o pedido é para um bot diferente,
-            // simplesmente ignore este evento. Ele é um "fantasma" de uma tentativa anterior.
+            // --- INÍCIO DA CORREÇÃO DEFINITIVA ---
+            // VERIFICAÇÃO DE AUTENTICAÇÃO: Esta é a guarda mais segura.
+            // Ela pergunta: "O usuário ainda está logado nesta aba?"
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                console.warn("Recebido 'request_new_qr', mas nenhum usuário está logado. Ignorando para quebrar o loop fantasma.");
+                return; // Quebra o ciclo de reconexão imediatamente.
+            }
+            // --- FIM DA CORREÇÃO DEFINITIVA ---
+
+            // A verificação abaixo continua sendo útil para o caso de o usuário estar logado,
+            // mas ter abandonado a tela de conexão de um bot para tentar conectar outro.
             if (!isActivelyConnecting || data.botId != editingBotId) {
-                console.log(`[Smart Refresh] Evento ignorado para o bot ${data.botId} pois não há um fluxo de conexão ativo.`);
+                console.log(`[Smart Refresh] Evento ignorado para o bot ${data.botId} pois não é o fluxo de conexão ativo no momento.`);
                 return;
             }
 
-            // Se a guarda passar, significa que o usuário AINDA está na tela de conexão
-            // esperando por um QR code, e a lógica para atualizar é bem-vinda.
+            // Se as guardas passarem, significa que o usuário está logado E na tela de conexão
+            // do bot correto, então a lógica para atualizar é bem-vinda.
             console.log(`[Smart Refresh] Recebido pedido do backend para gerar novo QR para o bot ${data.botId}`);
             
             const isUserInWizard = views.wizard.classList.contains('active');
