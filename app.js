@@ -958,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleWizardContinue() {
+    async function handleWizardContinue() {
         validateWizardStep(currentWizardStep);
         if (elements.wizardContinue.disabled && currentWizardStep !== 4) {
             return;
@@ -970,17 +970,17 @@ document.addEventListener('DOMContentLoaded', () => {
         } 
         // Se estamos na última etapa (botão "Fazer isso depois")
         else {
-            // Apenas fecha o wizard e vai para o dashboard
             console.log('Usuário clicou em "Fazer isso depois". Indo para o dashboard.');
             
-            // É importante chamar a função para cancelar a tentativa de conexão atual
+            // Forçamos o código a ESPERAR que o processo de cancelamento termine
+            // antes de prosseguir para as próximas linhas.
             if (editingBotId) {
-                handleConnectionToggle(editingBotId, 'connecting');
+                await handleConnectionToggle(editingBotId, 'connecting');
             }
             isActivelyConnecting = false;
             resetWizard();
             showView('dashboard');
-            fetchBots(); // Garante que a lista de bots (com o novo bot) seja carregada
+            await fetchBots();
         }
     }
 
@@ -1631,24 +1631,20 @@ async function createBot() {
         });
 
         
-        elements.closeWizard.addEventListener('click', () => {
+        elements.closeWizard.addEventListener('click', async () => { // Adiciona async
             console.log('Wizard fechado pelo botão "X".');
 
-            // Se um bot foi criado ou está em processo de conexão (identificado por wizardBotId ou editingBotId),
-            // é preciso cancelar a tentativa de conexão.
             const botIdToCancel = wizardBotId || editingBotId;
             if (botIdToCancel) {
                 console.log(`[Frontend] Cancelando conexão pendente para o bot ${botIdToCancel}.`);
-                handleConnectionToggle(botIdToCancel, 'connecting');
+                // Adiciona await para esperar a finalização
+                await handleConnectionToggle(botIdToCancel, 'connecting'); 
             }
 
             isActivelyConnecting = false;
-            // Reseta o estado do wizard.
             resetWizard();
-            // Mostra o dashboard.
             showView('dashboard');
-            // ATUALIZA o dashboard para garantir que o novo bot (se criado) apareça.
-            fetchBots(); 
+            await fetchBots(); // Adiciona await por boa prática
         });
 
         elements.backToDashboard.addEventListener('click', () => {
