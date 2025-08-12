@@ -553,13 +553,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>Aguarde enquanto preparamos a conexão com o WhatsApp.</p>
                     </div>
                 `);
+
+
                 
                 // 2. Chama a API para iniciar o processo de conexão no backend.
                 // A resposta aqui apenas confirma que o processo começou.
                 // O QR code e o status de sucesso virão pelos eventos do WebSocket.
                 response = await fetch(`${API_BASE_URL}/api/bots/${botId}/connect`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: {
+                        'Content-Type': 'application/json', // PRECISA ter este header
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    // Adicionamos o socket.id no corpo da requisição
+                    body: JSON.stringify({ socketId: socket.id }) 
                 });
                 
                 // A antiga lógica de "showView('wizard')" foi removida daqui.
@@ -1261,7 +1268,11 @@ async function createBot() {
             // Faz a chamada à API para o backend iniciar o processo
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/connect`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ socketId: socket.id })
             });
 
             if (!response.ok) {
