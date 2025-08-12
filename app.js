@@ -1460,6 +1460,37 @@ async function createBot() {
             });
         });
 
+        socket.on("connection_failure", (data) => {
+            // ... (código existente)
+        });
+
+        // --- ADICIONE ESTE NOVO BLOCO ---
+        socket.on("connection_timeout", (data) => {
+            if (data.botId != editingBotId) return;
+            isActivelyConnecting = false;
+            
+            console.error(`[Timeout] O tempo de conexão para o bot ${data.botId} expirou.`);
+
+            const errorHTML = `
+                <div class="qr-error">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="1.5">
+                       <circle cx="12" cy="12" r="10"></circle>
+                       <line x1="12" y1="8" x2="12" y2="12"></line>
+                       <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <h3 style="margin-top: 1rem;">Tempo Esgotado</h3>
+                    <p style="max-width: 90%; margin: 0 auto;">O tempo para escanear o QR Code expirou. Por favor, clique em cancelar e tente novamente.</p>
+                </div>
+            `;
+            
+            const wizardViewIsActive = views.wizard.classList.contains('active');
+            if (wizardViewIsActive) {
+                elements.qrDisplay.innerHTML = errorHTML;
+            } else {
+                showQrModal(errorHTML);
+            }
+        });        
+
         socket.on("request_new_qr", (data) => {
             // --- INÍCIO DA CORREÇÃO DEFINITIVA ---
             // VERIFICAÇÃO DE AUTENTICAÇÃO: Esta é a guarda mais segura.
