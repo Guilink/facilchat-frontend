@@ -1,5 +1,62 @@
 // FacilChat - Frontend JavaScript
 document.addEventListener('DOMContentLoaded', () => {
+    // =================================================================
+    // =========== CONFIGURAÇÃO WHITELABEL / REVENDEDORES ==============
+    // =================================================================
+    
+    // Este é o nosso "mapa" de revendedores. 
+    // Para adicionar um novo, basta adicionar uma nova linha com o domínio e o link de contato.
+    const resellerMap = {
+        '360agencia.adnest.com.br': {
+            contactLink: 'https://wa.me/5511999899032?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20os%20planos%20do%20assistente%20virtual.'
+        },
+        'dix.adnest.com.br': {
+            contactLink: 'https://wa.me/55983477906?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20os%20planos%20do%20assistente%20virtual'
+        },
+        // Exemplo de como adicionar um terceiro revendedor no futuro:
+        // 'nome-do-cliente.adnest.com.br': {
+        //     contactLink: 'SEU_LINK_DE_WHATSAPP_AQUI'
+        // },
+    };
+    // =================== FIM DA CONFIGURAÇÃO =========================    
+
+// Detecta o domínio atual e verifica se está no nosso mapa de revendedores.
+    const currentHostname = window.location.hostname;
+    const whitelabelConfig = resellerMap[currentHostname];
+    const isWhitelabelMode = !!whitelabelConfig; // Isso será 'true' se for um revendedor, e 'false' caso contrário.
+
+    console.log(`[Whitelabel Check] Host: ${currentHostname} | Modo Whitelabel: ${isWhitelabelMode}`);    
+    
+    // Função que aplica todas as mudanças visuais do modo Whitelabel
+    function applyWhitelabelMode() {
+        if (!isWhitelabelMode) return; // Se não for whitelabel, não faz nada.
+
+        // 1. Esconder a guia "Planos" do menu principal
+        const plansLink = document.querySelector('.header-nav a.nav-link:nth-child(2)');
+        if (plansLink && plansLink.textContent.trim() === 'Planos') {
+            plansLink.style.display = 'none';
+        }
+
+        // 2. Esconder a view de Planos (caso o usuário tente acessar de alguma forma)
+        if (views.plans) {
+            views.plans.style.display = 'none';
+        }
+
+        // 3. Trocar o card de promoção do "Plano Elite" pelo card de "Contato"
+        // Esta função será chamada depois que o usuário logar.
+        const allPromoCards = document.querySelectorAll('.sidebar-content .promo-card');
+        allPromoCards.forEach(card => {
+            const cardTitle = card.querySelector('h3');
+            if (cardTitle && cardTitle.textContent.includes('Plano Elite')) {
+                card.innerHTML = `
+                    <h3>Fale Conosco</h3>
+                    <p>Quer saber mais sobre os planos ou precisa de ajuda? Entre em contato com nosso suporte.</p>
+                    <a href="${whitelabelConfig.contactLink}" target="_blank" class="btn-link">Chamar no WhatsApp</a>
+                `;
+            }
+        });
+    }
+
     // === CONFIGURAÇÕES ===
     const firebaseConfig = {
         apiKey: "AIzaSyD6KF1OxewXN1gI81Lsm9i82bkps1UxwJ8",
@@ -171,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ETAPA 3: TRANSIÇÃO VISUAL FINAL (Após tudo carregar)
                 elements.header.style.display = 'block'; // AGORA sim, mostra o header
                 showView('dashboard');                   // MOSTRA o dashboard
+                applyWhitelabelMode();                   // <-- ADICIONE ESTA LINHA AQUI
 
             } catch (error) {
                 console.error('ERRO CRÍTICO DURANTE A INICIALIZAÇÃO:', error);
@@ -1622,15 +1680,21 @@ async function createBot() {
         });
         
         elements.logoutBtn.addEventListener('click', () => {
-            // URL da sua landing page
             const LANDING_PAGE_URL = 'https://facilchat.com.br';
 
             auth.signOut().then(() => {
-                // Logout foi bem-sucedido. Agora podemos redirecionar.
-                console.log('Usuário deslogado. Redirecionando para a landing page.');
-                window.location.href = LANDING_PAGE_URL;
+                // ---- INÍCIO DA LÓGICA WHITELABEL ----
+                if (isWhitelabelMode) {
+                    // No modo revendedor, apenas recarrega a página de login atual.
+                    console.log('Logout em modo Whitelabel. Recarregando a página.');
+                    window.location.reload();
+                } else {
+                    // No modo padrão, redireciona para a landing page.
+                    console.log('Logout em modo Padrão. Redirecionando para a landing page.');
+                    window.location.href = LANDING_PAGE_URL;
+                }
+                // ---- FIM DA LÓGICA WHITELABEL ----
             }).catch((error) => {
-                // Caso ocorra um erro improvável durante o logout
                 console.error('Erro ao fazer logout:', error);
                 alert('Ocorreu um erro ao tentar sair da sua conta.');
             });
