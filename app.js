@@ -1466,7 +1466,10 @@ async function createBot() {
 
         // --- ADICIONE ESTE NOVO BLOCO ---
         socket.on("connection_timeout", (data) => {
-            if (data.botId != editingBotId) return;
+            if (!isActivelyConnecting || data.botId != editingBotId) {
+                console.log(`[Timeout] Evento de timeout para o bot ${data.botId} ignorado, pois não é a conexão ativa.`);
+                return;
+            }
             isActivelyConnecting = false;
             
             console.error(`[Timeout] O tempo de conexão para o bot ${data.botId} expirou.`);
