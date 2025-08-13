@@ -2703,14 +2703,14 @@ async function createBot() {
 
         // --- PARTE 4: POPULA A DISPONIBILIDADE (CÓDIGO CORRIGIDO) ---
         try {
-            // Tenta "traduzir" a string JSON que vem do backend para um objeto JavaScript.
+            // Tenta "traduzir" a string JSON para um objeto JavaScript.
             const rulesObject = JSON.parse(bot.availability_rules);
             populateAvailability(rulesObject);
         } catch (e) {
             // Se `availability_rules` for nulo, vazio ou inválido, o JSON.parse vai falhar.
             // Nesse caso, chamamos a função sem argumentos para que ela desenhe o padrão.
             console.warn("Regras de disponibilidade não encontradas ou inválidas, carregando padrão.");
-            populateAvailability(); // Carrega a interface padrão
+            populateAvailability();
         }
         
         // --- PARTE 5: VERIFICA O STATUS DA CONEXÃO COM O GOOGLE ---
