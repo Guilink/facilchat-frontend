@@ -887,52 +887,107 @@ document.addEventListener('DOMContentLoaded', () => {
             const dayConfig = currentAgenda.schedule_config.days.find(d => d.day === dayKeys[dayOfWeekIndex]);
             const workingHours = (dayConfig && dayConfig.active) ? { open: dayConfig.open, close: dayConfig.close } : null;
 
-            const { appointments, overrides } = await fetchAppointmentsForDay(apiDate); // Agora retorna dois arrays
-            gridEl.innerHTML = '';
+            const { appointments, overrides } = await fetchAppointmentsForDay(apiDate);
+            const occupiedSlots = new Set(); // Guarda os horários já preenchidos por agendamentos
+
+            gridEl.innerHTML = ''; // Limpa o spinner
 
             let currentTime = new Date(selectedDate);
             const [startHour, startMinute] = dayBoundaries.start.split(':').map(Number);
             currentTime.setHours(startHour, startMinute, 0, 0);
+            
             const dayEndTime = new Date(selectedDate);
             const [endHour, endMinute] = dayBoundaries.end.split(':').map(Number);
             dayEndTime.setHours(endHour, endMinute, 0, 0);
 
             while (currentTime < dayEndTime) {
                 const slotStartTime = new Date(currentTime);
-                const timeString = slotStartTime.toTimeString().substring(0, 5);
+                const slotTimeValue = slotStartTime.getTime();
                 const slotISO = slotStartTime.toISOString();
+
+                if (occupiedSlots.has(slotTimeValue)) {
+                    currentTime.setMinutes(currentTime.getMinutes() + interval);
+                    continue; 
+                }
+
                 const slotEl = document.createElement('div');
                 slotEl.className = 'day-schedule-slot';
-
-                const appointmentInSlot = appointments.find(app => new Date(app.start_time).getTime() === slotStartTime.getTime());
-                const overrideInSlot = overrides.find(ov => new Date(ov.slot_time).getTime() === slotStartTime.getTime());
+                slotEl.dataset.time = slotStartTime.toTimeString().substring(0, 5);
+                
+                const appointmentInSlot = appointments.find(app => new Date(app.start_time).getTime() === slotTimeValue);
 
                 if (appointmentInSlot) {
                     slotEl.classList.add('booked');
-                    slotEl.innerHTML = `<span>${timeString}</span><span>${appointmentInSlot.client_name || 'Agendado'}</span>`;
-                    slotEl.style.cursor = "help";
-                    slotEl.title = `Agendado para: ${appointmentInSlot.client_name}`;
-                } else {
-                    let status = 'available'; // Padrão
-                    const isOutsideWorkingHours = workingHours ? (timeString < workingHours.open || timeString >= workingHours.close) : true;
-                    if (isOutsideWorkingHours) status = 'blocked';
+                    const startTime = new Date(appointmentInSlot.start_time);
+                    const endTime = new Date(appointmentInSlot.end_time);
+                    const duration = (endTime - startTime) / (1000 * 60);
+                    const slotSpan = Math.max(1, Math.ceil(duration / interval));
+                    
+                    slotEl.style.gridRow = `span ${slotSpan}`;
 
-                    if (overrideInSlot) status = overrideInSlot.status;
+                    slotEl.innerHTML = `
+                        <div class="slot-info">
+                            <span class="slot-time">${slotEl.dataset.time}</span>
+                            <span class="client-name">${appointmentInSlot.client_name || 'Agendado'}</span>
+                            <small>${appointmentInSlot.service_name || 'Serviço não especificado'}</small>
+                        </div>
+                        <div class="slot-actions">
+                             <button class="slot-action-btn" title="Editar Agendamento" onclick="openAppointmentModal('${slotISO}', ${JSON.stringify(appointmentInSlot).replace(/"/g, '&quot;').replace(/'/g, '&#39;')} )">
+                                <svg width="18" height="18"><use xlink:href="#icon-edit"/></svg>
+                            </button>
+                        </div>
+                    `;
+                    
+                    for (let i = 1; i < slotSpan; i++) {
+                        const nextSlotTime = new Date(slotStartTime);
+                        nextSlotTime.setMinutes(nextSlotTime.getMinutes() + (i * interval));
+                        occupiedSlots.add(nextSlotTime.getTime());
+                    }
+
+                } else {
+                    const overrideInSlot = overrides.find(ov => new Date(ov.slot_time).getTime() === slotTimeValue);
+                    let status = 'default';
+                    
+                    if (overrideInSlot) {
+                        status = overrideInSlot.status; // 'blocked' ou 'available'
+                    } else {
+                        const timeString = slotEl.dataset.time;
+                        const isOutsideWorkingHours = workingHours ? (timeString < workingHours.open || timeString >= workingHours.close) : true;
+                        if (isOutsideWorkingHours) status = 'blocked_by_schedule';
+                        else status = 'available';
+                    }
 
                     if (status === 'available') {
                         slotEl.classList.add('available');
-                        slotEl.innerHTML = `<span>${timeString}</span><span>Disponível</span>`;
-                        slotEl.onclick = () => window.handleToggleSlot(slotISO, 'blocked');
-                    } else {
+                         slotEl.innerHTML = `
+                            <span class="slot-time">${slotEl.dataset.time}</span>
+                            <div class="slot-actions">
+                                <button class="slot-action-btn" title="Bloquear horário" onclick="handleToggleSlot('${slotISO}', 'blocked')">
+                                    <svg width="18" height="18"><use xlink:href="#icon-unlock"/></svg>
+                                </button>
+                                <button class="slot-action-btn" title="Novo Agendamento" onclick="openAppointmentModal('${slotISO}')">
+                                    <svg width="18" height="18"><use xlink:href="#icon-plus-circle"/></svg>
+                                </button>
+                            </div>
+                        `;
+                    } else { // 'blocked' ou 'blocked_by_schedule'
                         slotEl.classList.add('blocked');
-                        slotEl.innerHTML = `<span>${timeString}</span><span>Bloqueado</span>`;
-                        slotEl.onclick = () => window.handleToggleSlot(slotISO, 'available');
+                        slotEl.innerHTML = `
+                            <span class="slot-time">${slotEl.dataset.time}</span>
+                            <div class="slot-actions">
+                                <button class="slot-action-btn" title="Liberar horário" onclick="handleToggleSlot('${slotISO}', 'available')">
+                                    <svg width="18" height="18"><use xlink:href="#icon-lock"/></svg>
+                                </button>
+                            </div>
+                        `;
                     }
                 }
+                
                 gridEl.appendChild(slotEl);
                 currentTime.setMinutes(currentTime.getMinutes() + interval);
             }
         } catch (error) {
+            console.error(error);
             gridEl.innerHTML = `<p class="error-message">Não foi possível carregar os horários.</p>`;
             showToast(error.message, 'error');
         }
@@ -974,12 +1029,125 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDaySchedule();
     }
 
+    window.openAppointmentModal = function(slotISO, appointment = null) {
+        const modal = document.getElementById('appointment-modal');
+        const form = document.getElementById('appointment-form');
+        const title = document.getElementById('appointment-modal-title');
+        const serviceSelect = document.getElementById('appointment-service');
+
+        form.reset(); // Limpa o formulário
+
+        // Popula o <select> de serviços
+        serviceSelect.innerHTML = '<option value="" disabled selected>Selecione um serviço...</option>';
+        currentAgenda.services.forEach(service => {
+            const option = document.createElement('option');
+            option.value = service.id;
+            option.textContent = `${service.name} (${service.duration_minutes} min)`;
+            option.dataset.duration = service.duration_minutes;
+            serviceSelect.appendChild(option);
+        });
+        
+        // Armazena a data de início no formulário
+        document.getElementById('appointment-slot-start-time').value = slotISO;
+
+        if (appointment) {
+            // --- MODO EDIÇÃO ---
+            title.textContent = 'Editar Agendamento';
+            document.getElementById('appointment-edit-id').value = appointment.id;
+            document.getElementById('appointment-service').value = appointment.service_id;
+            document.getElementById('appointment-client-name').value = appointment.client_name;
+            document.getElementById('appointment-client-phone').value = appointment.client_phone || '';
+            document.getElementById('appointment-notes').value = appointment.notes || '';
+        } else {
+            // --- MODO CRIAÇÃO ---
+            title.textContent = 'Novo Agendamento';
+            document.getElementById('appointment-edit-id').value = '';
+        }
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Função para salvar (criar ou atualizar) o agendamento
+    async function handleSaveAppointment(event) {
+        event.preventDefault(); // Impede o recarregamento da página
+        const saveBtn = document.getElementById('save-appointment-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner"></span> Salvando...';
+
+        try {
+            const token = await getAuthToken();
+            const serviceSelect = document.getElementById('appointment-service');
+            const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+            
+            const startTime = new Date(document.getElementById('appointment-slot-start-time').value);
+            const duration = parseInt(selectedOption.dataset.duration, 10);
+            const endTime = new Date(startTime.getTime() + duration * 60000);
+
+            // Monta o corpo da requisição
+            const appointmentData = {
+                agenda_id: currentAgenda.id,
+                service_id: document.getElementById('appointment-service').value,
+                client_name: document.getElementById('appointment-client-name').value,
+                client_phone: document.getElementById('appointment-client-phone').value,
+                notes: document.getElementById('appointment-notes').value,
+                start_time: startTime.toISOString(),
+                end_time: endTime.toISOString(),
+                status: 'confirmed' // Agendamentos manuais são sempre confirmados
+            };
+
+            // Por enquanto, a edição não foi implementada no backend, então só criamos.
+            const response = await fetch(`${API_BASE_URL}/api/appointments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(appointmentData)
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || "Falha ao salvar o agendamento.");
+            }
+            
+            showToast("Agendamento salvo com sucesso!", 'success');
+            closeAppointmentModal();
+            renderDaySchedule(); // Atualiza a grade
+
+        } catch (error) {
+            console.error("Erro ao salvar agendamento:", error);
+            showToast(error.message, 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Salvar Agendamento';
+        }
+    }
+
+    // Função para fechar o modal
+    function closeAppointmentModal() {
+        const modal = document.getElementById('appointment-modal');
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }    
+
     // Listener para o botão de voltar
     function setupCalendarListeners() {
+        // Listener para o botão de voltar (já existente)
         document.getElementById('back-to-agendas-btn').addEventListener('click', () => {
             showView('agendas');
         });
-    }    
+
+        // --- INÍCIO DA NOVA LÓGICA ---
+        const appointmentModal = document.getElementById('appointment-modal');
+        if (appointmentModal) {
+            // Listener para o envio do formulário
+            appointmentModal.querySelector('form').addEventListener('submit', handleSaveAppointment);
+
+            // Listeners para os botões de fechar
+            appointmentModal.querySelectorAll('[data-target-modal="appointment-modal"]').forEach(btn => {
+                btn.addEventListener('click', closeAppointmentModal);
+            });
+        }
+        // --- FIM DA NOVA LÓGICA ---
+    }
 
     function createBotCard(bot) {
         const card = document.createElement('div');
