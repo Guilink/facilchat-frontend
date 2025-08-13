@@ -426,6 +426,32 @@
                              </div>
                         </div>
 
+                        <!-- ======================================================= -->
+                        <!-- === NOVO CARD DE CONFIGURAÇÃO DE AGENDAMENTO (COLE AQUI) === -->
+                        <!-- ======================================================= -->
+                        <div class="edit-card" id="schedule-integration-card">
+                            <h3>Integração com Agenda</h3>
+                            <p>Conecte uma agenda para que o bot possa marcar compromissos automaticamente.</p>
+                            
+                            <!-- Estado 1: Desconectado -->
+                            <div id="google-connect-view">
+                                <button type="button" id="connect-google-btn" class="btn-primary-full">
+                                    <svg width="20" height="20" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 381.5 512 244 512 111.8 512 0 398.2 0 256S111.8 0 244 0c69.8 0 130.8 28.5 173.4 74.5l-68.3 67.3c-24.5-23.4-58.3-38.3-96.1-38.3-72.8 0-131.9 59.1-131.9 131.9s59.1 131.9 131.9 131.9c79.9 0 119.5-54.2 124.9-82.9H244v-87.2h244z"/></svg>
+                                    Conectar com Google Agenda
+                                </button>
+                            </div>
+
+                            <!-- Estado 2: Conectado -->
+                            <div id="google-connected-view" style="display: none;">
+                                <div class="connection-status">
+                                    <span class="status-icon-success">✅</span>
+                                    Conectado como: <strong id="google-user-email"></strong>
+                                </div>
+                                <button type="button" id="disconnect-google-btn" class="btn-secondary">Desconectar</button>
+                            </div>
+                        </div>
+                        <!-- =================== FIM DO NOVO CARD ==================== -->                        
+
                         <!-- Card de Encaminhamento -->
                         <div class="edit-card">
                             <h3>Contatos para Encaminhamento</h3>
