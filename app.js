@@ -124,6 +124,24 @@ document.addEventListener('DOMContentLoaded', () => {
         googleConnectedView: document.getElementById('google-connected-view')        
     };
 
+    // --- NOVA FUNÇÃO: Atualiza a UI do card de integração com a agenda ---
+    function updateGoogleConnectionView(status) {
+        const connectView = document.getElementById('google-connect-view');
+        const connectedView = document.getElementById('google-connected-view');
+        const userEmailSpan = document.getElementById('google-user-email');
+
+        if (status.isConnected) {
+            // Mostra o card de "Conectado" e esconde o de "Conectar"
+            connectView.style.display = 'none';
+            connectedView.style.display = 'flex'; // Usamos flex para alinhar corretamente
+            userEmailSpan.textContent = status.email;
+        } else {
+            // Mostra o card de "Conectar" e esconde o de "Conectado"
+            connectView.style.display = 'block';
+            connectedView.style.display = 'none';
+        }
+    }    
+
     // Adicione esta nova função auxiliar
     function updateUploadButtonState(listElementId, buttonElementId) {
         const list = document.getElementById(listElementId);
@@ -2189,6 +2207,11 @@ async function createBot() {
         if (connectBtn) {
             connectBtn.addEventListener('click', handleConnectGoogleClick);
         }        
+        // --- NOVA FUNÇÃO: Lida com o clique no botão de desconexão do Google ---
+        const disconnectBtn = document.getElementById('disconnect-google-btn');
+        if (disconnectBtn) {
+            disconnectBtn.addEventListener('click', handleDisconnectGoogleClick);
+        }        
 
         isEditViewInitialized = true;
     }
@@ -2302,8 +2325,9 @@ async function createBot() {
         }
     }
 
-    function populateEditFormWithBotData(bot) {
-        // --- Preenche o cabeçalho e campos de identidade ---
+    // Adicionamos a palavra-chave 'async' aqui para permitir o uso do 'await' dentro dela.
+    async function populateEditFormWithBotData(bot) {
+        // --- PARTE 1: Preenche o cabeçalho e campos de identidade (código original) ---
         document.getElementById('editing-bot-name-header').textContent = bot.name || 'Bot sem nome';
         document.getElementById('edit-bot-id').value = bot.id;
         document.getElementById('edit-bot-name').value = bot.name || '';
@@ -2335,25 +2359,20 @@ async function createBot() {
             toneCustomTextarea.value = bot.tone_custom_description || '';
         }
         
-        // --- Preenche a Base de Conhecimento (INCLUINDO "OUTRAS INSTRUÇÕES") ---
+        // --- PARTE 2: Preenche a Base de Conhecimento (código original) ---
         const instructionsTextarea = document.getElementById('edit-knowledge-instructions');
         instructionsTextarea.value = bot.knowledge_instructions || '';
-        instructionsTextarea.style.display = 'block'; // Garante que o campo esteja sempre visível
+        instructionsTextarea.style.display = 'block';
 
         populateEditFAQ(bot.knowledge_faq || []);
         populateEditFiles(bot.knowledge_files || []);
         
-        // --- Preenche a Sidebar de Operações ---
+        // --- PARTE 3: Preenche a Sidebar de Operações (código original) ---
         const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
         const leadDetails = document.getElementById('edit-lead-collection-details');
         const leadPromptTextarea = document.getElementById('edit-lead-collection-prompt');
-
-        // Define o valor do textarea com o texto do bot ou o padrão
         leadPromptTextarea.value = bot.lead_collection_prompt || 'Olá! Para podermos iniciar, poderia me dizer como você nos encontrou? (Ex: Instagram, Google, Indicação)';
-        
-        // Define o estado do toggle
         leadEnabledCheckbox.checked = bot.lead_collection_enabled || false;
-        // Mostra ou esconde o container com base no estado do toggle
         leadDetails.style.display = leadEnabledCheckbox.checked ? 'block' : 'none';
 
         const snoozeEnabledCheckbox = document.getElementById('edit-smart-snooze-enabled');
@@ -2364,7 +2383,6 @@ async function createBot() {
 
         populateEditContacts(bot.knowledge_contacts || []);
 
-        // --- Preenche os dados de Horário (código anterior já estava correto) ---
         const dayMapPtToEn = { 'segunda': 'monday', 'terca': 'tuesday', 'quarta': 'wednesday', 'quinta': 'thursday', 'sexta': 'friday', 'sabado': 'saturday', 'domingo': 'sunday' };
         const scheduleEnabled = bot.schedule_enabled || false;
         document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Sem restrição, sempre ativo';
@@ -2391,7 +2409,54 @@ async function createBot() {
                 }
             });
         }
+
+        // --- PARTE 4: VERIFICA O STATUS DA CONEXÃO COM O GOOGLE (NOVO BLOCO) ---
+        // Este bloco é adicionado no final para rodar após o resto do formulário ser preenchido.
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/google/status`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const status = await response.json();
+            
+            // Se a chamada à API funcionou, atualiza a interface com a resposta
+            if (response.ok) {
+                updateGoogleConnectionView(status);
+            } else {
+                // Se a API deu erro, por segurança, mostra o estado de "desconectado"
+                updateGoogleConnectionView({ isConnected: false });
+            }
+        } catch (error) {
+            console.error("Erro ao buscar status do Google:", error);
+            // Se houve um erro de rede, também mostra o estado de "desconectado"
+            updateGoogleConnectionView({ isConnected: false });
+        }
     }
+
+    // --- NOVA FUNÇÃO: Lida com o clique para desconectar do Google ---
+    async function handleDisconnectGoogleClick() {
+        if (!confirm("Tem certeza que deseja desconectar sua conta do Google Agenda? O bot não poderá mais criar agendamentos.")) {
+            return;
+        }
+
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/google/disconnect`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error("Falha ao desconectar.");
+
+            // Atualiza a UI para o estado "desconectado"
+            updateGoogleConnectionView({ isConnected: false });
+            showToast("Agenda desconectada.", "success");
+
+        } catch (error) {
+            console.error("Erro ao desconectar do Google:", error);
+            showToast("Não foi possível desconectar. Tente novamente.", "error");
+        }
+    }    
 
     function addEditFaqItem(question = '', answer = '') {
         const faqList = document.getElementById('edit-faq-list');
