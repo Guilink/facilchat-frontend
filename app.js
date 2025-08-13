@@ -129,23 +129,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const connectView = document.getElementById('google-connect-view');
         const connectedView = document.getElementById('google-connected-view');
         const userEmailSpan = document.getElementById('google-user-email');
-        const servicesView = document.getElementById('services-management-view');
-        const availabilityView = document.getElementById('availability-management-view'); // Nova linha
+        const servicesView = document.getElementById('services-management-view'); // Nova linha
 
         if (status.isConnected) {
             connectView.style.display = 'none';
             connectedView.style.display = 'flex';
-            servicesView.style.display = 'block';
-            availabilityView.style.display = 'block'; // Mostra a disponibilidade
+            servicesView.style.display = 'block'; // Mostra os serviços
             userEmailSpan.textContent = status.email;
             
+            // Popula a lista de serviços quando o usuário está conectado
             if(editingBotId) populateServices(editingBotId);
 
         } else {
             connectView.style.display = 'block';
             connectedView.style.display = 'none';
-            servicesView.style.display = 'none';
-            availabilityView.style.display = 'none'; // Esconde a disponibilidade
+            servicesView.style.display = 'none'; // Esconde os serviços
         }
     }
 
@@ -2223,10 +2221,6 @@ async function createBot() {
         if (addServiceBtn) {
             addServiceBtn.addEventListener('click', handleAddService);
         }        
-        const saveAvailabilityBtn = document.getElementById('save-availability-btn');
-        if (saveAvailabilityBtn) {
-            saveAvailabilityBtn.addEventListener('click', handleSaveAvailability);
-        }        
 
         isEditViewInitialized = true;
     }
@@ -2334,178 +2328,6 @@ async function createBot() {
             showToast("Não foi possível remover o serviço.", "error");
         }
     }
-
-    // Função para desenhar a grade da semana
-    function renderAvailabilityScheduler() {
-        const container = document.getElementById('weekly-availability-container');
-        container.innerHTML = ''; // Limpa antes de desenhar
-        const days = [
-            { key: 'monday', label: 'Segunda' }, { key: 'tuesday', label: 'Terça' },
-            { key: 'wednesday', label: 'Quarta' }, { key: 'thursday', label: 'Quinta' },
-            { key: 'friday', label: 'Sexta' }, { key: 'saturday', label: 'Sábado' },
-            { key: 'sunday', label: 'Domingo' }
-        ];
-
-        days.forEach(day => {
-            const dayElement = document.createElement('div');
-            dayElement.className = 'schedule-day';
-            dayElement.dataset.day = day.key;
-            dayElement.innerHTML = `
-                <span class="day-name">${day.label}</span>
-                <div class="time-inputs-wrapper">
-                    <div class="time-inputs-container">
-                        <!-- Os intervalos de tempo serão inseridos aqui -->
-                    </div>
-                    <button type="button" class="btn-add-slot" style="display: none;">+ intervalo</button>
-                </div>
-                <label class="day-toggle">
-                    <input type="checkbox">
-                    <span class="toggle-slider"></span>
-                </label>
-            `;
-            container.appendChild(dayElement);
-        });
-        
-        // Adiciona os event listeners para a nova grade
-        addAvailabilityEventListeners();
-    }
-
-    // Função para adicionar os listeners aos novos elementos
-    function addAvailabilityEventListeners() {
-        document.querySelectorAll('#weekly-availability-container .schedule-day').forEach(dayEl => {
-            const toggle = dayEl.querySelector('input[type="checkbox"]');
-            toggle.addEventListener('change', () => updateDayAvailabilityState(dayEl, toggle.checked));
-
-            const addSlotBtn = dayEl.querySelector('.btn-add-slot');
-            addSlotBtn.addEventListener('click', () => addTimeslot(dayEl));
-        });
-    }
-
-    // Função para atualizar a aparência de um dia (ativo/inativo)
-    function updateDayAvailabilityState(dayEl, isActive) {
-        const wrapper = dayEl.querySelector('.time-inputs-wrapper');
-        const addSlotBtn = dayEl.querySelector('.btn-add-slot');
-        if (isActive) {
-            wrapper.classList.remove('disabled');
-            addSlotBtn.style.display = 'inline-block';
-            if (wrapper.querySelector('.time-inputs-container').children.length === 0) {
-                addTimeslot(dayEl); // Adiciona um slot se não houver nenhum
-            }
-        } else {
-            wrapper.classList.add('disabled');
-            addSlotBtn.style.display = 'none';
-            wrapper.querySelector('.time-inputs-container').innerHTML = '<label class="day-closed-label">Fechado</label>';
-        }
-    }
-
-    // Função para adicionar um novo intervalo de tempo a um dia
-    function addTimeslot(dayEl, start = '09:00', end = '17:00') {
-        const container = dayEl.querySelector('.time-inputs-container');
-        const slotEl = document.createElement('div');
-        slotEl.className = 'time-slot';
-        slotEl.innerHTML = `
-            <input type="time" class="start-time" value="${start}">
-            <span>-</span>
-            <input type="time" class="end-time" value="${end}">
-            <button type="button" class="remove-btn slot-remove-btn">×</button>
-        `;
-        slotEl.querySelector('.slot-remove-btn').addEventListener('click', () => slotEl.remove());
-        container.appendChild(slotEl);
-    }
-
-    // Função para popular a grade com os dados salvos do bot
-    function populateAvailability(rules) {
-        if (!rules) { // Se não houver regras salvas, desenha o padrão
-            renderAvailabilityScheduler();
-            document.querySelectorAll('#weekly-availability-container .schedule-day').forEach(dayEl => {
-                updateDayAvailabilityState(dayEl, false); // Começa tudo desativado
-            });
-            return;
-        }
-
-        renderAvailabilityScheduler(); // Desenha a grade vazia primeiro
-
-        const weeklyRules = rules.weekly_availability || [];
-        weeklyRules.forEach(rule => {
-            const dayEl = document.querySelector(`.schedule-day[data-day="${rule.day}"]`);
-            if (!dayEl) return;
-
-            const toggle = dayEl.querySelector('input[type="checkbox"]');
-            toggle.checked = rule.active;
-            updateDayAvailabilityState(dayEl, rule.active);
-
-            if (rule.active) {
-                const container = dayEl.querySelector('.time-inputs-container');
-                container.innerHTML = ''; // Limpa o slot padrão
-                rule.slots.forEach(slot => {
-                    addTimeslot(dayEl, slot.start, slot.end);
-                });
-            }
-        });
-    }
-
-    // Função para COLETAR os dados da interface e montar o objeto JSON
-    function collectAvailabilityData() {
-        const weekly_availability = [];
-        document.querySelectorAll('#weekly-availability-container .schedule-day').forEach(dayEl => {
-            const dayKey = dayEl.dataset.day;
-            const isActive = dayEl.querySelector('input[type="checkbox"]').checked;
-            const slots = [];
-            
-            if (isActive) {
-                dayEl.querySelectorAll('.time-slot').forEach(slotEl => {
-                    const start = slotEl.querySelector('.start-time').value;
-                    const end = slotEl.querySelector('.end-time').value;
-                    if (start && end) {
-                        slots.push({ start, end });
-                    }
-                });
-            }
-            
-            weekly_availability.push({ day: dayKey, active: isActive, slots });
-        });
-        
-        // No futuro, podemos adicionar as configurações gerais aqui
-        return {
-            weekly_availability
-        };
-    }
-
-    // Função para SALVAR os dados no backend
-    async function handleSaveAvailability() {
-        const botId = editingBotId;
-        const button = document.getElementById('save-availability-btn');
-        button.disabled = true;
-        button.innerHTML = '<span class="spinner"></span> Salvando...';
-
-        const availability_rules = collectAvailabilityData();
-
-        try {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/availability`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ availability_rules })
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || "Falha ao salvar disponibilidade.");
-            }
-
-            showToast("Disponibilidade salva com sucesso!", "success");
-
-        } catch (error) {
-            console.error("Erro ao salvar disponibilidade:", error);
-            showToast(error.message, "error");
-        } finally {
-            button.disabled = false;
-            button.textContent = 'Salvar Disponibilidade';
-        }
-    }    
 
     // --- NOVA FUNÇÃO: Lida com o início da conexão com o Google ---
     async function handleConnectGoogleClick() {
@@ -2622,8 +2444,6 @@ async function createBot() {
         document.getElementById('editing-bot-name-header').textContent = bot.name || 'Bot sem nome';
         document.getElementById('edit-bot-id').value = bot.id;
         document.getElementById('edit-bot-name').value = bot.name || '';
-
-        populateAvailability(bot.availability_rules); // Popula a grade de disponibilidade
         
         const functionOptionsContainer = document.getElementById('edit-function-options');
         const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
