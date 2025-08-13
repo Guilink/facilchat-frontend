@@ -129,23 +129,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const connectView = document.getElementById('google-connect-view');
         const connectedView = document.getElementById('google-connected-view');
         const userEmailSpan = document.getElementById('google-user-email');
-        const servicesView = document.getElementById('services-management-view'); // Nova linha
 
         if (status.isConnected) {
+            // Mostra o card de "Conectado" e esconde o de "Conectar"
             connectView.style.display = 'none';
-            connectedView.style.display = 'flex';
-            servicesView.style.display = 'block'; // Mostra os serviços
+            connectedView.style.display = 'flex'; // Usamos flex para alinhar corretamente
             userEmailSpan.textContent = status.email;
-            
-            // Popula a lista de serviços quando o usuário está conectado
-            if(editingBotId) populateServices(editingBotId);
-
         } else {
+            // Mostra o card de "Conectar" e esconde o de "Conectado"
             connectView.style.display = 'block';
             connectedView.style.display = 'none';
-            servicesView.style.display = 'none'; // Esconde os serviços
         }
-    }
+    }    
 
     // Adicione esta nova função auxiliar
     function updateUploadButtonState(listElementId, buttonElementId) {
@@ -2217,116 +2212,8 @@ async function createBot() {
         if (disconnectBtn) {
             disconnectBtn.addEventListener('click', handleDisconnectGoogleClick);
         }        
-        const addServiceBtn = document.getElementById('add-service-btn');
-        if (addServiceBtn) {
-            addServiceBtn.addEventListener('click', handleAddService);
-        }        
 
         isEditViewInitialized = true;
-    }
-
-    // --- FUNÇÕES DE GERENCIAMENTO DE SERVIÇOS ---
-
-    // Função para desenhar um único item de serviço na lista
-    function renderServiceItem(service) {
-        const list = document.getElementById('services-list');
-        const item = document.createElement('div');
-        item.className = 'knowledge-item'; // Reutilizamos a classe do FAQ
-        item.dataset.serviceId = service.id;
-
-        item.innerHTML = `
-            <span>${service.service_name}</span>
-            <span class="item-detail">${service.duration_minutes} min</span>
-            <button type="button" class="remove-btn" onclick="handleDeleteService(${service.id})">×</button>
-        `;
-        list.appendChild(item);
-    }
-
-    // Função para buscar e popular a lista de serviços
-    async function populateServices(botId) {
-        document.getElementById('services-list').innerHTML = ''; // Limpa a lista
-        try {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/services`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error("Falha ao buscar serviços.");
-            
-            const services = await response.json();
-            services.forEach(renderServiceItem);
-
-        } catch (error) {
-            console.error("Erro ao popular serviços:", error);
-        }
-    }
-
-    // Função para lidar com a adição de um novo serviço
-    async function handleAddService() {
-        const botId = editingBotId; // Usamos a variável global
-        const nameInput = document.getElementById('new-service-name');
-        const durationInput = document.getElementById('new-service-duration');
-        const addButton = document.getElementById('add-service-btn');
-
-        const service_name = nameInput.value.trim();
-        const duration_minutes = parseInt(durationInput.value, 10);
-
-        if (!service_name || !duration_minutes) {
-            showToast("Por favor, preencha o nome e a duração.", "error");
-            return;
-        }
-
-        addButton.disabled = true;
-
-        try {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/bots/${botId}/services`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ service_name, duration_minutes })
-            });
-
-            if (!response.ok) throw new Error("Falha ao adicionar serviço.");
-
-            const newService = await response.json();
-            renderServiceItem(newService); // Adiciona o novo item na tela
-            
-            // Limpa os campos de input
-            nameInput.value = '';
-            durationInput.value = '';
-            nameInput.focus();
-
-        } catch (error) {
-            console.error("Erro ao adicionar serviço:", error);
-            showToast("Não foi possível adicionar o serviço.", "error");
-        } finally {
-            addButton.disabled = false;
-        }
-    }
-
-    // Função para lidar com a deleção de um serviço
-    window.handleDeleteService = async function(serviceId) {
-        if (!confirm("Tem certeza que deseja remover este serviço?")) return;
-        
-        try {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/services/${serviceId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error("Falha ao deletar serviço.");
-
-            // Remove o item da tela
-            const itemToRemove = document.querySelector(`.knowledge-item[data-service-id="${serviceId}"]`);
-            if (itemToRemove) itemToRemove.remove();
-            
-        } catch (error) {
-            console.error("Erro ao deletar serviço:", error);
-            showToast("Não foi possível remover o serviço.", "error");
-        }
     }
 
     // --- NOVA FUNÇÃO: Lida com o início da conexão com o Google ---
