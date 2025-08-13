@@ -512,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const servicesList = agenda.services.map(s => `<li>${s.name} (${s.duration_minutes} min)</li>`).join('');
 
-        // A única mudança está na última linha, no botão de "Excluir"
+        // A mudança agora está no botão "Editar"
         card.innerHTML = `
             <div class="agenda-card-header">
                 <h3>${agenda.name}</h3>
@@ -524,7 +524,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="agenda-card-footer">
                 <button class="btn-secondary" onclick="alert('Visualizar calendário em breve!')">Calendário</button>
-                <button class="btn-secondary" onclick="alert('Editar em breve!')">Editar</button>
+                <button class="btn-secondary" onclick="window.handleEditAgenda(${agenda.id})">Editar</button>
                 <button class="btn-danger-outline" onclick="window.handleDeleteAgenda(${agenda.id}, '${agenda.name.replace(/'/g, "\\'")}')">Excluir</button>
             </div>
         `;
@@ -558,6 +558,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }    
 
+    // Cole esta nova função após handleDeleteAgenda
+
+    window.handleEditAgenda = function(agendaId) {
+        const agenda = userAgendas.find(a => a.id === agendaId);
+        if (!agenda) {
+            showToast("Agenda não encontrada.", "error");
+            return;
+        }
+
+        const modal = document.getElementById('agenda-modal');
+        const form = document.getElementById('agenda-form');
+        const servicesList = document.getElementById('agenda-services-list');
+
+        // Preenche os campos do formulário com os dados da agenda
+        document.getElementById('agenda-modal-title').textContent = 'Editar Agenda';
+        document.getElementById('agenda-edit-id').value = agenda.id;
+        document.getElementById('agenda-name').value = agenda.name;
+        document.getElementById('agenda-min-antecedence').value = agenda.min_antecedence_minutes;
+        document.getElementById('agenda-max-days').value = agenda.max_days_ahead;
+        document.getElementById('agenda-auto-confirm').checked = agenda.auto_confirm;
+        
+        // Limpa a lista de serviços e a repopula
+        servicesList.innerHTML = '';
+        agenda.services.forEach(service => {
+            addAgendaServiceItem(service.name, service.duration_minutes);
+        });
+
+        // Abre o modal
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }    
+
     // --- Funções para controlar o modal de criação/edição de agenda ---
 
     function setupAgendaModalListeners() {
@@ -571,6 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listeners para abrir o modal
         const openModal = () => {
             form.reset(); // Limpa o formulário
+            document.getElementById('agenda-edit-id').value = '';
             document.getElementById('agenda-modal-title').textContent = 'Criar Nova Agenda';
             servicesList.innerHTML = '';
             addAgendaServiceItem(); // Adiciona o primeiro item de serviço
@@ -636,18 +669,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const token = await getAuthToken();
+            const editingId = document.getElementById('agenda-edit-id').value;
+            const isEditing = !!editingId;
 
-            // Coleta os dados do formulário
+            // Coleta os dados do formulário (lógica idêntica)
             const agendaData = {
                 name: document.getElementById('agenda-name').value,
                 min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
                 max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
                 auto_confirm: document.getElementById('agenda-auto-confirm').checked,
                 services: [],
-                schedule_config: {} // Por enquanto, enviamos um objeto vazio
+                schedule_config: {}
             };
-
-            // Coleta os serviços da lista
             document.querySelectorAll('#agenda-services-list .knowledge-item').forEach(item => {
                 const name = item.querySelector('.agenda-service-name').value.trim();
                 const duration = parseInt(item.querySelector('.agenda-service-duration').value, 10);
@@ -655,29 +688,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     agendaData.services.push({ name: name, duration_minutes: duration });
                 }
             });
+            if (agendaData.services.length === 0) throw new Error("Adicione pelo menos um serviço válido.");
 
-            if (agendaData.services.length === 0) {
-                throw new Error("Adicione pelo menos um serviço válido.");
-            }
-
-            // Envia os dados para o backend
-            const response = await fetch(`${API_BASE_URL}/api/agendas`, {
-                method: 'POST',
+            // Define a URL e o método com base na operação (Criar vs. Editar)
+            const url = isEditing ? `${API_BASE_URL}/api/agendas/${editingId}` : `${API_BASE_URL}/api/agendas`;
+            const method = isEditing ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(agendaData)
             });
 
             const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.message || "Falha ao salvar a agenda.");
-            }
+            if (!response.ok) throw new Error(result.message || "Falha ao salvar a agenda.");
             
-            showToast('Agenda criada com sucesso!', 'success');
-            await fetchAgendas(); // Atualiza a lista de agendas na tela
+            showToast(isEditing ? 'Agenda atualizada com sucesso!' : 'Agenda criada com sucesso!', 'success');
+            await fetchAgendas(); 
             
-            if (onSuccessCallback) {
-                onSuccessCallback(); // Fecha o modal
-            }
+            if (onSuccessCallback) onSuccessCallback();
 
         } catch (error) {
             console.error("Erro ao salvar agenda:", error);
