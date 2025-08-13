@@ -118,10 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         welcomeState: document.getElementById('welcome-state'),
         botsState: document.getElementById('bots-state'),
         botsList: document.getElementById('bots-list'),
-        qrDisplay: document.getElementById('qr-display'),
-        connectGoogleBtn: document.getElementById('connect-google-btn'),
-        googleConnectView: document.getElementById('google-connect-view'),
-        googleConnectedView: document.getElementById('google-connected-view')        
+        qrDisplay: document.getElementById('qr-display')
     };
 
     // Adicione esta nova função auxiliar
@@ -2185,46 +2182,8 @@ async function createBot() {
         document.getElementById('edit-faq-list').addEventListener('click', handleKnowledgeItemRemove);
         document.getElementById('edit-contacts-list').addEventListener('click', handleKnowledgeItemRemove);      
 
-        const connectBtn = document.getElementById('connect-google-btn');
-        if (connectBtn) {
-            connectBtn.addEventListener('click', handleConnectGoogleClick);
-        }        
-
         isEditViewInitialized = true;
     }
-
-    // --- NOVA FUNÇÃO: Lida com o início da conexão com o Google ---
-    async function handleConnectGoogleClick() {
-        const button = document.getElementById('connect-google-btn');
-        if (!button) return;
-
-        button.disabled = true;
-        button.innerHTML = '<span class="spinner"></span> Redirecionando para o Google...';
-
-        try {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/google/connect`, {
-                method: 'GET', // Usamos GET para esta rota
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) {
-                throw new Error("Não foi possível obter a URL de autorização do backend.");
-            }
-
-            const data = await response.json();
-
-            // Redireciona o usuário para a página de permissão do Google
-            window.location.href = data.url;
-
-        } catch (error) {
-            console.error("Erro ao conectar com o Google:", error);
-            showToast("Erro ao iniciar a conexão. Tente novamente.", "error");
-            button.disabled = false;
-            // Restaura o conteúdo original do botão
-            button.innerHTML = '<svg width="20" height="20" viewBox="0 0 488 512">...</svg> Conectar com Google Agenda'; 
-        }
-    }    
 
     async function handleEditFormSubmit(event) {
         event.preventDefault();
@@ -2795,19 +2754,6 @@ async function createBot() {
         
         // As inicializações do Wizard e da tela de Edição foram REMOVIDAS daqui
         // para serem chamadas pela função showView.
-
-        // Verifica se voltamos do fluxo de autenticação do Google
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('google_auth')) {
-            const status = urlParams.get('google_auth');
-            if (status === 'success') {
-                showToast("Agenda conectada com sucesso!", "success");
-            } else if (status === 'error') {
-                showToast("Falha ao conectar a agenda. Tente novamente.", "error");
-            }
-            // Limpa os parâmetros da URL para evitar que o toast apareça novamente ao recarregar a página
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }        
         
         auth.onAuthStateChanged((user) => {
             console.log('🔐 Estado de autenticação DEFINIDO:', user ? `Logado: ${user.email}` : 'Não logado');
