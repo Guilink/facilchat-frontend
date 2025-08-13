@@ -2618,10 +2618,12 @@ async function createBot() {
 
     // Adicionamos a palavra-chave 'async' aqui para permitir o uso do 'await' dentro dela.
     async function populateEditFormWithBotData(bot) {
-        // --- PARTE 1: Preenche o cabeçalho e campos de identidade ---
+        // --- PARTE 1: Preenche o cabeçalho e campos de identidade (código original) ---
         document.getElementById('editing-bot-name-header').textContent = bot.name || 'Bot sem nome';
         document.getElementById('edit-bot-id').value = bot.id;
         document.getElementById('edit-bot-name').value = bot.name || '';
+
+        populateAvailability(bot.availability_rules); // Popula a grade de disponibilidade
         
         const functionOptionsContainer = document.getElementById('edit-function-options');
         const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
@@ -2650,7 +2652,7 @@ async function createBot() {
             toneCustomTextarea.value = bot.tone_custom_description || '';
         }
         
-        // --- PARTE 2: Preenche a Base de Conhecimento ---
+        // --- PARTE 2: Preenche a Base de Conhecimento (código original) ---
         const instructionsTextarea = document.getElementById('edit-knowledge-instructions');
         instructionsTextarea.value = bot.knowledge_instructions || '';
         instructionsTextarea.style.display = 'block';
@@ -2658,7 +2660,7 @@ async function createBot() {
         populateEditFAQ(bot.knowledge_faq || []);
         populateEditFiles(bot.knowledge_files || []);
         
-        // --- PARTE 3: Preenche a Sidebar de Operações ---
+        // --- PARTE 3: Preenche a Sidebar de Operações (código original) ---
         const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
         const leadDetails = document.getElementById('edit-lead-collection-details');
         const leadPromptTextarea = document.getElementById('edit-lead-collection-prompt');
@@ -2701,19 +2703,8 @@ async function createBot() {
             });
         }
 
-        // --- PARTE 4: POPULA A DISPONIBILIDADE (CÓDIGO CORRIGIDO) ---
-        try {
-            // Tenta "traduzir" a string JSON para um objeto JavaScript.
-            const rulesObject = JSON.parse(bot.availability_rules);
-            populateAvailability(rulesObject);
-        } catch (e) {
-            // Se `availability_rules` for nulo, vazio ou inválido, o JSON.parse vai falhar.
-            // Nesse caso, chamamos a função sem argumentos para que ela desenhe o padrão.
-            console.warn("Regras de disponibilidade não encontradas ou inválidas, carregando padrão.");
-            populateAvailability();
-        }
-        
-        // --- PARTE 5: VERIFICA O STATUS DA CONEXÃO COM O GOOGLE ---
+        // --- PARTE 4: VERIFICA O STATUS DA CONEXÃO COM O GOOGLE (NOVO BLOCO) ---
+        // Este bloco é adicionado no final para rodar após o resto do formulário ser preenchido.
         try {
             const token = await getAuthToken();
             const response = await fetch(`${API_BASE_URL}/api/google/status`, {
@@ -2721,13 +2712,16 @@ async function createBot() {
             });
             const status = await response.json();
             
+            // Se a chamada à API funcionou, atualiza a interface com a resposta
             if (response.ok) {
                 updateGoogleConnectionView(status);
             } else {
+                // Se a API deu erro, por segurança, mostra o estado de "desconectado"
                 updateGoogleConnectionView({ isConnected: false });
             }
         } catch (error) {
             console.error("Erro ao buscar status do Google:", error);
+            // Se houve um erro de rede, também mostra o estado de "desconectado"
             updateGoogleConnectionView({ isConnected: false });
         }
     }
