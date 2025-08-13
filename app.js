@@ -888,9 +888,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const workingHours = (dayConfig && dayConfig.active) ? { open: dayConfig.open, close: dayConfig.close } : null;
 
             const { appointments, overrides } = await fetchAppointmentsForDay(apiDate);
-            const occupiedSlots = new Set(); // Guarda os horários já preenchidos por agendamentos
+            const occupiedSlots = new Set(); 
 
-            gridEl.innerHTML = ''; // Limpa o spinner
+            gridEl.innerHTML = ''; 
 
             let currentTime = new Date(selectedDate);
             const [startHour, startMinute] = dayBoundaries.start.split(':').map(Number);
@@ -935,6 +935,10 @@ document.addEventListener('DOMContentLoaded', () => {
                              <button class="slot-action-btn" title="Editar Agendamento" onclick="openAppointmentModal('${slotISO}', ${JSON.stringify(appointmentInSlot).replace(/"/g, '&quot;').replace(/'/g, '&#39;')} )">
                                 <svg width="18" height="18"><use xlink:href="#icon-edit"/></svg>
                             </button>
+                            
+                            <button class="slot-action-btn danger" title="Excluir Agendamento" onclick="window.handleDeleteAppointment(${appointmentInSlot.id}, '${(appointmentInSlot.client_name || '').replace(/'/g, "\\'")}')">
+                                <svg width="18" height="18"><use xlink:href="#icon-trash"/></svg>
+                            </button>
                         </div>
                     `;
                     
@@ -949,7 +953,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     let status = 'default';
                     
                     if (overrideInSlot) {
-                        status = overrideInSlot.status; // 'blocked' ou 'available'
+                        status = overrideInSlot.status;
                     } else {
                         const timeString = slotEl.dataset.time;
                         const isOutsideWorkingHours = workingHours ? (timeString < workingHours.open || timeString >= workingHours.close) : true;
@@ -970,7 +974,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 </button>
                             </div>
                         `;
-                    } else { // 'blocked' ou 'blocked_by_schedule'
+                    } else { 
                         slotEl.classList.add('blocked');
                         slotEl.innerHTML = `
                             <span class="slot-time">${slotEl.dataset.time}</span>
@@ -1070,13 +1074,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função para salvar (criar ou atualizar) o agendamento
     async function handleSaveAppointment(event) {
-        event.preventDefault(); // Impede o recarregamento da página
+        event.preventDefault(); 
         const saveBtn = document.getElementById('save-appointment-btn');
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<span class="spinner"></span> Salvando...';
 
         try {
             const token = await getAuthToken();
+            
+            // --- INÍCIO DA CORREÇÃO ---
+            
+            // 1. Determina se estamos editando ou criando
+            const editingId = document.getElementById('appointment-edit-id').value;
+            const isEditing = !!editingId;
+
+            // 2. Coleta os dados (a sua lógica de cálculo de end_time já estava perfeita!)
             const serviceSelect = document.getElementById('appointment-service');
             const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
             
@@ -1084,7 +1096,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const duration = parseInt(selectedOption.dataset.duration, 10);
             const endTime = new Date(startTime.getTime() + duration * 60000);
 
-            // Monta o corpo da requisição
             const appointmentData = {
                 agenda_id: currentAgenda.id,
                 service_id: document.getElementById('appointment-service').value,
@@ -1093,24 +1104,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 notes: document.getElementById('appointment-notes').value,
                 start_time: startTime.toISOString(),
                 end_time: endTime.toISOString(),
-                status: 'confirmed' // Agendamentos manuais são sempre confirmados
+                status: 'confirmed'
             };
+            
+            // 3. Define a URL e o método da API dinamicamente
+            const url = isEditing 
+                ? `${API_BASE_URL}/api/appointments/${editingId}` 
+                : `${API_BASE_URL}/api/appointments`;
 
-            // Por enquanto, a edição não foi implementada no backend, então só criamos.
-            const response = await fetch(`${API_BASE_URL}/api/appointments`, {
-                method: 'POST',
+            const method = isEditing ? 'PUT' : 'POST';
+
+            // 4. Faz a chamada à API com os parâmetros corretos
+            const response = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(appointmentData)
             });
+
+            // --- FIM DA CORREÇÃO ---
 
             const result = await response.json();
             if (!response.ok) {
                 throw new Error(result.message || "Falha ao salvar o agendamento.");
             }
             
-            showToast("Agendamento salvo com sucesso!", 'success');
+            // Usa uma mensagem de sucesso mais específica
+            showToast(isEditing ? 'Agendamento atualizado com sucesso!' : 'Agendamento salvo com sucesso!', 'success');
             closeAppointmentModal();
-            renderDaySchedule(); // Atualiza a grade
+            renderDaySchedule(); 
 
         } catch (error) {
             console.error("Erro ao salvar agendamento:", error);
@@ -1120,6 +1141,34 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.textContent = 'Salvar Agendamento';
         }
     }
+
+// Função para deletar um agendamento
+    window.handleDeleteAppointment = async function(appointmentId, clientName) {
+        console.log('Função handleDeleteAppointment foi chamada com ID:', appointmentId, 'e Nome:', clientName);
+        if (!confirm(`Tem certeza que deseja excluir o agendamento de "${clientName}"?\n\nEsta ação não pode ser desfeita.`)) {
+            return;
+        }
+
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/appointments/${appointmentId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || "Não foi possível remover o agendamento.");
+            }
+            
+            showToast("Agendamento removido com sucesso!", 'success');
+            renderDaySchedule(); // Atualiza a grade para refletir a exclusão
+
+        } catch (error) {
+            console.error("Erro ao remover agendamento:", error);
+            showToast(error.message, 'error');
+        }
+    }    
 
     // Função para fechar o modal
     function closeAppointmentModal() {
