@@ -3140,3 +3140,173 @@ input:checked + .toggle-slider:before {
 .modal-content {
     padding: 1.5rem 2rem;
 }
+
+/* ================================================================== */
+/* SUBSTITUA TODA A SEÇÃO DE ESTILOS DE AGENDAS PELO CÓDIGO ABAIXO */
+/* ================================================================== */
+
+/* --- Página de Listagem de Agendas --- */
+.agendas-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.agendas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* Novo container para o conteúdo principal da página de agendas */
+.agendas-main-content {
+    width: 100%;
+}
+
+.agendas-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Card de Agenda Individual */
+.agenda-card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition-normal);
+}
+.agenda-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+}
+.agenda-card-header {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+.agenda-card-body {
+    padding: 1rem 1.5rem;
+    flex-grow: 1;
+}
+.agenda-card-body ul {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.agenda-card-footer {
+    padding: 1rem 1.5rem;
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 11px 11px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+/* --- Página do Calendário --- */
+.calendar-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.calendar-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.calendar-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr; 
+    gap: 2rem; 
+    align-items: flex-start;
+}
+.calendar-sidebar {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+/* --- Mini Calendário (VERSÃO CORRIGIDA E POLIDA) --- */
+.mini-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+.mini-calendar-header button {
+    background: none; border: none; color: var(--text-primary);
+    font-size: 1.5rem; cursor: pointer; border-radius: 50%;
+    width: 32px; height: 32px; display: grid; place-items: center;
+    transition: background-color 0.2s;
+}
+.mini-calendar-header button:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.mini-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 colunas de larguras iguais */
+    gap: 0.5rem; /* Espaço entre os dias */
+    place-items: center; /* Centraliza tudo na grade */
+}
+.day-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 100%;
+    text-align: center;
+}
+.day-number {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Força o elemento a ser um quadrado perfeito */
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+.day-number:hover {
+    background-color: var(--bg-tertiary);
+}
+.day-number.selected {
+    background-color: var(--accent);
+    color: white;
+}
+
+/* Legenda */
+.calendar-legend { margin-top: 1rem; }
+.calendar-legend ul { list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.calendar-legend li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.legend-color { width: 14px; height: 14px; border-radius: 4px; }
+.legend-color.available { background-color: #22c55e; }
+.legend-color.booked { background-color: #ef4444; }
+.legend-color.blocked { background-color: #6b7280; }
+
+/* Grade de Horários do Dia */
+.day-schedule { background-color: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; }
+.day-schedule-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+.day-schedule-grid { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.day-schedule-slot { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+.day-schedule-slot:hover { background-color: var(--bg-tertiary); }
+.day-schedule-slot.available span:last-child { color: #22c55e; font-weight: 500; }
+.day-schedule-slot.booked { background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
+.day-schedule-slot.booked span:last-child { color: #ef4444; font-weight: 500; }
+.day-schedule-slot.blocked { background-color: rgba(107, 114, 128, 0.1); border-color: rgba(107, 114, 128, 0.3); }
+.day-schedule-slot.blocked span:last-child { color: #6b7280; font-weight: 500; }
+
+/* Modal de Agendas */
+.agenda-modal-container .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: center; }
+.agenda-modal-container .setting-item-toggle { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-primary); padding: 1rem; border-radius: 8px; }

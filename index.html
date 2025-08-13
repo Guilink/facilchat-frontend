@@ -140,9 +140,10 @@
             </div>
         </div>
 
-        <!-- VIEW: AGENDAS -->
+        <!-- VIEW: AGENDAS (CORRIGIDA) -->
         <div id="agendas-view" class="view">
-            <div class="agendas-container">
+            <div class="agendas-container"> <!-- Mantemos o container para o padding geral -->
+
                 <!-- Cabeçalho da página de agendas -->
                 <div class="agendas-header">
                     <div>
@@ -152,24 +153,75 @@
                     <button id="create-agenda-btn" class="btn-primary">+ Criar Agenda</button>
                 </div>
 
-                <!-- Estado para quando NÃO HÁ agendas criadas -->
-                <div id="no-agendas-state" style="display: none;" class="welcome-state">
-                    <div class="welcome-card">
-                        <div class="welcome-icon">
-                            <svg width="80" height="80"><use xlink:href="#icon-calendar"/></svg>
+                <!-- O conteúdo principal (lista ou estado vazio) agora está aqui -->
+                <div class="agendas-main-content">
+                    <!-- Estado para quando NÃO HÁ agendas criadas -->
+                    <div id="no-agendas-state" style="display: none;" class="welcome-state">
+                        <div class="welcome-card">
+                            <div class="welcome-icon">
+                                <svg width="80" height="80"><use xlink:href="#icon-calendar"></use></svg>
+                            </div>
+                            <h2>Nenhuma agenda encontrada</h2>
+                            <p>Crie sua primeira agenda para começar a organizar seus horários e permitir que o bot agende para você.</p><br>
+                            <button id="start-agenda-creation-btn" class="btn-primary">Criar minha primeira agenda</button>
                         </div>
-                        <h2>Nenhuma agenda encontrada</h2>
-                        <p>Crie sua primeira agenda para começar a organizar seus horários e permitir que o bot agende para você.</p><br>
-                        <button id="start-agenda-creation-btn" class="btn-primary">Criar minha primeira agenda</button>
+                    </div>
+
+                    <!-- Container onde a lista de agendas será exibida -->
+                    <div id="agendas-list" class="agendas-list">
+                        <!-- Os cards de agenda serão inseridos aqui pelo JavaScript -->
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- VIEW: CALENDÁRIO DA AGENDA -->
+        <div id="calendar-view" class="view">
+            <div class="calendar-container">
+                <!-- Cabeçalho da página de calendário -->
+                <div class="calendar-page-header">
+                    <div>
+                        <h2 id="calendar-agenda-name">Calendário de [Nome da Agenda]</h2>
+                        <p>Visualize os horários, agendamentos e faça bloqueios manuais.</p>
+                    </div>
+                    <div class="header-actions">
+                        <button id="back-to-agendas-btn" class="btn-secondary">Voltar para Agendas</button>
+                        <!-- <button class="btn-primary">+ Agendamento Manual</button> -->
                     </div>
                 </div>
 
-                <!-- Container onde a lista de agendas será exibida -->
-                <div id="agendas-list" class="agendas-list">
-                    <!-- Os cards de agenda serão inseridos aqui pelo JavaScript -->
+                <!-- Layout principal do calendário -->
+                <div class="calendar-layout">
+                    <!-- Painel Esquerdo: Mini-calendário e informações -->
+                    <div class="calendar-sidebar">
+                        <div class="mini-calendar" id="mini-calendar">
+                            <!-- O mini-calendário será gerado aqui -->
+                        </div>
+                        <hr>
+                        <div class="calendar-legend">
+                            <h4>Legenda:</h4>
+                            <ul>
+                                <li><span class="legend-color available"></span> Horário Livre</li>
+                                <li><span class="legend-color booked"></span> Horário Agendado</li>
+                                <li><span class="legend-color blocked"></span> Horário Bloqueado</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Painel Direito: Grade de horários do dia -->
+                    <div class="day-schedule">
+                        <div class="day-schedule-header">
+                            <h3>Horários para: <span id="day-schedule-date-display">-- de -- de ----</span></h3>
+                        </div>
+                        <div class="day-schedule-grid" id="day-schedule-grid">
+                            <!-- A lista de horários será gerada aqui pelo JavaScript -->
+                            <div class="loading-spinner-large"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </div>        
 
         <!-- VIEW 3: WIZARD DE CRIAÇÃO/EDIÇÃO -->
         <div id="wizard-view" class="view">
@@ -644,6 +696,16 @@
                     </div>
 
                     <hr>
+                    <!-- Seção de Horário de Funcionamento (NOVA) -->
+                    <div class="form-group">
+                        <label>Horário de Funcionamento Semanal</label>
+                        <div id="agenda-schedule-details" class="schedule-details">
+                            <!-- Os dias da semana serão gerados aqui -->
+                        </div>
+                        <small>Defina os horários padrão de atendimento para cada dia.</small>
+                    </div>
+
+                    <hr>                    
 
                     <!-- Seção de Configurações Adicionais -->
                     <div class="form-group">

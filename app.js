@@ -81,6 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let socket;
     let userBots = [];
     let userAgendas = [];
+    let currentAgenda = null;     // Guarda o objeto completo da agenda ativa
+    let selectedDate = new Date();  // Guarda a data que o usuário selecionou    
     let wizardBotData = {};
     let currentWizardStep = 1;
     let isEditMode = false;
@@ -101,7 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
         success: document.getElementById('success-view'),
         edit: document.getElementById('edit-view'),
         plans: document.getElementById('plans-view'),
-        agendas: document.getElementById('agendas-view')
+        agendas: document.getElementById('agendas-view'),
+        calendar: document.getElementById('calendar-view')
     };
     
     const appLoading = document.getElementById('app-loading');
@@ -512,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const servicesList = agenda.services.map(s => `<li>${s.name} (${s.duration_minutes} min)</li>`).join('');
 
-        // A mudança agora está no botão "Editar"
+        // A mudança agora está no botão "Calendário"
         card.innerHTML = `
             <div class="agenda-card-header">
                 <h3>${agenda.name}</h3>
@@ -523,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <ul>${servicesList || "<li>Nenhum serviço cadastrado.</li>"}</ul>
             </div>
             <div class="agenda-card-footer">
-                <button class="btn-secondary" onclick="alert('Visualizar calendário em breve!')">Calendário</button>
+                <button class="btn-secondary" onclick="window.openCalendarView(${agenda.id})">Calendário</button>
                 <button class="btn-secondary" onclick="window.handleEditAgenda(${agenda.id})">Editar</button>
                 <button class="btn-danger-outline" onclick="window.handleDeleteAgenda(${agenda.id}, '${agenda.name.replace(/'/g, "\\'")}')">Excluir</button>
             </div>
@@ -568,7 +571,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const modal = document.getElementById('agenda-modal');
-        const form = document.getElementById('agenda-form');
         const servicesList = document.getElementById('agenda-services-list');
 
         // Preenche os campos do formulário com os dados da agenda
@@ -579,13 +581,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('agenda-max-days').value = agenda.max_days_ahead;
         document.getElementById('agenda-auto-confirm').checked = agenda.auto_confirm;
         
-        // Limpa a lista de serviços e a repopula
         servicesList.innerHTML = '';
         agenda.services.forEach(service => {
             addAgendaServiceItem(service.name, service.duration_minutes);
         });
 
-        // Abre o modal
+        // Popula o editor de horários com os dados salvos da agenda
+        populateAgendaScheduleEditor(agenda.schedule_config.days);
+
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }    
@@ -602,14 +605,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Listeners para abrir o modal
         const openModal = () => {
-            form.reset(); // Limpa o formulário
+            form.reset(); 
             document.getElementById('agenda-edit-id').value = '';
             document.getElementById('agenda-modal-title').textContent = 'Criar Nova Agenda';
-            servicesList.innerHTML = '';
-            addAgendaServiceItem(); // Adiciona o primeiro item de serviço
+            document.getElementById('agenda-services-list').innerHTML = '';
+            addAgendaServiceItem();
+            
+            // CHAMA A NOVA FUNÇÃO PARA POPULAR OS HORÁRIOS PADRÃO
+            populateAgendaScheduleEditor();
+            
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         };
+
         createAgendaBtn.addEventListener('click', openModal);
         startCreationBtn.addEventListener('click', openModal);
 
@@ -679,8 +687,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
                 auto_confirm: document.getElementById('agenda-auto-confirm').checked,
                 services: [],
-                schedule_config: {}
+                schedule_config: { // Objeto para guardar os horários
+                    interval: 30, // Por enquanto, fixo em 30 minutos
+                    days: []      // Array para os dias da semana
+                }
             };
+            // Coleta os horários de funcionamento (NOVO)
+            document.querySelectorAll('#agenda-schedule-details .schedule-day').forEach(dayEl => {
+                const dayKey = dayEl.dataset.day;
+                const toggle = dayEl.querySelector('input[type="checkbox"]');
+                const openTime = dayEl.querySelector('input[type="time"]:first-of-type');
+                const closeTime = dayEl.querySelector('input[type="time"]:last-of-type');
+
+                agendaData.schedule_config.days.push({
+                    day: dayKey,
+                    active: toggle ? toggle.checked : false,
+                    open: openTime ? openTime.value : '09:00',
+                    close: closeTime ? closeTime.value : '18:00'
+                });
+            });
+
             document.querySelectorAll('#agenda-services-list .knowledge-item').forEach(item => {
                 const name = item.querySelector('.agenda-service-name').value.trim();
                 const duration = parseInt(item.querySelector('.agenda-service-duration').value, 10);
@@ -715,6 +741,244 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.disabled = false;
             saveBtn.textContent = 'Salvar Agenda';
         }
+    }    
+
+    // =====================================================================
+    //      EM app.js, COLE ESTA NOVA FUNÇÃO APÓS handleSaveAgenda
+    // =====================================================================
+
+    function populateAgendaScheduleEditor(scheduleData = []) {
+        const container = document.getElementById('agenda-schedule-details');
+        container.innerHTML = ''; // Limpa o conteúdo anterior
+
+        const dayNames = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+        const dayKeys = ["segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo"];
+
+        dayKeys.forEach((key, index) => {
+            // Procura pelos dados do dia atual, ou usa um padrão inteligente
+            let dayConfig = scheduleData.find(d => d.day === key);
+            if (!dayConfig) {
+                // Aplica nossas regras padrão
+                if (key === 'domingo') {
+                    dayConfig = { active: false, open: '09:00', close: '18:00' };
+                } else if (key === 'sabado') {
+                    dayConfig = { active: true, open: '08:00', close: '16:00' };
+                } else {
+                    dayConfig = { active: true, open: '08:00', close: '18:00' };
+                }
+            }
+
+            const dayElement = document.createElement('div');
+            dayElement.className = 'schedule-day';
+            dayElement.dataset.day = key;
+            
+            dayElement.innerHTML = `
+                <span class="day-name">${dayNames[index]}</span>
+                <div class="time-inputs">
+                    <label>Abre</label><input type="time" value="${dayConfig.open}">
+                    <label>Fecha</label><input type="time" value="${dayConfig.close}">
+                </div>
+                <label class="day-toggle"><input type="checkbox" ${dayConfig.active ? 'checked' : ''}><span class="toggle-slider"></span></label>
+            `;
+            container.appendChild(dayElement);
+
+            // Adiciona o listener para o toggle recém-criado
+            const toggle = dayElement.querySelector('input[type="checkbox"]');
+            toggle.addEventListener('change', () => updateDayScheduleState(dayElement));
+            
+            // Garante que o estado visual inicial esteja correto
+            updateDayScheduleState(dayElement);
+        });
+    }    
+
+    // =====================================================================
+    // ================ LÓGICA DA VIEW DE CALENDÁRIO (NOVO) ================
+    // =====================================================================
+
+    // Função principal que abre e inicializa a view do calendário
+    window.openCalendarView = function(agendaId) {
+        currentAgenda = userAgendas.find(a => a.id === agendaId);
+        if (!currentAgenda) {
+            showToast("Não foi possível carregar a agenda.", "error");
+            return;
+        }
+
+        selectedDate = new Date(); // Reseta para a data de hoje ao abrir
+        document.getElementById('calendar-agenda-name').textContent = `Calendário de ${currentAgenda.name}`;
+        
+        showView('calendar');
+        renderMiniCalendar();
+        renderDaySchedule();
+    }
+
+    // Função chamada quando o usuário clica em um dia no mini-calendário
+    window.changeSelectedDate = function(day, month, year) {
+        // O mês no JavaScript vai de 0 a 11, então subtraímos 1
+        selectedDate = new Date(year, month - 1, day);
+        renderMiniCalendar();
+        renderDaySchedule();
+    }
+
+    // =====================================================================
+    //      SUBSTITUA TODA A SUA FUNÇÃO renderMiniCalendar POR ESTA
+    // =====================================================================
+
+    function renderMiniCalendar() {
+        const calendarEl = document.getElementById('mini-calendar');
+        const month = selectedDate.getMonth();
+        const year = selectedDate.getFullYear();
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0);
+
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        const dayNames = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+        // Gera o cabeçalho do calendário (Mês/Ano e botões de navegação)
+        let html = `
+            <div class="mini-calendar-header">
+                <button onclick="changeMonth(-1)" title="Mês anterior">‹</button>
+                <span>${monthNames[month]} ${year}</span>
+                <button onclick="changeMonth(1)" title="Próximo mês">›</button>
+            </div>
+            <div class="mini-calendar-grid">
+        `;
+
+        // GERA AS SIGLAS DOS DIAS DA SEMANA (CORRIGIDO: AGORA FEITO COM UM LOOP)
+        dayNames.forEach(day => {
+            html += `<div class="day-name">${day}</div>`;
+        });
+
+        // Adiciona os espaços em branco para alinhar o primeiro dia do mês
+        for (let i = 0; i < firstDayOfMonth.getDay(); i++) {
+            html += `<div></div>`;
+        }
+
+        // Adiciona os números dos dias do mês
+        for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+            const isSelected = day === selectedDate.getDate();
+            html += `<div class="day-number ${isSelected ? 'selected' : ''}" onclick="changeSelectedDate(${day}, ${month + 1}, ${year})">${day}</div>`;
+        }
+
+        html += `</div>`; // Fecha a mini-calendar-grid
+        calendarEl.innerHTML = html;
+    }
+
+    // Função para mudar o mês no mini-calendário
+    window.changeMonth = function(offset) {
+        selectedDate.setMonth(selectedDate.getMonth() + offset);
+        renderMiniCalendar();
+        // Opcional: renderiza o dia 1 do novo mês
+        changeSelectedDate(1, selectedDate.getMonth() + 1, selectedDate.getFullYear());
+    }
+
+    // Função principal que busca os dados e renderiza a grade de horários do dia
+    async function renderDaySchedule() {
+        const gridEl = document.getElementById('day-schedule-grid');
+        gridEl.innerHTML = '<div class="loading-spinner-large"></div>';
+        const apiDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+        document.getElementById('day-schedule-date-display').textContent = `${String(selectedDate.getDate()).padStart(2, '0')}/${String(selectedDate.getMonth() + 1).padStart(2, '0')}/${selectedDate.getFullYear()}`;
+
+        try {
+            const dayBoundaries = { start: '06:00', end: '23:00' };
+            const interval = currentAgenda.schedule_config.interval || 30;
+            const dayOfWeekIndex = selectedDate.getDay();
+            const dayKeys = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+            const dayConfig = currentAgenda.schedule_config.days.find(d => d.day === dayKeys[dayOfWeekIndex]);
+            const workingHours = (dayConfig && dayConfig.active) ? { open: dayConfig.open, close: dayConfig.close } : null;
+
+            const { appointments, overrides } = await fetchAppointmentsForDay(apiDate); // Agora retorna dois arrays
+            gridEl.innerHTML = '';
+
+            let currentTime = new Date(selectedDate);
+            const [startHour, startMinute] = dayBoundaries.start.split(':').map(Number);
+            currentTime.setHours(startHour, startMinute, 0, 0);
+            const dayEndTime = new Date(selectedDate);
+            const [endHour, endMinute] = dayBoundaries.end.split(':').map(Number);
+            dayEndTime.setHours(endHour, endMinute, 0, 0);
+
+            while (currentTime < dayEndTime) {
+                const slotStartTime = new Date(currentTime);
+                const timeString = slotStartTime.toTimeString().substring(0, 5);
+                const slotISO = slotStartTime.toISOString();
+                const slotEl = document.createElement('div');
+                slotEl.className = 'day-schedule-slot';
+
+                const appointmentInSlot = appointments.find(app => new Date(app.start_time).getTime() === slotStartTime.getTime());
+                const overrideInSlot = overrides.find(ov => new Date(ov.slot_time).getTime() === slotStartTime.getTime());
+
+                if (appointmentInSlot) {
+                    slotEl.classList.add('booked');
+                    slotEl.innerHTML = `<span>${timeString}</span><span>${appointmentInSlot.client_name || 'Agendado'}</span>`;
+                    slotEl.style.cursor = "help";
+                    slotEl.title = `Agendado para: ${appointmentInSlot.client_name}`;
+                } else {
+                    let status = 'available'; // Padrão
+                    const isOutsideWorkingHours = workingHours ? (timeString < workingHours.open || timeString >= workingHours.close) : true;
+                    if (isOutsideWorkingHours) status = 'blocked';
+
+                    if (overrideInSlot) status = overrideInSlot.status;
+
+                    if (status === 'available') {
+                        slotEl.classList.add('available');
+                        slotEl.innerHTML = `<span>${timeString}</span><span>Disponível</span>`;
+                        slotEl.onclick = () => window.handleToggleSlot(slotISO, 'blocked');
+                    } else {
+                        slotEl.classList.add('blocked');
+                        slotEl.innerHTML = `<span>${timeString}</span><span>Bloqueado</span>`;
+                        slotEl.onclick = () => window.handleToggleSlot(slotISO, 'available');
+                    }
+                }
+                gridEl.appendChild(slotEl);
+                currentTime.setMinutes(currentTime.getMinutes() + interval);
+            }
+        } catch (error) {
+            gridEl.innerHTML = `<p class="error-message">Não foi possível carregar os horários.</p>`;
+            showToast(error.message, 'error');
+        }
+    }
+
+
+
+    // Busca os agendamentos do dia na API
+    async function fetchAppointmentsForDay(date) {
+        const token = await getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/api/agendas/${currentAgenda.id}/appointments?date=${date}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error("Falha ao buscar agendamentos.");
+        return await response.json();
+    }
+
+        // Função única para bloquear ou desbloquear um horário
+    window.handleToggleSlot = async function(slotISO, newStatus) {
+        // Ação de inversão simples
+        const actionText = newStatus === 'blocked' ? 'bloquear' : 'liberar';
+        if (!confirm(`Deseja ${actionText} este horário?`)) return;
+
+        try {
+            const token = await getAuthToken();
+            await fetch(`${API_BASE_URL}/api/agendas/toggle-slot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    agenda_id: currentAgenda.id,
+                    slot_time: slotISO,
+                    new_status: newStatus
+                })
+            });
+            showToast(`Horário ${actionText === 'bloquear' ? 'bloqueado' : 'liberado'}!`, 'success');
+        } catch (error) {
+            showToast("Não foi possível atualizar o horário.", "error");
+        }
+        renderDaySchedule();
+    }
+
+    // Listener para o botão de voltar
+    function setupCalendarListeners() {
+        document.getElementById('back-to-agendas-btn').addEventListener('click', () => {
+            showView('agendas');
+        });
     }    
 
     function createBotCard(bot) {
@@ -3012,6 +3276,8 @@ async function createBot() {
         setupNavigation();
         setupPlanButtons();
         setupAgendaModalListeners();
+        setupCalendarListeners();
+
         
         // As inicializações do Wizard e da tela de Edição foram REMOVIDAS daqui
         // para serem chamadas pela função showView.
