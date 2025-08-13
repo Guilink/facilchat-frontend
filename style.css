@@ -3128,3 +3128,15 @@ input:checked + .toggle-slider:before {
     .form-grid { grid-template-columns: 1fr; gap: 1.5rem; }
     .grid-col-span-2 { grid-column: span 1; }
 }
+
+
+/* Correção para barra de rolagem em modais com muito conteúdo */
+.modal-content {
+  overflow-y: auto;
+  max-height: calc(100vh - 320px); /* Limita a altura máxima para 200px a menos que a altura da tela */
+}
+
+/* Garante que o espaçamento interno fique bonito mesmo com a barra de rolagem */
+.modal-content {
+    padding: 1.5rem 2rem;
+}

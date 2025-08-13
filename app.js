@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === VARIÁVEIS GLOBAIS ===
     let socket;
     let userBots = [];
+    let userAgendas = [];
     let wizardBotData = {};
     let currentWizardStep = 1;
     let isEditMode = false;
@@ -99,7 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
         wizard: document.getElementById('wizard-view'),
         success: document.getElementById('success-view'),
         edit: document.getElementById('edit-view'),
-        plans: document.getElementById('plans-view')
+        plans: document.getElementById('plans-view'),
+        agendas: document.getElementById('agendas-view')
     };
     
     const appLoading = document.getElementById('app-loading');
@@ -223,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 await fetchBots();
+                await fetchAgendas();
                 initializeSocket();
                 
                 // ETAPA 3: TRANSIÇÃO VISUAL FINAL (Após tudo carregar)
@@ -456,6 +459,234 @@ document.addEventListener('DOMContentLoaded', () => {
             isInitialLoad = false;
         }
     }
+
+    // =================================================================
+    // =================== LÓGICA DE AGENDAS (NOVO) ====================
+    // =================================================================
+
+    async function fetchAgendas() {
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/agendas`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) throw new Error('Falha ao buscar as agendas.');
+            
+            userAgendas = await response.json();
+            renderAgendas(); // Chama a função para desenhar na tela
+        } catch (error) {
+            console.error("Erro em fetchAgendas:", error);
+            showToast("Não foi possível carregar suas agendas.", "error");
+        }
+    }
+
+    function renderAgendas() {
+        const listContainer = document.getElementById('agendas-list');
+        const emptyState = document.getElementById('no-agendas-state');
+
+        if (!listContainer || !emptyState) return;
+
+        listContainer.innerHTML = ''; // Limpa a lista antes de renderizar
+
+        if (userAgendas.length === 0) {
+            emptyState.style.display = 'flex';
+            listContainer.style.display = 'none';
+        } else {
+            emptyState.style.display = 'none';
+            listContainer.style.display = 'grid';
+            userAgendas.forEach(agenda => {
+                const agendaCard = createAgendaCard(agenda);
+                listContainer.appendChild(agendaCard);
+            });
+        }
+    }
+
+    function createAgendaCard(agenda) {
+        const card = document.createElement('div');
+        card.className = 'agenda-card';
+        card.setAttribute('data-agenda-id', agenda.id);
+
+        const statusClass = agenda.status === 'active' ? 'active' : 'inactive';
+        const statusText = agenda.status === 'active' ? 'Ativa' : 'Inativa';
+
+        const servicesList = agenda.services.map(s => `<li>${s.name} (${s.duration_minutes} min)</li>`).join('');
+
+        // A única mudança está na última linha, no botão de "Excluir"
+        card.innerHTML = `
+            <div class="agenda-card-header">
+                <h3>${agenda.name}</h3>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+            <div class="agenda-card-body">
+                <h4>Serviços Oferecidos:</h4>
+                <ul>${servicesList || "<li>Nenhum serviço cadastrado.</li>"}</ul>
+            </div>
+            <div class="agenda-card-footer">
+                <button class="btn-secondary" onclick="alert('Visualizar calendário em breve!')">Calendário</button>
+                <button class="btn-secondary" onclick="alert('Editar em breve!')">Editar</button>
+                <button class="btn-danger-outline" onclick="window.handleDeleteAgenda(${agenda.id}, '${agenda.name.replace(/'/g, "\\'")}')">Excluir</button>
+            </div>
+        `;
+        return card;
+    } 
+
+    window.handleDeleteAgenda = async function(agendaId, agendaName) {
+        // Sempre peça confirmação para ações destrutivas!
+        if (!confirm(`Tem certeza que deseja excluir a agenda "${agendaName}"?\n\nTodos os serviços e agendamentos vinculados a ela serão perdidos permanentemente.`)) {
+            return;
+        }
+
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/agendas/${agendaId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || "Não foi possível excluir a agenda.");
+            }
+
+            showToast("Agenda excluída com sucesso!", 'success');
+            await fetchAgendas(); // Atualiza a lista na tela, fazendo o card sumir.
+
+        } catch (error) {
+            console.error("Erro ao excluir agenda:", error);
+            showToast(error.message, 'error');
+        }
+    }    
+
+    // --- Funções para controlar o modal de criação/edição de agenda ---
+
+    function setupAgendaModalListeners() {
+        const createAgendaBtn = document.getElementById('create-agenda-btn');
+        const startCreationBtn = document.getElementById('start-agenda-creation-btn');
+        const modal = document.getElementById('agenda-modal');
+        const form = document.getElementById('agenda-form');
+        const addServiceBtn = document.getElementById('add-agenda-service');
+        const servicesList = document.getElementById('agenda-services-list');
+
+        // Listeners para abrir o modal
+        const openModal = () => {
+            form.reset(); // Limpa o formulário
+            document.getElementById('agenda-modal-title').textContent = 'Criar Nova Agenda';
+            servicesList.innerHTML = '';
+            addAgendaServiceItem(); // Adiciona o primeiro item de serviço
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+        createAgendaBtn.addEventListener('click', openModal);
+        startCreationBtn.addEventListener('click', openModal);
+
+        // Listeners para fechar o modal
+        const closeModal = () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        };
+        modal.querySelectorAll('[data-target-modal="agenda-modal"]').forEach(btn => {
+            btn.addEventListener('click', closeModal);
+        });
+
+        // Listener para adicionar novos serviços
+        addServiceBtn.addEventListener('click', () => {
+            addAgendaServiceItem();
+        });
+
+        // Listener para remover serviços (usando delegação de evento)
+        servicesList.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-btn')) {
+                // Apenas remove se não for o último item da lista
+                if (servicesList.childElementCount > 1) {
+                    e.target.parentElement.remove();
+                } else {
+                    showToast("A agenda deve ter pelo menos um serviço.", "error");
+                }
+            }
+        });
+        
+        // Listener para o envio do formulário
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleSaveAgenda(closeModal); // Passa a função de fechar o modal
+        });
+    }
+
+    function addAgendaServiceItem(name = '', duration = 30) {
+        const servicesList = document.getElementById('agenda-services-list');
+        const item = document.createElement('div');
+        item.className = 'knowledge-item';
+        
+        item.innerHTML = `
+            <div class="knowledge-item-inputs">
+                <input type="text" class="agenda-service-name" placeholder="Nome do Serviço (Ex: Corte Masculino)" value="${name}" required maxlength="50">
+                <input type="number" class="agenda-service-duration" placeholder="Duração" value="${duration}" required min="5" step="5">
+                <span>minutos</span>
+            </div>
+            <button type="button" class="remove-btn">×</button>
+        `;
+        servicesList.appendChild(item);
+    }
+
+    async function handleSaveAgenda(onSuccessCallback) {
+        const saveBtn = document.getElementById('save-agenda-btn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner"></span> Salvando...';
+
+        try {
+            const token = await getAuthToken();
+
+            // Coleta os dados do formulário
+            const agendaData = {
+                name: document.getElementById('agenda-name').value,
+                min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
+                max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
+                auto_confirm: document.getElementById('agenda-auto-confirm').checked,
+                services: [],
+                schedule_config: {} // Por enquanto, enviamos um objeto vazio
+            };
+
+            // Coleta os serviços da lista
+            document.querySelectorAll('#agenda-services-list .knowledge-item').forEach(item => {
+                const name = item.querySelector('.agenda-service-name').value.trim();
+                const duration = parseInt(item.querySelector('.agenda-service-duration').value, 10);
+                if (name && duration) {
+                    agendaData.services.push({ name: name, duration_minutes: duration });
+                }
+            });
+
+            if (agendaData.services.length === 0) {
+                throw new Error("Adicione pelo menos um serviço válido.");
+            }
+
+            // Envia os dados para o backend
+            const response = await fetch(`${API_BASE_URL}/api/agendas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(agendaData)
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.message || "Falha ao salvar a agenda.");
+            }
+            
+            showToast('Agenda criada com sucesso!', 'success');
+            await fetchAgendas(); // Atualiza a lista de agendas na tela
+            
+            if (onSuccessCallback) {
+                onSuccessCallback(); // Fecha o modal
+            }
+
+        } catch (error) {
+            console.error("Erro ao salvar agenda:", error);
+            showToast(error.message, 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Salvar Agenda';
+        }
+    }    
 
     function createBotCard(bot) {
         const card = document.createElement('div');
@@ -2751,6 +2982,7 @@ async function createBot() {
         setupPricingToggle();
         setupNavigation();
         setupPlanButtons();
+        setupAgendaModalListeners();
         
         // As inicializações do Wizard e da tela de Edição foram REMOVIDAS daqui
         // para serem chamadas pela função showView.
@@ -2767,34 +2999,29 @@ async function createBot() {
         const navContainer = document.querySelector('.header-nav');
         if (!navContainer) return;
 
-        // Usamos delegação de evento, que é mais eficiente.
         navContainer.addEventListener('click', (e) => {
-            // Impede a ação padrão do link
             e.preventDefault();
-            
-            // Verifica se o clique foi realmente em um link (<a>)
             const targetLink = e.target.closest('a.nav-link');
             if (!targetLink) return;
 
-            // Pega o texto do link para decidir qual view mostrar
             const linkText = targetLink.textContent.trim();
-            let viewToShow = 'dashboard'; // Padrão
+            let viewToShow = 'dashboard'; 
 
+            // Lógica atualizada para incluir Agendas
             if (linkText === 'Planos') {
-            //  viewToShow = 'plans';
+                viewToShow = 'plans';
+            } else if (linkText === 'Agendas') { // <-- NOVA CONDIÇÃO
+                viewToShow = 'agendas';
             } else if (linkText === 'Painel') {
                 viewToShow = 'dashboard';
             }
-            // Você pode adicionar mais 'else if' aqui no futuro para outras páginas
-
-            // Remove a classe 'active' de todos os links e a adiciona apenas no clicado
+            
             navContainer.querySelectorAll('a.nav-link').forEach(link => link.classList.remove('active'));
             targetLink.classList.add('active');
 
-            // Mostra a view correspondente
             showView(viewToShow);
         });
-    }    
+    }
 
     function setupPricingToggle() {
         const toggleContainer = document.querySelector('.plan-toggle');
