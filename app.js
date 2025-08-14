@@ -2958,7 +2958,8 @@ async function createBot() {
             const smartSnoozeMinutes = document.getElementById('edit-smart-snooze-minutes').value || 15;
             const leadCollectionEnabled = document.getElementById('edit-lead-collection-enabled').checked;
             const leadCollectionPrompt = document.getElementById('edit-lead-collection-prompt').value.trim();
-            const knowledgeInstructions = document.getElementById('edit-knowledge-instructions').value.trim();
+            const knowledgeInstructions = document.getElementById('edit-knowledge-instructions').value.trim()
+            const agendaEnabled = document.getElementById('edit-agenda-enabled').checked;
 
             const botData = {
                 name: document.getElementById('edit-bot-name').value,
@@ -2973,7 +2974,8 @@ async function createBot() {
                 smart_snooze_enabled: smartSnoozeEnabled,
                 smart_snooze_minutes: parseInt(smartSnoozeMinutes, 10),
                 lead_collection_enabled: leadCollectionEnabled,
-                lead_collection_prompt: leadCollectionPrompt                
+                lead_collection_prompt: leadCollectionPrompt,
+                agenda_enabled: agendaEnabled,              
             };
             
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}`, {
@@ -3061,6 +3063,7 @@ async function createBot() {
         snoozeEnabledCheckbox.checked = bot.smart_snooze_enabled || false;
         snoozeDetails.style.display = snoozeEnabledCheckbox.checked ? 'block' : 'none';
         document.getElementById('edit-smart-snooze-minutes').value = bot.smart_snooze_minutes || 15;
+        document.getElementById('edit-agenda-enabled').checked = bot.agenda_enabled || false;
 
         populateEditContacts(bot.knowledge_contacts || []);
 
