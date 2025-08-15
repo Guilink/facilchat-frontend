@@ -601,8 +601,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }    
 
-    // Cole esta nova função após handleDeleteAgenda
-
     window.handleEditAgenda = function(agendaId) {
         const agenda = userAgendas.find(a => a.id === agendaId);
         if (!agenda) {
@@ -619,22 +617,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('agenda-name').value = agenda.name;
         document.getElementById('agenda-min-antecedence').value = agenda.min_antecedence_minutes;
         document.getElementById('agenda-max-days').value = agenda.max_days_ahead;
-        // O toggle de auto-confirm foi removido, então não precisamos mais preenchê-lo.
         
         servicesList.innerHTML = '';
-        // Garante que o array de serviços exista antes de iterar
+        // Garante que o array de serviços exista e só itera sobre os NÃO arquivados
         if (agenda.services && Array.isArray(agenda.services)) {
-            agenda.services.forEach(service => {
+            agenda.services.filter(s => !s.is_archived).forEach(service => {
+                // A chamada agora está correta e passa os 3 parâmetros
                 addAgendaServiceItem(service.name, service.duration_minutes, service.id);
             });
         }
 
         // Popula o editor de horários com os dados salvos da agenda
-        // Garante que a configuração de dias exista
         if (agenda.schedule_config && agenda.schedule_config.days) {
             populateAgendaScheduleEditor(agenda.schedule_config.days);
         } else {
-            // Se não houver dados, popula com o padrão
             populateAgendaScheduleEditor();
         }
 
@@ -708,11 +704,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('div');
         item.className = 'knowledge-item';
         
+        // Armazena o ID do serviço (se existir) no elemento para uso posterior
         if (serviceId) {
             item.dataset.serviceId = serviceId;
         }
 
-        // A estrutura do layout compacto que já implementamos permanece a mesma.
+        // A estrutura do layout compacto permanece a mesma
         item.innerHTML = `
             <div class="service-item-compact">
                 <input type="text" class="agenda-service-name" placeholder="Nome do Serviço" value="${name}" required maxlength="50">
