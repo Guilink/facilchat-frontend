@@ -677,7 +677,6 @@
     <!-- MODAL: CRIAÇÃO/EDIÇÃO DE AGENDA -->
     <div id="agenda-modal" class="modal-overlay">
         <div class="modal-container agenda-modal-container">
-            <!-- O formulário engloba todo o conteúdo para facilitar a submissão -->
             <form id="agenda-form">
                 <input type="hidden" id="agenda-edit-id">
                 <div class="modal-header">
@@ -687,64 +686,59 @@
                 <div class="modal-content">
                     <!-- Seção de Nome -->
                     <div class="form-group">
-                        <label for="agenda-name">Nome da Agenda</label>
+                        <label for="agenda-name">Nome da Agenda / Profissional</label>
                         <input type="text" id="agenda-name" placeholder="Ex: Barbeiro João, Dra. Ana (Psicóloga)" required maxlength="50">
-                        <small>Dê um nome que identifique o profissional ou recurso (Ex: Sala de Reunião).</small>
                     </div>
                     
-                    <hr>
-
                     <!-- Seção de Serviços -->
                     <div class="form-group">
                         <label>Serviços Oferecidos</label>
+                        <small>Cadastre os serviços, informando o nome e o tempo de duração de cada um. Ex: Avaliação (30 min).</small>
                         <div id="agenda-services-list" class="knowledge-list">
                             <!-- Serviços serão adicionados aqui dinamicamente -->
                         </div>
                         <button type="button" id="add-agenda-service" class="btn-add">+ Adicionar Serviço</button>
-                        <small>Adicione os serviços que poderão ser agendados e suas durações.</small>
                     </div>
-
-                    <hr>
-                    <!-- Seção de Horário de Funcionamento (NOVA) -->
+                    
+                    <!-- Seção de Horário de Funcionamento -->
                     <div class="form-group">
-                        <label>Horário de Funcionamento Semanal</label>
+                        <label>Horário Base de Funcionamento</label>
+                        <small>Defina a grade de horários padrão do profissional. Você poderá liberar ou bloquear horários específicos depois, no calendário.</small>
                         <div id="agenda-schedule-details" class="schedule-details">
                             <!-- Os dias da semana serão gerados aqui -->
                         </div>
-                        <small>Defina os horários padrão de atendimento para cada dia.</small>
                     </div>
-
-                    <hr>                    
-
+                    
                     <!-- Seção de Configurações Adicionais -->
                     <div class="form-group">
                         <label>Configurações de Agendamento</label>
                         <div class="settings-grid">
                             <div class="setting-item">
                                 <label for="agenda-min-antecedence">Antecedência Mínima</label>
-                                <select id="agenda-min-antecedence">
-                                    <option value="60">1 hora</option>
-                                    <option value="120" selected>2 horas</option>
-                                    <option value="240">4 horas</option>
-                                    <option value="1440">1 dia</option>
-                                </select>
+                                <div class="custom-select-wrapper">
+                                    <select id="agenda-min-antecedence">
+                                        <option value="60">1 hora</option>
+                                        <option value="120" selected>2 horas</option>
+                                        <option value="240">4 horas</option>
+                                        <option value="1440">1 dia</option>
+                                    </select>
+                                </div>
+                                <small>Evita que agendamentos sejam marcados em cima da hora.</small>
                             </div>
                             <div class="setting-item">
-                                <label for="agenda-max-days">Janela de Agendamento</label>
-                                <select id="agenda-max-days">
-                                    <option value="7">7 dias</option>
-                                    <option value="15">15 dias</option>
-                                    <option value="30" selected>30 dias</option>
-                                    <option value="60">60 dias</option>
-                                </select>
-                            </div>
-                            <div class="setting-item-toggle">
-                                <label for="agenda-auto-confirm">Confirmar Agendamentos Automaticamente</label>
-                                <label class="day-toggle"><input type="checkbox" id="agenda-auto-confirm" checked><span class="toggle-slider"></span></label>
+                                <label for="agenda-max-days">Janela Máxima</label>
+                                <div class="custom-select-wrapper">
+                                    <select id="agenda-max-days">
+                                        <option value="7">7 dias</option>
+                                        <option value="15">15 dias</option>
+                                        <option value="30" selected>30 dias</option>
+                                        <option value="60">60 dias</option>
+                                    </select>
+                                </div>
+                                <small>Limite máximo de dias no futuro que alguém pode agendar.</small>
                             </div>
                         </div>
                     </div>
-
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" data-target-modal="agenda-modal">Cancelar</button>

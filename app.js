@@ -529,7 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const servicesList = agenda.services.map(s => `<li>${s.name} (${s.duration_minutes} min)</li>`).join('');
 
-        // A mudança agora está no botão "Calendário"
+        // <<< AQUI ESTÁ A MUDANÇA >>>
+        // Trocamos 'btn-danger-outline' por 'btn-danger' para o botão sólido.
         card.innerHTML = `
             <div class="agenda-card-header">
                 <h3>${agenda.name}</h3>
@@ -542,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="agenda-card-footer">
                 <button class="btn-secondary" onclick="window.openCalendarView(${agenda.id})">Calendário</button>
                 <button class="btn-secondary" onclick="window.handleEditAgenda(${agenda.id})">Editar</button>
-                <button class="btn-danger-outline" onclick="window.handleDeleteAgenda(${agenda.id}, '${agenda.name.replace(/'/g, "\\'")}')">Excluir</button>
+                <button class="btn-danger" onclick="window.handleDeleteAgenda(${agenda.id}, '${agenda.name.replace(/'/g, "\\'")}')">Excluir</button>
             </div>
         `;
         return card;
@@ -593,15 +594,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('agenda-name').value = agenda.name;
         document.getElementById('agenda-min-antecedence').value = agenda.min_antecedence_minutes;
         document.getElementById('agenda-max-days').value = agenda.max_days_ahead;
-        document.getElementById('agenda-auto-confirm').checked = agenda.auto_confirm;
+        // O toggle de auto-confirm foi removido, então não precisamos mais preenchê-lo.
         
         servicesList.innerHTML = '';
-        agenda.services.forEach(service => {
-            addAgendaServiceItem(service.name, service.duration_minutes);
-        });
+        // Garante que o array de serviços exista antes de iterar
+        if (agenda.services && Array.isArray(agenda.services)) {
+            agenda.services.forEach(service => {
+                addAgendaServiceItem(service.name, service.duration_minutes);
+            });
+        }
 
         // Popula o editor de horários com os dados salvos da agenda
-        populateAgendaScheduleEditor(agenda.schedule_config.days);
+        // Garante que a configuração de dias exista
+        if (agenda.schedule_config && agenda.schedule_config.days) {
+            populateAgendaScheduleEditor(agenda.schedule_config.days);
+        } else {
+            // Se não houver dados, popula com o padrão
+            populateAgendaScheduleEditor();
+        }
 
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -673,11 +683,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('div');
         item.className = 'knowledge-item';
         
+        // <<< CORREÇÃO PRINCIPAL >>>
+        // A classe "knowledge-item-inputs" foi REMOVIDA para evitar o conflito de estilos.
+        // Agora temos apenas o "service-item-compact", que será estilizado corretamente.
         item.innerHTML = `
-            <div class="knowledge-item-inputs">
-                <input type="text" class="agenda-service-name" placeholder="Nome do Serviço (Ex: Corte Masculino)" value="${name}" required maxlength="50">
-                <input type="number" class="agenda-service-duration" placeholder="Duração" value="${duration}" required min="5" step="5">
-                <span>minutos</span>
+            <div class="service-item-compact">
+                <input type="text" class="agenda-service-name" placeholder="Nome do Serviço" value="${name}" required maxlength="50">
+                <input type="number" class="agenda-service-duration" value="${duration}" required min="5" step="5">
+                <span>Min.</span>
             </div>
             <button type="button" class="remove-btn">×</button>
         `;
@@ -699,7 +712,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: document.getElementById('agenda-name').value,
                 min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
                 max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
-                auto_confirm: document.getElementById('agenda-auto-confirm').checked,
                 services: [],
                 schedule_config: { // Objeto para guardar os horários
                     interval: 30, // Por enquanto, fixo em 30 minutos
@@ -809,6 +821,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ================ LÓGICA DA VIEW DE CALENDÁRIO (NOVO) ================
     // =====================================================================
 
+    function updateDateDisplay(date) {
+        const displayEl = document.getElementById('day-schedule-date-display');
+        if (displayEl) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0'); // Mês é base 0, então somamos 1
+            const year = date.getFullYear();
+            displayEl.textContent = `${day}/${month}/${year}`;
+        }
+    }
+
     // Função principal que abre e inicializa a view do calendário
     window.openCalendarView = function(agendaId) {
         currentAgenda = userAgendas.find(a => a.id === agendaId);
@@ -819,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         selectedDate = new Date(); // Reseta para a data de hoje ao abrir
         document.getElementById('calendar-agenda-name').textContent = `Calendário de ${currentAgenda.name}`;
-        
+        updateDateDisplay(selectedDate);
         showView('calendar');
         renderMiniCalendar();
         renderDaySchedule();

@@ -3402,3 +3402,172 @@ input:checked + .toggle-slider:before {
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
+
+/* ===================================================================== */
+/* =================== CORREÇÕES E POLIMENTO DA AGENDA (v5 - DEFINITIVO) = */
+/* ===================================================================== */
+
+/* --- 1. Alarga o modal e controla a rolagem (Mantido) --- */
+.agenda-modal-container {
+    max-width: 800px;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+#agenda-modal .modal-content {
+    overflow-y: auto;
+    flex: 1;
+    padding: var(--space-2xl) var(--space-3xl);
+}
+#agenda-modal .modal-footer {
+    flex-shrink: 0;
+}
+
+/* --- 2. Layout compacto para os itens de serviço (Mantido) --- */
+.knowledge-list .knowledge-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.service-item-compact {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+.service-item-compact .agenda-service-name {
+    flex: 1;
+}
+.service-item-compact .agenda-service-duration {
+    width: 80px;
+    text-align: center;
+}
+.service-item-compact span {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* --- 3. Alinhamento das Configurações de Agendamento (Mantido) --- */
+.settings-grid {
+    align-items: start;
+}
+.setting-item {
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- 4. CORREÇÃO DEFINITIVA: Estilização dos Menus Suspensos (Dropdowns) --- */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+.custom-select-wrapper select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+    /* VARIÁVEIS CORRIGIDAS ABAIXO */
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    /* FIM DA CORREÇÃO DAS VARIÁVEIS */
+    border-radius: var(--radius-md);
+    padding: 10px 30px 10px 12px;
+    font-size: 1rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+.custom-select-wrapper select:hover {
+    border-color: var(--accent);
+}
+.custom-select-wrapper::after {
+    content: '▼';
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+
+/* --- 5. Responsividade dos Horários (Mantido e Consolidado) --- */
+@media (max-width: 768px) {
+    #step-2 .schedule-day,
+    #modal-schedule-details .schedule-day,
+    #agenda-schedule-details .schedule-day {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        background: none;
+        border-radius: 0;
+        padding: 0;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    #step-2 .schedule-day:last-child,
+    #modal-schedule-details .schedule-day:last-child,
+    #agenda-schedule-details .schedule-day:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    #step-2 .schedule-day .day-name,
+    #modal-schedule-details .schedule-day .day-name,
+    #agenda-schedule-details .schedule-day .day-name {
+        font-size: 1.2rem;
+        font-weight: 600;
+        border: none; margin: 0; padding: 0;
+        order: 1;
+    }
+    
+    #step-2 .schedule-day .day-toggle,
+    #modal-schedule-details .schedule-day .day-toggle,
+    #agenda-schedule-details .schedule-day .day-toggle {
+        order: 2;
+    }
+
+    #step-2 .schedule-day .time-inputs,
+    #modal-schedule-details .schedule-day .time-inputs,
+    #agenda-schedule-details .schedule-day .time-inputs {
+        order: 3;
+        width: max-content;
+        padding: 0;
+        background: none;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem 1rem;
+        align-items: center;
+    }
+}
+
+/* ===================================================================== */
+/* ==== RESPONSIVIDADE DA PÁGINA DO CALENDÁRIO (MOBILE-FRIENDLY) ===== */
+/* ===================================================================== */
+
+/* Aplica estas regras em telas de até 1024px de largura (tablets e celulares) */
+@media (max-width: 1024px) {
+    .calendar-layout {
+        /* A MÁGICA ACONTECE AQUI:
+           Transformamos o grid de 2 colunas em um grid de 1 coluna.
+           Isso força os itens (sidebar e grade de horários) a se empilharem.
+        */
+        grid-template-columns: 1fr;
+        gap: 1.5rem; /* Reduzimos um pouco o espaçamento para telas menores */
+    }
+
+    .calendar-container {
+        /* Reduzimos o padding geral da página em telas menores */
+        padding: 1.5rem 1rem;
+    }
+
+    .calendar-page-header {
+        /* Empilha o título e o botão de voltar em telas muito pequenas */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
