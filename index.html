@@ -110,8 +110,11 @@
 
                     <!-- ESTADO 2: COM BOTS -->
                     <div id="bots-state" class="bots-state" style="display: none;">
-                        <div class="bots-header">
-                            <h2>Seus assistentes</h2>
+                        <div class="page-header bots-header">
+                            <div>
+                                <h2>Meus Assistentes</h2>
+                                <p>Crie e gerencie seus assistentes virtuais com IA.</p>
+                            </div>
                             <button id="create-bot-btn" class="btn-primary">+ Criar assistente virtual</button>
                         </div>
                         <div id="bots-list" class="bots-list">
@@ -150,10 +153,10 @@
             <div class="agendas-container"> <!-- Mantemos o container para o padding geral -->
 
                 <!-- Cabeçalho da página de agendas -->
-                <div class="agendas-header">
+                <div class="page-header bots-header">
                     <div>
                         <h2>Minhas Agendas</h2>
-                        <p>Crie e gerencie as agendas dos seus profissionais ou recursos.</p>
+                        <p>Crie e gerencie as agendas dos seus profissionais.</p>
                     </div>
                     <button id="create-agenda-btn" class="btn-primary">+ Criar Agenda</button>
                 </div>
@@ -205,11 +208,10 @@
                         </div>
                         <hr>
                         <div class="calendar-legend">
-                            <h4>Legenda:</h4>
                             <ul>
-                                <li><span class="legend-color available"></span> Horário Livre</li>
-                                <li><span class="legend-color booked"></span> Horário Agendado</li>
-                                <li><span class="legend-color blocked"></span> Horário Bloqueado</li>
+                                <li><span class="legend-color available"></span>Horários Livres</li>
+                                <li><span class="legend-color booked"></span>Agenda Cheia</li>
+                                <li><span class="legend-color blocked"></span>Fechado</li>
                             </ul>
                         </div>
                     </div>
@@ -760,21 +762,25 @@
                     <button type="button" class="modal-close" data-target-modal="appointment-modal">×</button>
                 </div>
                 <div class="modal-content">
-                    <div class="form-group">
-                        <label for="appointment-service">Serviço</label>
-                        <select id="appointment-service" required>
-                            <!-- Opções de serviço serão populadas pelo JS -->
-                        </select>
-                    </div>
+                    <!-- <<< ORDEM DOS CAMPOS CORRIGIDA >>> -->
                     <div class="form-group">
                         <label for="appointment-client-name">Nome do Cliente</label>
                         <input type="text" id="appointment-client-name" placeholder="Nome de quem será atendido" required maxlength="100">
                     </div>
                     <div class="form-group">
+                        <label for="appointment-service">Serviço</label>
+                        <!-- <<< WRAPPER ADICIONADO PARA ESTILO ELEGANTE >>> -->
+                        <div class="custom-select-wrapper">
+                            <select id="appointment-service" required>
+                                <!-- Opções de serviço serão populadas pelo JS -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label for="appointment-client-phone">Telefone do Cliente (Opcional)</label>
                         <input type="tel" id="appointment-client-phone" placeholder="Ex: 11987654321" maxlength="20">
                     </div>
-                     <div class="form-group">
+                    <div class="form-group">
                         <label for="appointment-notes">Observações (Opcional)</label>
                         <textarea id="appointment-notes" rows="3" placeholder="Alguma observação sobre o cliente ou o serviço." maxlength="300"></textarea>
                     </div>

@@ -3403,6 +3403,25 @@ input:checked + .toggle-slider:before {
     animation: spin 1s linear infinite;
 }
 
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px; /* ou o valor que você usa */
+}
+
+.page-header h2 {
+    margin-bottom: 8px;
+    font-size: /* mesmo tamanho */;
+    font-weight: /* mesmo peso */;
+}
+
+.page-header p {
+    margin-bottom: 0;
+    color: /* mesma cor */;
+    font-size: /* mesmo tamanho */;
+}
 /* ===================================================================== */
 /* =================== CORREÇÕES E POLIMENTO DA AGENDA (v5 - DEFINITIVO) = */
 /* ===================================================================== */
@@ -3570,4 +3589,122 @@ input:checked + .toggle-slider:before {
         align-items: flex-start;
         gap: 1rem;
     }
+}
+
+
+
+/* ===================================================================== */
+/* ==== ESTILO PARA OPÇÕES DESABILITADAS NO MODAL DE AGENDAMENTO ===== */
+/* ===================================================================== */
+
+/* Deixa o texto das opções inviáveis com uma cor mais fraca e proíbe o clique */
+#appointment-service option:disabled {
+    color: var(--text-muted);
+    background-color: var(--bg-primary); /* Garante que não fique branco em alguns navegadores */
+}
+
+/* ===================================================================== */
+/* ==== ESTILOS PARA O NOVO CARD DE AGENDA (CONSISTENTE COM BOT) ===== */
+/* ===================================================================== */
+
+/* Estilo base para o card da agenda */
+.agenda-card {
+    background: var(--gradient-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-normal);
+}
+.agenda-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Classes genéricas para Header, Body e Actions, para reutilização */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--space-lg);
+    gap: var(--space-lg);
+}
+.card-name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+.card-toggle-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.card-body {
+    padding: 0 var(--space-lg) var(--space-lg) var(--space-lg);
+    flex-grow: 1; /* Faz o corpo crescer e empurrar o rodapé para baixo */
+}
+.card-body h4 {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+}
+.card-body ul {
+    list-style: none;
+    padding-left: 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding: var(--space-md);
+    border-top: 1px solid var(--border);
+}
+.card-actions-left { flex: 1; }
+.card-actions-right { display: flex; gap: var(--space-sm); }
+
+/* Botão de ícone genérico */
+.card-action-icon {
+    background: none; border: none; color: var(--text-secondary);
+    cursor: pointer; padding: 0.5rem; border-radius: 6px;
+    transition: var(--transition-normal);
+    display: flex; align-items: center; justify-content: center;
+}
+.card-action-icon:hover {
+    color: var(--accent);
+    background-color: var(--bg-tertiary);
+}
+
+/* Novo botão de destaque para o Calendário */
+.btn-accent {
+    font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    background-color: var(--accent);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+.btn-accent:hover {
+    background-color: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }

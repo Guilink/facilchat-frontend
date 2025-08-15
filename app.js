@@ -87,11 +87,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentWizardStep = 1;
     let isEditMode = false;
     let editingBotId = null;
-    let wizardBotId = null; // <-- NOVA VARIÁVEL DE CONTROLE
+    let wizardBotId = null;
     let isActivelyConnecting = false;
-    let wizardFilesToUpload = []; // <-- NOVA VARIÁVEL
+    let wizardFilesToUpload = [];
     let isWizardInitialized = false;
     let isEditViewInitialized = false;
+    let currentDayAppointments = [];
 
 
     
@@ -521,29 +522,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createAgendaCard(agenda) {
         const card = document.createElement('div');
-        card.className = 'agenda-card';
+        card.className = 'agenda-card'; // Usaremos esta classe para estilizar
         card.setAttribute('data-agenda-id', agenda.id);
 
-        const statusClass = agenda.status === 'active' ? 'active' : 'inactive';
-        const statusText = agenda.status === 'active' ? 'Ativa' : 'Inativa';
+        const isActive = agenda.status === 'active';
+        const statusText = isActive ? 'Ativa' : 'Inativa';
+        const statusClass = isActive ? 'active' : 'inactive';
+        const toggleChecked = isActive ? 'checked' : '';
+        const onchangeAction = `onchange="handleAgendaStatusToggle('${agenda.id}', this.checked)"`;
 
+        // Lista de serviços para o corpo do card
         const servicesList = agenda.services.map(s => `<li>${s.name} (${s.duration_minutes} min)</li>`).join('');
 
-        // <<< AQUI ESTÁ A MUDANÇA >>>
-        // Trocamos 'btn-danger-outline' por 'btn-danger' para o botão sólido.
         card.innerHTML = `
-            <div class="agenda-card-header">
-                <h3>${agenda.name}</h3>
-                <span class="status-badge ${statusClass}">${statusText}</span>
+            <div class="card-header"> <!-- Usando uma classe mais genérica -->
+                <div class="card-info">
+                    <div class="card-name">${agenda.name}</div>
+                </div>
+                <div class="card-toggle-area">
+                    <label class="status-toggle">
+                        <input type="checkbox" ${toggleChecked} ${onchangeAction}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="status-text ${statusClass}">${statusText}</span>
+                </div>
             </div>
-            <div class="agenda-card-body">
+            
+            <div class="card-body"> <!-- Corpo do card com os serviços -->
                 <h4>Serviços Oferecidos:</h4>
                 <ul>${servicesList || "<li>Nenhum serviço cadastrado.</li>"}</ul>
             </div>
-            <div class="agenda-card-footer">
-                <button class="btn-secondary" onclick="window.openCalendarView(${agenda.id})">Calendário</button>
-                <button class="btn-secondary" onclick="window.handleEditAgenda(${agenda.id})">Editar</button>
-                <button class="btn-danger" onclick="window.handleDeleteAgenda(${agenda.id}, '${agenda.name.replace(/'/g, "\\'")}')">Excluir</button>
+
+            <div class="card-actions"> <!-- Usando a mesma classe de ações do bot -->
+                <div class="card-actions-left">
+                    <button class="btn-accent" onclick="window.openCalendarView(${agenda.id})">
+                        <!-- Ícone de Calendário para consistência -->
+                        <svg width="14" height="14"><use xlink:href="#icon-calendar"/></svg>
+                        Calendário
+                    </button>
+                </div>
+                <div class="card-actions-right">
+                    <button class="card-action-icon" onclick="window.handleEditAgenda(${agenda.id})" title="Editar Agenda">
+                        <svg width="16" height="16"><use xlink:href="#icon-edit"/></svg>
+                    </button>
+                    <button class="card-action-icon" onclick="window.handleDeleteAgenda(${agenda.id}, '${agenda.name.replace(/'/g, "\\'")}')" title="Excluir Agenda">
+                        <svg width="16" height="16"><use xlink:href="#icon-trash"/></svg>
+                    </button>
+                </div>
             </div>
         `;
         return card;
@@ -953,6 +978,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const apiDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
             const { appointments, overrides } = await fetchAppointmentsForDay(apiDate);
+            currentDayAppointments = appointments;
 
             // ... (o restante do código interno desta função, que já está correto, permanece o mesmo)
             // A lógica do loop while que constrói o finalHTML não precisa de alterações.
@@ -1097,20 +1123,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const title = document.getElementById('appointment-modal-title');
         const serviceSelect = document.getElementById('appointment-service');
 
-        form.reset(); // Limpa o formulário
+        form.reset();
+        document.getElementById('appointment-slot-start-time').value = slotISO;
 
-        // Popula o <select> de serviços
+        // <<< INÍCIO DA NOVA LÓGICA INTELIGENTE >>>
+
+        const slotStartTime = new Date(slotISO).getTime();
+
+        // 1. Encontra o próximo agendamento no dia
+        const nextAppointment = currentDayAppointments
+            .filter(app => new Date(app.start_time).getTime() > slotStartTime) // Pega todos os agendamentos futuros
+            .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))[0]; // Ordena e pega o mais próximo
+
+        // 2. Calcula o tempo disponível em minutos
+        let availableWindowInMinutes;
+        if (nextAppointment) {
+            const nextAppointmentTime = new Date(nextAppointment.start_time).getTime();
+            availableWindowInMinutes = (nextAppointmentTime - slotStartTime) / 60000;
+        } else {
+            availableWindowInMinutes = 9999; // Se não houver próximo agendamento, há tempo "infinito"
+        }
+
+        // 3. Popula o <select> de serviços, verificando a viabilidade
         serviceSelect.innerHTML = '<option value="" disabled selected>Selecione um serviço...</option>';
         currentAgenda.services.forEach(service => {
             const option = document.createElement('option');
             option.value = service.id;
-            option.textContent = `${service.name} (${service.duration_minutes} min)`;
             option.dataset.duration = service.duration_minutes;
+
+            if (appointment && appointment.service_id === service.id) {
+                // Se estiver editando, o serviço atual deve estar sempre habilitado
+                option.textContent = `${service.name} (${service.duration_minutes} min)`;
+                option.disabled = false;
+            } else if (service.duration_minutes > availableWindowInMinutes) {
+                // Se o serviço não couber na janela de tempo
+                option.textContent = `${service.name} (${service.duration_minutes} min) - Sem tempo hábil`;
+                option.disabled = true; // Desabilita a opção
+            } else {
+                // Se o serviço couber
+                option.textContent = `${service.name} (${service.duration_minutes} min)`;
+                option.disabled = false;
+            }
+            
             serviceSelect.appendChild(option);
         });
-        
-        // Armazena a data de início no formulário
-        document.getElementById('appointment-slot-start-time').value = slotISO;
+
+        // <<< FIM DA NOVA LÓGICA INTELIGENTE >>>
 
         if (appointment) {
             // --- MODO EDIÇÃO ---
@@ -1129,6 +1187,38 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
+
+    window.handleAgendaStatusToggle = async function(agendaId, isActive) {
+        try {
+            const status = isActive ? 'active' : 'inactive';
+            const token = await getAuthToken();
+            
+            const response = await fetch(`${API_BASE_URL}/api/agendas/${agendaId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ status })
+            });
+
+            if (!response.ok) throw new Error('Falha ao alterar status da agenda');
+
+            // Atualiza o estado local para feedback instantâneo
+            const agenda = userAgendas.find(a => a.id == agendaId);
+            if (agenda) {
+                agenda.status = status;
+                // Força a re-renderização apenas do card afetado (mais eficiente)
+                const card = document.querySelector(`.agenda-card[data-agenda-id="${agendaId}"]`);
+                if (card) {
+                    card.outerHTML = createAgendaCard(agenda);
+                }
+            }
+
+        } catch (error) {
+            console.error('Erro ao alterar status da agenda:', error);
+            showToast("Não foi possível atualizar o status.", "error");
+            // Reverte o toggle visualmente em caso de falha
+            await fetchAgendas(); // Recarrega tudo para garantir consistência
+        }
+    };    
 
     // Função para salvar (criar ou atualizar) o agendamento
     async function handleSaveAppointment(event) {
