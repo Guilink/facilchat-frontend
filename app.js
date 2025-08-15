@@ -405,6 +405,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function fetchMonthAvailability(year, month) {
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/agendas/${currentAgenda.id}/month-availability?year=${year}&month=${month}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) return {};
+            return await response.json();
+        } catch (error) {
+            console.error("Falha ao buscar status do mês:", error);
+            return {}; // Retorna um objeto vazio em caso de erro para não quebrar a interface
+        }
+    }    
+
     function renderDashboard() {
         // PASSO 1: SEMPRE limpa a lista de bots para evitar "fantasmas".
         elements.botsList.innerHTML = '';
@@ -813,9 +827,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função chamada quando o usuário clica em um dia no mini-calendário
     window.changeSelectedDate = function(day, month, year) {
-        // O mês no JavaScript vai de 0 a 11, então subtraímos 1
+        const gridEl = document.getElementById('day-schedule-grid');
+        gridEl.innerHTML = '<div class="loading-spinner-large"></div>';
+        document.getElementById('day-schedule-date-display').textContent = `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
+
         selectedDate = new Date(year, month - 1, day);
-        renderMiniCalendar();
+        updateMiniCalendarSelection(); 
         renderDaySchedule();
     }
 
@@ -823,129 +840,150 @@ document.addEventListener('DOMContentLoaded', () => {
     //      SUBSTITUA TODA A SUA FUNÇÃO renderMiniCalendar POR ESTA
     // =====================================================================
 
-    function renderMiniCalendar() {
+    window.renderMiniCalendar = async function() {
+        // A lógica desta função permanece a mesma da versão anterior,
+        // pois ela já está correta para quando precisamos de um loading.
         const calendarEl = document.getElementById('mini-calendar');
         const month = selectedDate.getMonth();
         const year = selectedDate.getFullYear();
-
-        const firstDayOfMonth = new Date(year, month, 1);
-        const lastDayOfMonth = new Date(year, month + 1, 0);
-
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        const dayNames = ["D", "S", "T", "Q", "Q", "S", "S"];
 
-        // Gera o cabeçalho do calendário (Mês/Ano e botões de navegação)
-        let html = `
+        calendarEl.innerHTML = `
             <div class="mini-calendar-header">
-                <button onclick="changeMonth(-1)" title="Mês anterior">‹</button>
+                <button onclick="window.changeMonth(-1)" title="Mês anterior">‹</button>
                 <span>${monthNames[month]} ${year}</span>
-                <button onclick="changeMonth(1)" title="Próximo mês">›</button>
+                <button onclick="window.changeMonth(1)" title="Prximo mês">›</button>
             </div>
             <div class="mini-calendar-grid">
+                <div class="loading-spinner" style="grid-column: 1 / -1; margin: 2rem auto;"></div>
+            </div>
         `;
 
-        // GERA AS SIGLAS DOS DIAS DA SEMANA (CORRIGIDO: AGORA FEITO COM UM LOOP)
-        dayNames.forEach(day => {
-            html += `<div class="day-name">${day}</div>`;
-        });
+        try {
+            const monthAvailability = await fetchMonthAvailability(year, month + 1);
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const dayNames = ["D", "S", "T", "Q", "Q", "S", "S"];
 
-        // Adiciona os espaços em branco para alinhar o primeiro dia do mês
-        for (let i = 0; i < firstDayOfMonth.getDay(); i++) {
-            html += `<div></div>`;
+            let finalGridContent = '';
+            dayNames.forEach(day => { finalGridContent += `<div class="day-name">${day}</div>`; });
+            for (let i = 0; i < firstDayOfMonth.getDay(); i++) { finalGridContent += `<div></div>`; }
+
+            for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+                const isSelected = day === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear();
+                const dayStatusClass = monthAvailability[day] || '';
+                finalGridContent += `<div class="day-number ${isSelected ? 'selected' : ''} ${dayStatusClass}" data-day="${day}" onclick="window.changeSelectedDate(${day}, ${month + 1}, ${year})">${day}</div>`;
+            }
+            
+            const gridContainer = calendarEl.querySelector('.mini-calendar-grid');
+            if (gridContainer) gridContainer.innerHTML = finalGridContent;
+
+        } catch (error) {
+            console.error("Erro ao renderizar mini-calendário:", error);
+            const gridContainer = calendarEl.querySelector('.mini-calendar-grid');
+            if (gridContainer) gridContainer.innerHTML = `<p class="error-message">Erro.</p>`;
         }
-
-        // Adiciona os números dos dias do mês
-        for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
-            const isSelected = day === selectedDate.getDate();
-            html += `<div class="day-number ${isSelected ? 'selected' : ''}" onclick="changeSelectedDate(${day}, ${month + 1}, ${year})">${day}</div>`;
-        }
-
-        html += `</div>`; // Fecha a mini-calendar-grid
-        calendarEl.innerHTML = html;
-    }
+    };
 
     // Função para mudar o mês no mini-calendário
     window.changeMonth = function(offset) {
         selectedDate.setMonth(selectedDate.getMonth() + offset);
+        // Para garantir a reatividade, a melhor prática é chamar a função de renderização principal
         renderMiniCalendar();
-        // Opcional: renderiza o dia 1 do novo mês
-        changeSelectedDate(1, selectedDate.getMonth() + 1, selectedDate.getFullYear());
+        
+        // Simula o clique no primeiro dia do novo mês para carregar a grade de horários
+        // Isso garante que a grade da direita sempre atualize ao mudar de mês
+        const newDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        changeSelectedDate(newDate.getDate(), newDate.getMonth() + 1, newDate.getFullYear());
+    }
+    
+    // Função LEVE que apenas atualiza o destaque do dia selecionado
+    function updateMiniCalendarSelection() {
+        const calendarEl = document.getElementById('mini-calendar');
+        if (!calendarEl) return;
+
+        // Remove a seleção de qualquer dia que estivesse selecionado antes
+        const previouslySelected = calendarEl.querySelector('.day-number.selected');
+        if (previouslySelected) {
+            previouslySelected.classList.remove('selected');
+        }
+
+        // Encontra o novo dia a ser selecionado e adiciona a classe
+        // Usamos data-day para garantir que estamos pegando o dia correto
+        const currentDayEl = calendarEl.querySelector(`.day-number[data-day="${selectedDate.getDate()}"]`);
+        if (currentDayEl) {
+            currentDayEl.classList.add('selected');
+        }
     }
 
+    // Função de mudança de mês, agora mais limpa
+    window.changeMonth = function(offset) {
+        selectedDate.setMonth(selectedDate.getMonth() + offset, 1); // O ", 1" evita bugs em meses com diferentes dias
+        window.renderMiniCalendar(); // Chama a função "pesada" com loading
+    }    
+       
+    
     // Função principal que busca os dados e renderiza a grade de horários do dia
     async function renderDaySchedule() {
         const gridEl = document.getElementById('day-schedule-grid');
-        gridEl.innerHTML = '<div class="loading-spinner-large"></div>';
-        const apiDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-        document.getElementById('day-schedule-date-display').textContent = `${String(selectedDate.getDate()).padStart(2, '0')}/${String(selectedDate.getMonth() + 1).padStart(2, '0')}/${selectedDate.getFullYear()}`;
+        if (!gridEl) return;
 
         try {
-            const dayBoundaries = { start: '06:00', end: '23:00' };
-            const interval = currentAgenda.schedule_config.interval || 30;
+            const apiDate = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+            const { appointments, overrides } = await fetchAppointmentsForDay(apiDate);
+
+            // ... (o restante do código interno desta função, que já está correto, permanece o mesmo)
+            // A lógica do loop while que constrói o finalHTML não precisa de alterações.
+            // Copie e cole o corpo inteiro da função que você já tem para garantir.
+
             const dayOfWeekIndex = selectedDate.getDay();
             const dayKeys = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
             const dayConfig = currentAgenda.schedule_config.days.find(d => d.day === dayKeys[dayOfWeekIndex]);
             const workingHours = (dayConfig && dayConfig.active) ? { open: dayConfig.open, close: dayConfig.close } : null;
 
-            const { appointments, overrides } = await fetchAppointmentsForDay(apiDate);
-            const occupiedSlots = new Set(); 
-
-            gridEl.innerHTML = ''; 
+            const occupiedSlots = new Set();
+            let finalHTML = '';
+            const interval = 30;
 
             let currentTime = new Date(selectedDate);
-            const [startHour, startMinute] = dayBoundaries.start.split(':').map(Number);
-            currentTime.setHours(startHour, startMinute, 0, 0);
-            
+            currentTime.setHours(6, 0, 0, 0);
             const dayEndTime = new Date(selectedDate);
-            const [endHour, endMinute] = dayBoundaries.end.split(':').map(Number);
-            dayEndTime.setHours(endHour, endMinute, 0, 0);
+            dayEndTime.setHours(23, 0, 0, 0);
 
             while (currentTime < dayEndTime) {
                 const slotStartTime = new Date(currentTime);
                 const slotTimeValue = slotStartTime.getTime();
                 const slotISO = slotStartTime.toISOString();
+                const slotTimeDisplay = slotStartTime.toTimeString().substring(0, 5);
 
                 if (occupiedSlots.has(slotTimeValue)) {
                     currentTime.setMinutes(currentTime.getMinutes() + interval);
-                    continue; 
+                    continue;
                 }
 
-                const slotEl = document.createElement('div');
-                slotEl.className = 'day-schedule-slot';
-                slotEl.dataset.time = slotStartTime.toTimeString().substring(0, 5);
-                
                 const appointmentInSlot = appointments.find(app => new Date(app.start_time).getTime() === slotTimeValue);
 
                 if (appointmentInSlot) {
-                    slotEl.classList.add('booked');
                     const startTime = new Date(appointmentInSlot.start_time);
                     const endTime = new Date(appointmentInSlot.end_time);
                     const duration = (endTime - startTime) / (1000 * 60);
                     const slotSpan = Math.max(1, Math.ceil(duration / interval));
-                    
-                    slotEl.style.gridRow = `span ${slotSpan}`;
 
-                    slotEl.innerHTML = `
-                        <div class="slot-info">
-                            <span class="slot-time">${slotEl.dataset.time}</span>
-                            <span class="client-name">${appointmentInSlot.client_name || 'Agendado'}</span>
-                            <small>${appointmentInSlot.service_name || 'Serviço não especificado'}</small>
-                        </div>
-                        <div class="slot-actions">
-                             <button class="slot-action-btn" title="Editar Agendamento" onclick="openAppointmentModal('${slotISO}', ${JSON.stringify(appointmentInSlot).replace(/"/g, '&quot;').replace(/'/g, '&#39;')} )">
-                                <svg width="18" height="18"><use xlink:href="#icon-edit"/></svg>
-                            </button>
-                            
-                            <button class="slot-action-btn danger" title="Excluir Agendamento" onclick="window.handleDeleteAppointment(${appointmentInSlot.id}, '${(appointmentInSlot.client_name || '').replace(/'/g, "\\'")}')">
-                                <svg width="18" height="18"><use xlink:href="#icon-trash"/></svg>
-                            </button>
+                    finalHTML += `
+                        <div class="day-schedule-slot booked">
+                            <div class="slot-info">
+                                <span class="client-name">${appointmentInSlot.client_name || 'Agendado'}</span>
+                                <small>${appointmentInSlot.service_name || 'Serviço'} - ${slotTimeDisplay}</small>
+                            </div>
+                            <div class="slot-actions">
+                                <button class="slot-action-btn" title="Editar Agendamento" onclick="window.openAppointmentModal('${slotISO}', ${JSON.stringify(appointmentInSlot).replace(/"/g, '&quot;').replace(/'/g, '&#39;')} )"><svg width="18" height="18"><use xlink:href="#icon-edit"/></svg></button>
+                                <button class="slot-action-btn danger" title="Excluir Agendamento" onclick="window.handleDeleteAppointment(${appointmentInSlot.id}, '${(appointmentInSlot.client_name || '').replace(/'/g, "\\'")}')"><svg width="18" height="18"><use xlink:href="#icon-trash"/></svg></button>
+                            </div>
                         </div>
                     `;
                     
                     for (let i = 1; i < slotSpan; i++) {
-                        const nextSlotTime = new Date(slotStartTime);
-                        nextSlotTime.setMinutes(nextSlotTime.getMinutes() + (i * interval));
-                        occupiedSlots.add(nextSlotTime.getTime());
+                        occupiedSlots.add(new Date(slotStartTime).setMinutes(slotStartTime.getMinutes() + (i * interval)));
                     }
 
                 } else {
@@ -955,45 +993,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (overrideInSlot) {
                         status = overrideInSlot.status;
                     } else {
-                        const timeString = slotEl.dataset.time;
-                        const isOutsideWorkingHours = workingHours ? (timeString < workingHours.open || timeString >= workingHours.close) : true;
-                        if (isOutsideWorkingHours) status = 'blocked_by_schedule';
+                        const isOutsideWorkingHours = workingHours ? (slotTimeDisplay < workingHours.open || slotTimeDisplay >= workingHours.close) : true;
+                        if (isOutsideWorkingHours) status = 'blocked';
                         else status = 'available';
                     }
 
                     if (status === 'available') {
-                        slotEl.classList.add('available');
-                         slotEl.innerHTML = `
-                            <span class="slot-time">${slotEl.dataset.time}</span>
-                            <div class="slot-actions">
-                                <button class="slot-action-btn" title="Bloquear horário" onclick="handleToggleSlot('${slotISO}', 'blocked')">
-                                    <svg width="18" height="18"><use xlink:href="#icon-unlock"/></svg>
-                                </button>
-                                <button class="slot-action-btn" title="Novo Agendamento" onclick="openAppointmentModal('${slotISO}')">
-                                    <svg width="18" height="18"><use xlink:href="#icon-plus-circle"/></svg>
-                                </button>
+                        finalHTML += `
+                            <div class="day-schedule-slot available" onclick="window.openAppointmentModal('${slotISO}')">
+                                <span class="slot-time">${slotTimeDisplay}</span>
+                                <div class="slot-actions">
+                                    <button class="slot-action-btn" title="Bloquear horário" onclick="event.stopPropagation(); window.handleToggleSlot('${slotISO}', 'blocked')"><svg width="18" height="18"><use xlink:href="#icon-lock"/></svg></button>
+                                    <button class="slot-action-btn" title="Novo Agendamento" onclick="event.stopPropagation(); window.openAppointmentModal('${slotISO}')"><svg width="18" height="18"><use xlink:href="#icon-plus-circle"/></svg></button>
+                                </div>
                             </div>
                         `;
                     } else { 
-                        slotEl.classList.add('blocked');
-                        slotEl.innerHTML = `
-                            <span class="slot-time">${slotEl.dataset.time}</span>
-                            <div class="slot-actions">
-                                <button class="slot-action-btn" title="Liberar horário" onclick="handleToggleSlot('${slotISO}', 'available')">
-                                    <svg width="18" height="18"><use xlink:href="#icon-lock"/></svg>
-                                </button>
+                        finalHTML += `
+                            <div class="day-schedule-slot blocked">
+                                <span class="slot-time">${slotTimeDisplay}</span>
+                                <div class="slot-actions">
+                                    <button class="slot-action-btn" title="Liberar horário" onclick="window.handleToggleSlot('${slotISO}', 'available')"><svg width="18" height="18"><use xlink:href="#icon-unlock"/></svg></button>
+                                </div>
                             </div>
                         `;
                     }
                 }
                 
-                gridEl.appendChild(slotEl);
                 currentTime.setMinutes(currentTime.getMinutes() + interval);
             }
+
+            gridEl.innerHTML = finalHTML;
+            
         } catch (error) {
-            console.error(error);
+            console.error("Erro ao renderizar a grade de horários:", error);
             gridEl.innerHTML = `<p class="error-message">Não foi possível carregar os horários.</p>`;
-            showToast(error.message, 'error');
         }
     }
 
@@ -1027,10 +1061,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
             showToast(`Horário ${actionText === 'bloquear' ? 'bloqueado' : 'liberado'}!`, 'success');
+            renderDaySchedule();
+            renderMiniCalendar();
         } catch (error) {
             showToast("Não foi possível atualizar o horário.", "error");
         }
-        renderDaySchedule();
+        
     }
 
     window.openAppointmentModal = function(slotISO, appointment = null) {
@@ -1132,6 +1168,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(isEditing ? 'Agendamento atualizado com sucesso!' : 'Agendamento salvo com sucesso!', 'success');
             closeAppointmentModal();
             renderDaySchedule(); 
+            renderMiniCalendar();
 
         } catch (error) {
             console.error("Erro ao salvar agendamento:", error);
@@ -1163,6 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             showToast("Agendamento removido com sucesso!", 'success');
             renderDaySchedule(); // Atualiza a grade para refletir a exclusão
+            renderMiniCalendar();
 
         } catch (error) {
             console.error("Erro ao remover agendamento:", error);

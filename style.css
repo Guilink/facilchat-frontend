@@ -3160,7 +3160,6 @@ input:checked + .toggle-slider:before {
     border-bottom: 1px solid var(--border);
 }
 
-/* Novo container para o conteúdo principal da página de agendas */
 .agendas-main-content {
     width: 100%;
 }
@@ -3171,7 +3170,6 @@ input:checked + .toggle-slider:before {
     gap: 1.5rem;
 }
 
-/* Card de Agenda Individual */
 .agenda-card {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border);
@@ -3237,7 +3235,7 @@ input:checked + .toggle-slider:before {
     padding: 1.5rem;
 }
 
-/* --- Mini Calendário (VERSÃO CORRIGIDA E POLIDA) --- */
+/* --- Mini Calendário Polido --- */
 .mini-calendar-header {
     display: flex;
     justify-content: space-between;
@@ -3257,11 +3255,11 @@ input:checked + .toggle-slider:before {
 
 .mini-calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 colunas de larguras iguais */
-    gap: 0.5rem; /* Espaço entre os dias */
-    place-items: center; /* Centraliza tudo na grade */
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    place-items: center;
 }
-.day-name {
+.mini-calendar-grid .day-name { /* Adicionado seletor para especificidade */
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-secondary);
@@ -3272,41 +3270,135 @@ input:checked + .toggle-slider:before {
     display: grid;
     place-items: center;
     width: 100%;
-    aspect-ratio: 1 / 1; /* Força o elemento a ser um quadrado perfeito */
+    aspect-ratio: 1 / 1;
     border-radius: 50%;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background-color 0.2s;
+    font-weight: 500; /* << NOVO */
+    transition: background-color 0.2s, color 0.2s;
 }
 .day-number:hover {
     background-color: var(--bg-tertiary);
 }
 .day-number.selected {
     background-color: var(--accent);
-    color: white;
+    color: white !important; /* << IMPORTANTE */
 }
+
+/* <<< CORES DINÂMICAS PARA O MINI-CALENDÁRIO >>> */
+.day-number.has-availability { color: var(--success); }
+.day-number.fully-booked { color: var(--danger); }
+.day-number.no-work-day { color: var(--text-muted); }
+
 
 /* Legenda */
 .calendar-legend { margin-top: 1rem; }
 .calendar-legend ul { list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 0.5rem; }
 .calendar-legend li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
 .legend-color { width: 14px; height: 14px; border-radius: 4px; }
-.legend-color.available { background-color: #22c55e; }
-.legend-color.booked { background-color: #ef4444; }
-.legend-color.blocked { background-color: #6b7280; }
+.legend-color.available { background-color: var(--success); }
+.legend-color.booked { background-color: var(--danger); }
+.legend-color.blocked { background-color: var(--text-muted); }
 
-/* Grade de Horários do Dia */
+
+/* <<< NOVA GRADE DE HORÁRIOS >>> */
 .day-schedule { background-color: var(--bg-secondary); border: 1px solid var(--border); border-radius: 12px; }
 .day-schedule-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
-.day-schedule-grid { padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.day-schedule-slot { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
-.day-schedule-slot:hover { background-color: var(--bg-tertiary); }
-.day-schedule-slot.available span:last-child { color: #22c55e; font-weight: 500; }
-.day-schedule-slot.booked { background-color: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
-.day-schedule-slot.booked span:last-child { color: #ef4444; font-weight: 500; }
-.day-schedule-slot.blocked { background-color: rgba(107, 114, 128, 0.1); border-color: rgba(107, 114, 128, 0.3); }
-.day-schedule-slot.blocked span:last-child { color: #6b7280; font-weight: 500; }
+
+/* << A MÁGICA DO GRID DE 3 COLUNAS >> */
+.day-schedule-grid {
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsivo */
+    gap: 0.75rem;
+}
+
+.day-schedule-slot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+    min-height: 50px; /* Altura mínima para slots ocupados */
+}
+.day-schedule-slot:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+}
+
+.slot-time { font-weight: 500; }
+.client-name { font-weight: 600; font-size: 0.9rem; }
+
+/* <<< CORES VIVAS PARA OS SLOTS >>> */
+.day-schedule-slot.available {
+    flex-direction: column; /* Empilha o tempo e os botões */
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    border-style: dashed;
+    border-color: var(--border-light);
+    color: var(--text-secondary);
+}
+.day-schedule-slot.available:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.day-schedule-slot.booked {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.25rem;
+    background-color: var(--danger);
+    border-color: var(--danger);
+    color: white;
+    padding: 0.5rem 1rem; /* Ajusta padding para caber mais info */
+}
+
+.day-schedule-slot.blocked {
+    background-color: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+/* Ícones de Ação dentro dos slots */
+.slot-actions { display: flex; gap: 0.5rem; }
+.slot-action-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--text-secondary);
+    width: 28px; height: 28px;
+    display: grid; place-items: center;
+    border-radius: 6px;
+    transition: color 0.2s, background-color 0.2s;
+}
+.slot-action-btn:hover { color: var(--text-primary); background-color: var(--bg-tertiary); }
+.day-schedule-slot.booked .slot-action-btn { color: white; opacity: 0.8; }
+.day-schedule-slot.booked .slot-action-btn:hover { background-color: rgba(0,0,0,0.2); opacity: 1; }
+.slot-action-btn.danger:hover { color: var(--danger); }
 
 /* Modal de Agendas */
 .agenda-modal-container .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: center; }
 .agenda-modal-container .setting-item-toggle { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-primary); padding: 1rem; border-radius: 8px; }
+
+/* EM: style.css -> ADICIONE ESTE BLOCO NO FINAL DO ARQUIVO */
+
+/* --- EFEITOS DE CARREGAMENTO GRACIOSO PARA A AGENDA --- */
+
+/* Estilo para o spinner grande na grade de horários */
+.loading-spinner-large {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px; /* Garante que a área não encolha durante o loading */
+}
+
+.loading-spinner-large::after {
+    content: '';
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
