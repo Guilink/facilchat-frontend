@@ -731,18 +731,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const editingId = document.getElementById('agenda-edit-id').value;
             const isEditing = !!editingId;
 
-            // Coleta os dados do formulário (lógica idêntica)
             const agendaData = {
                 name: document.getElementById('agenda-name').value,
                 min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
                 max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
                 services: [],
-                schedule_config: { // Objeto para guardar os horários
-                    interval: 30, // Por enquanto, fixo em 30 minutos
-                    days: []      // Array para os dias da semana
+                schedule_config: {
+                    interval: 30,
+                    days: []
                 }
             };
-            // Coleta os horários de funcionamento (NOVO)
+
             document.querySelectorAll('#agenda-schedule-details .schedule-day').forEach(dayEl => {
                 const dayKey = dayEl.dataset.day;
                 const toggle = dayEl.querySelector('input[type="checkbox"]');
@@ -760,13 +759,20 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('#agenda-services-list .knowledge-item').forEach(item => {
                 const name = item.querySelector('.agenda-service-name').value.trim();
                 const duration = parseInt(item.querySelector('.agenda-service-duration').value, 10);
+                
+                // <<< AQUI ESTÁ A CORREÇÃO CIRÚRGICA >>>
+                // Declaramos a variável 'serviceId' DENTRO do loop, lendo do elemento.
+                // Se o atributo não existir (modo de criação), ela se torna 'null'.
+                const serviceId = item.dataset.serviceId ? parseInt(item.dataset.serviceId, 10) : null;
+
                 if (name && duration) {
+                    // Agora, a variável 'serviceId' sempre existirá (seja com um número ou null).
                     agendaData.services.push({ id: serviceId, name: name, duration_minutes: duration });
                 }
             });
+
             if (agendaData.services.length === 0) throw new Error("Adicione pelo menos um serviço válido.");
 
-            // Define a URL e o método com base na operação (Criar vs. Editar)
             const url = isEditing ? `${API_BASE_URL}/api/agendas/${editingId}` : `${API_BASE_URL}/api/agendas`;
             const method = isEditing ? 'PUT' : 'POST';
             
@@ -791,8 +797,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.disabled = false;
             saveBtn.textContent = 'Salvar Agenda';
         }
-    }    
-
+    }
+    
     // =====================================================================
     //      EM app.js, COLE ESTA NOVA FUNÇÃO APÓS handleSaveAgenda
     // =====================================================================
