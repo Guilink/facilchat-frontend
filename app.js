@@ -703,17 +703,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function addAgendaServiceItem(name = '', duration = 30) {
+    function addAgendaServiceItem(name = '', duration = 30, serviceId = null) {
         const servicesList = document.getElementById('agenda-services-list');
         const item = document.createElement('div');
         item.className = 'knowledge-item';
+        
         if (serviceId) {
             item.dataset.serviceId = serviceId;
-        }        
-        
-        // <<< CORREÇÃO PRINCIPAL >>>
-        // A classe "knowledge-item-inputs" foi REMOVIDA para evitar o conflito de estilos.
-        // Agora temos apenas o "service-item-compact", que será estilizado corretamente.
+        }
+
+        // A estrutura do layout compacto que já implementamos permanece a mesma.
         item.innerHTML = `
             <div class="service-item-compact">
                 <input type="text" class="agenda-service-name" placeholder="Nome do Serviço" value="${name}" required maxlength="50">
