@@ -3404,24 +3404,6 @@ input:checked + .toggle-slider:before {
 }
 
 
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 24px; /* ou o valor que você usa */
-}
-
-.page-header h2 {
-    margin-bottom: 8px;
-    font-size: /* mesmo tamanho */;
-    font-weight: /* mesmo peso */;
-}
-
-.page-header p {
-    margin-bottom: 0;
-    color: /* mesma cor */;
-    font-size: /* mesmo tamanho */;
-}
 /* ===================================================================== */
 /* =================== CORREÇÕES E POLIMENTO DA AGENDA (v5 - DEFINITIVO) = */
 /* ===================================================================== */
@@ -3707,4 +3689,19 @@ input:checked + .toggle-slider:before {
     background-color: var(--accent-hover);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.page-header h2 {
+    margin-bottom: 8px;
+}
+
+.page-header p {
+    margin-bottom: 0;
 }

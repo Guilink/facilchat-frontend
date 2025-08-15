@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Garante que o array de serviços exista antes de iterar
         if (agenda.services && Array.isArray(agenda.services)) {
             agenda.services.forEach(service => {
-                addAgendaServiceItem(service.name, service.duration_minutes);
+                addAgendaServiceItem(service.name, service.duration_minutes, service.id);
             });
         }
 
@@ -707,6 +707,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const servicesList = document.getElementById('agenda-services-list');
         const item = document.createElement('div');
         item.className = 'knowledge-item';
+        if (serviceId) {
+            item.dataset.serviceId = serviceId;
+        }        
         
         // <<< CORREÇÃO PRINCIPAL >>>
         // A classe "knowledge-item-inputs" foi REMOVIDA para evitar o conflito de estilos.
@@ -762,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const name = item.querySelector('.agenda-service-name').value.trim();
                 const duration = parseInt(item.querySelector('.agenda-service-duration').value, 10);
                 if (name && duration) {
-                    agendaData.services.push({ name: name, duration_minutes: duration });
+                    agendaData.services.push({ id: serviceId, name: name, duration_minutes: duration });
                 }
             });
             if (agendaData.services.length === 0) throw new Error("Adicione pelo menos um serviço válido.");
@@ -1146,7 +1149,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Popula o <select> de serviços, verificando a viabilidade
         serviceSelect.innerHTML = '<option value="" disabled selected>Selecione um serviço...</option>';
-        currentAgenda.services.forEach(service => {
+        currentAgenda.services.filter(service => !service.is_archived).forEach(service => {
             const option = document.createElement('option');
             option.value = service.id;
             option.dataset.duration = service.duration_minutes;
@@ -1189,6 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     window.handleAgendaStatusToggle = async function(agendaId, isActive) {
+        // A lógica de chamada da API permanece a mesma
         try {
             const status = isActive ? 'active' : 'inactive';
             const token = await getAuthToken();
@@ -1201,22 +1205,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) throw new Error('Falha ao alterar status da agenda');
 
-            // Atualiza o estado local para feedback instantâneo
+            // Atualiza o estado local
             const agenda = userAgendas.find(a => a.id == agendaId);
             if (agenda) {
                 agenda.status = status;
-                // Força a re-renderização apenas do card afetado (mais eficiente)
-                const card = document.querySelector(`.agenda-card[data-agenda-id="${agendaId}"]`);
-                if (card) {
-                    card.outerHTML = createAgendaCard(agenda);
+                
+                // <<< AQUI ESTÁ A CORREÇÃO >>>
+                // 1. Encontramos o card antigo que está na tela.
+                const oldCard = document.querySelector(`.agenda-card[data-agenda-id="${agendaId}"]`);
+                
+                if (oldCard) {
+                    // 2. Criamos o novo card atualizado em memória.
+                    const newCardElement = createAgendaCard(agenda);
+                    
+                    // 3. Usamos .replaceWith() para substituir o antigo pelo novo.
+                    oldCard.replaceWith(newCardElement);
                 }
             }
 
         } catch (error) {
             console.error('Erro ao alterar status da agenda:', error);
             showToast("Não foi possível atualizar o status.", "error");
-            // Reverte o toggle visualmente em caso de falha
-            await fetchAgendas(); // Recarrega tudo para garantir consistência
+            await fetchAgendas();
         }
     };    
 
