@@ -2423,51 +2423,45 @@ async function createBot() {
         socket.on("qr_code", (data) => {
             if (data.botId != editingBotId) return;
 
-            // Limpa qualquer contador regressivo anterior para evitar timers duplicados
             if (qrTimerInterval) clearInterval(qrTimerInterval);
 
-            let timeLeft = 20; // O tempo visual que o usuário vê
-            const qrModalContent = document.getElementById('qr-modal-content');
-            const wizardQrDisplay = document.getElementById('qr-display');
-
-            // Função interna para renderizar o QR Code e o timer no elemento correto
-            const renderQrAndTimer = (targetEl) => {
-                if (!targetEl) return;
-                targetEl.innerHTML = `
-                    <div class="qr-code-wrapper"></div>
-                    <p class="qr-timer" id="qr-timer-display">Atualizando em ${timeLeft}s...</p>
-                `;
-                // Gera o QR Code visualmente
-                new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
-                    text: data.qrString,
-                    width: 240, height: 240,
-                    colorDark: "#000000", colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-            };
+            let timeLeft = 20;
+            const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
+            if (!targetEl) return;
             
-            // Determina se estamos no wizard ou no modal e renderiza o conteúdo lá
-            const targetDisplayElement = views.wizard.classList.contains('active') ? wizardQrDisplay : qrModalContent;
-            renderQrAndTimer(targetDisplayElement);
+            // Renderiza o QR Code com o novo layout do timer
+            targetEl.innerHTML = `
+                <div class="qr-code-wrapper"></div>
+                <p class="qr-timer" id="qr-timer-display">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>${timeLeft}</span>
+                </p>
+            `;
+            new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
+                text: data.qrString,
+                width: 240, height: 240,
+                colorDark: "#000000", colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
 
-            // Inicia o contador regressivo que atualiza a UI a cada segundo
+            const timerSpan = document.querySelector('#qr-timer-display span');
+
+            // Inicia o contador regressivo visual
             qrTimerInterval = setInterval(() => {
                 timeLeft--;
-                const timerDisplay = document.getElementById('qr-timer-display');
-                if (timerDisplay) timerDisplay.textContent = `Atualizando em ${timeLeft}s...`;
+                if (timerSpan) timerSpan.textContent = timeLeft;
                 
-                // Quando o contador visual chega a zero...
                 if (timeLeft <= 0) {
                     clearInterval(qrTimerInterval);
-                    // ...substituímos o QR Code pela mensagem de "Gerando novo código..."
-                    if (targetDisplayElement) {
-                        targetDisplayElement.innerHTML = `
-                            <div class="qr-loading">
-                                <div class="loading-spinner"></div>
-                                <h3>Gerando novo código...</h3>
-                            </div>
-                        `;
-                    }
+                    // Ao final dos 20s, o frontend AGORA PEDE um novo QR Code
+                    targetEl.innerHTML = `
+                        <div class="qr-loading">
+                            <div class="loading-spinner"></div>
+                            <h3>Gerando novo código...</h3>
+                        </div>
+                    `;
+                    // Chamamos a mesma função que inicia a conexão para obter um novo código
+                    handleConnectionToggle(data.botId, 'offline'); 
                 }
             }, 1000);
         });
