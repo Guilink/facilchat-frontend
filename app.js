@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isWizardInitialized = false;
     let isEditViewInitialized = false;
     let currentDayAppointments = [];
-
+    let qrTimerInterval = null; // Timer para o QR Code
 
     
     // === ELEMENTOS ===
@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     //FUNÇÃO GLOBAL PARA CANCELAR A CONEXÃO
     window.cancelConnection = function() {
+        if (qrTimerInterval) clearInterval(qrTimerInterval);
         if (editingBotId) {
             console.log(`[Frontend] Cancelando conexão para o bot ${editingBotId}`);
             // A função handleConnectionToggle já faz a chamada de disconnect correta
@@ -2422,107 +2423,82 @@ async function createBot() {
         socket.on("qr_code", (data) => {
             if (data.botId != editingBotId) return;
 
-            console.log("📱 QR Code recebido para o bot:", data.botId);
+            // Limpa qualquer contador regressivo anterior para evitar timers duplicados
+            if (qrTimerInterval) clearInterval(qrTimerInterval);
+
+            let timeLeft = 20; // O tempo visual que o usuário vê
+            const qrModalContent = document.getElementById('qr-modal-content');
+            const wizardQrDisplay = document.getElementById('qr-display');
+
+            // Função interna para renderizar o QR Code e o timer no elemento correto
+            const renderQrAndTimer = (targetEl) => {
+                if (!targetEl) return;
+                targetEl.innerHTML = `
+                    <div class="qr-code-wrapper"></div>
+                    <p class="qr-timer" id="qr-timer-display">Atualizando em ${timeLeft}s...</p>
+                `;
+                // Gera o QR Code visualmente
+                new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
+                    text: data.qrString,
+                    width: 240, height: 240,
+                    colorDark: "#000000", colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            };
             
-            const wizardViewIsActive = views.wizard.classList.contains('active');
-            const qrModalIsActive = document.getElementById('qr-modal').classList.contains('active');
+            // Determina se estamos no wizard ou no modal e renderiza o conteúdo lá
+            const targetDisplayElement = views.wizard.classList.contains('active') ? wizardQrDisplay : qrModalContent;
+            renderQrAndTimer(targetDisplayElement);
 
-            if (!wizardViewIsActive && !qrModalIsActive) {
-                console.warn("QR code recebido, mas o usuário não está em uma tela de conexão. Ignorando evento.");
-                return;
-            }
-
-            let targetDisplayElement;
-            if (wizardViewIsActive) {
-                targetDisplayElement = elements.qrDisplay;
-            } else if (qrModalIsActive) {
-                targetDisplayElement = document.getElementById('qr-modal-content');
-            } else {
-                return; 
-            }
-
-            targetDisplayElement.innerHTML = "";
-            const qrWrapper = document.createElement('div');
-            qrWrapper.className = 'qr-code-wrapper';
-            targetDisplayElement.appendChild(qrWrapper);
-
-            new QRCode(qrWrapper, {
-                text: data.qrString,
-                width: 240,
-                height: 240,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            // Inicia o contador regressivo que atualiza a UI a cada segundo
+            qrTimerInterval = setInterval(() => {
+                timeLeft--;
+                const timerDisplay = document.getElementById('qr-timer-display');
+                if (timerDisplay) timerDisplay.textContent = `Atualizando em ${timeLeft}s...`;
+                
+                // Quando o contador visual chega a zero...
+                if (timeLeft <= 0) {
+                    clearInterval(qrTimerInterval);
+                    // ...substituímos o QR Code pela mensagem de "Gerando novo código..."
+                    if (targetDisplayElement) {
+                        targetDisplayElement.innerHTML = `
+                            <div class="qr-loading">
+                                <div class="loading-spinner"></div>
+                                <h3>Gerando novo código...</h3>
+                            </div>
+                        `;
+                    }
+                }
+            }, 1000);
         });
 
-        socket.on("connection_failure", (data) => {
-            // ... (código existente)
-        });
-
-        // --- ADICIONE ESTE NOVO BLOCO ---
         socket.on("connection_timeout", (data) => {
-            if (!isActivelyConnecting || data.botId != editingBotId) {
-                console.log(`[Timeout] Evento de timeout para o bot ${data.botId} ignorado, pois não é a conexão ativa.`);
-                return;
-            }
-            isActivelyConnecting = false;
+            // Ignora o evento se não for para o bot que estamos conectando ativamente
+            if (!isActivelyConnecting || data.botId != editingBotId) return;
             
-            console.error(`[Timeout] O tempo de conexão para o bot ${data.botId} expirou.`);
+            isActivelyConnecting = false; // O processo de conexão falhou, então não está mais ativo
+            if (qrTimerInterval) clearInterval(qrTimerInterval); // Para o contador regressivo, se estiver rodando
+            
+            // Determina onde mostrar a mensagem de erro (wizard ou modal)
+            const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
+            if (!targetEl) return;
 
+            // O novo HTML com o botão "Tentar Novamente"
             const errorHTML = `
                 <div class="qr-error">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="1.5">
-                       <circle cx="12" cy="12" r="10"></circle>
-                       <line x1="12" y1="8" x2="12" y2="12"></line>
-                       <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                    </svg>
-                    <h3 style="margin-top: 1rem;">Tempo Esgotado</h3>
-                    <p style="max-width: 90%; margin: 0 auto;">O tempo para escanear o QR Code expirou. Por favor, clique em cancelar e tente novamente.</p>
+                    <h3>Tempo Esgotado</h3>
+                    <p>O tempo para escanear expirou. Clique abaixo para tentar novamente.</p>
+                    <button class="btn-primary" id="retry-connection-btn">Gerar Novo QR Code</button>
                 </div>
             `;
-            
-            const wizardViewIsActive = views.wizard.classList.contains('active');
-            if (wizardViewIsActive) {
-                elements.qrDisplay.innerHTML = errorHTML;
-            } else {
-                showQrModal(errorHTML);
-            }
-        });        
+            targetEl.innerHTML = errorHTML;
 
-        socket.on("request_new_qr", (data) => {
-            // --- INÍCIO DA CORREÇÃO DEFINITIVA ---
-            // VERIFICAÇÃO DE AUTENTICAÇÃO: Esta é a guarda mais segura.
-            // Ela pergunta: "O usuário ainda está logado nesta aba?"
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
-                console.warn("Recebido 'request_new_qr', mas nenhum usuário está logado. Ignorando para quebrar o loop fantasma.");
-                return; // Quebra o ciclo de reconexão imediatamente.
-            }
-            // --- FIM DA CORREÇÃO DEFINITIVA ---
-
-            // A verificação abaixo continua sendo útil para o caso de o usuário estar logado,
-            // mas ter abandonado a tela de conexão de um bot para tentar conectar outro.
-            if (!isActivelyConnecting || data.botId != editingBotId) {
-                console.log(`[Smart Refresh] Evento ignorado para o bot ${data.botId} pois não é o fluxo de conexão ativo no momento.`);
-                return;
-            }
-
-            // Se as guardas passarem, significa que o usuário está logado E na tela de conexão
-            // do bot correto, então a lógica para atualizar é bem-vinda.
-            console.log(`[Smart Refresh] Recebido pedido do backend para gerar novo QR para o bot ${data.botId}`);
-            
-            const isUserInWizard = views.wizard.classList.contains('active');
-            const qrModalIsActive = document.getElementById('qr-modal').classList.contains('active');
-
-            if (isUserInWizard) {
-                console.log("--> Atualizando QR Code DENTRO do Wizard.");
-                startWhatsAppConnection(data.botId);
-            } else if (qrModalIsActive) {
-                console.log("--> Atualizando QR Code DENTRO do Modal.");
+            // Adiciona um listener de clique ao botão que acabamos de criar
+            document.getElementById('retry-connection-btn').addEventListener('click', () => {
+                // A ação do botão é simplesmente chamar a mesma função de conexão novamente
                 handleConnectionToggle(data.botId, 'offline');
-            }
-        });
+            });
+        });        
 
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
