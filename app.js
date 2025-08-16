@@ -532,7 +532,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const onchangeAction = `onchange="handleAgendaStatusToggle('${agenda.id}', this.checked)"`;
 
         // Lista de serviços para o corpo do card
-        const servicesList = agenda.services.map(s => `<li>${s.name} (${s.duration_minutes} min)</li>`).join('');
+        const servicesList = agenda.services
+            .filter(s => !s.is_archived) // <-- ADICIONA O FILTRO AQUI
+            .map(s => `<li>${s.name} (${s.duration_minutes} min)</li>`)
+            .join('');
 
         card.innerHTML = `
             <div class="card-header"> <!-- Usando uma classe mais genérica -->
@@ -618,25 +621,39 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('agenda-min-antecedence').value = agenda.min_antecedence_minutes;
         document.getElementById('agenda-max-days').value = agenda.max_days_ahead;
         
+        // Limpa a lista antes de adicionar os itens
         servicesList.innerHTML = '';
+
         // Garante que o array de serviços exista e só itera sobre os NÃO arquivados
         if (agenda.services && Array.isArray(agenda.services)) {
-            agenda.services.filter(s => !s.is_archived).forEach(service => {
-                // A chamada agora está correta e passa os 3 parâmetros
-                addAgendaServiceItem(service.name, service.duration_minutes, service.id);
-            });
+            const activeServices = agenda.services.filter(s => !s.is_archived);
+            
+            // Se não houver serviços ativos, adiciona um item em branco para começar
+            if (activeServices.length === 0) {
+                addAgendaServiceItem('', 30, null);
+            } else {
+                // Itera sobre os serviços e os adiciona à lista
+                activeServices.forEach(service => {
+                    addAgendaServiceItem(service.name, service.duration_minutes, service.id);
+                });
+            }
+        } else {
+            // Se a agenda não tiver nenhum serviço, adiciona um em branco
+            addAgendaServiceItem('', 30, null);
         }
+
 
         // Popula o editor de horários com os dados salvos da agenda
         if (agenda.schedule_config && agenda.schedule_config.days) {
             populateAgendaScheduleEditor(agenda.schedule_config.days);
         } else {
+            // Se não houver config, popula com o padrão
             populateAgendaScheduleEditor();
         }
 
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
-    }    
+    }
 
     // --- Funções para controlar o modal de criação/edição de agenda ---
 
@@ -704,12 +721,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const item = document.createElement('div');
         item.className = 'knowledge-item';
         
-        // Armazena o ID do serviço (se existir) no elemento para uso posterior
+        // <<< CORREÇÃO CRUCIAL AQUI >>>
+        // Se um serviceId for fornecido, nós o armazenamos como um atributo de dados no elemento HTML.
+        // Isso garante que, ao salvar, possamos ler este ID de volta.
         if (serviceId) {
             item.dataset.serviceId = serviceId;
         }
 
-        // A estrutura do layout compacto permanece a mesma
         item.innerHTML = `
             <div class="service-item-compact">
                 <input type="text" class="agenda-service-name" placeholder="Nome do Serviço" value="${name}" required maxlength="50">
@@ -731,24 +749,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const editingId = document.getElementById('agenda-edit-id').value;
             const isEditing = !!editingId;
 
-            const agendaData = {
-                name: document.getElementById('agenda-name').value,
-                min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
-                max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
-                services: [],
-                schedule_config: {
-                    interval: 30,
-                    days: []
-                }
-            };
+            // 1. Coleta e validação dos dados principais
+            const agendaName = document.getElementById('agenda-name').value;
+            if (!agendaName.trim()) {
+                throw new Error("O nome da agenda é obrigatório.");
+            }
 
+            // 2. Coleta dos serviços (Array de objetos)
+            const services = [];
+            document.querySelectorAll('#agenda-services-list .knowledge-item').forEach(item => {
+                const nameInput = item.querySelector('.agenda-service-name');
+                const durationInput = item.querySelector('.agenda-service-duration');
+                const name = nameInput ? nameInput.value.trim() : '';
+                const duration = durationInput ? parseInt(durationInput.value, 10) : 0;
+                
+                // Adiciona o serviço apenas se for válido
+                if (name && duration > 0) {
+                    // Para criação, o ID é nulo. Para edição, pegamos do dataset.
+                    const serviceId = item.dataset.serviceId ? parseInt(item.dataset.serviceId, 10) : null;
+                    services.push({ id: serviceId, name: name, duration_minutes: duration });
+                }
+            });
+
+            if (services.length === 0) {
+                throw new Error("Adicione pelo menos um serviço válido com nome e duração.");
+            }
+
+            // 3. Coleta da configuração de horários (Array de objetos)
+            const scheduleDays = [];
             document.querySelectorAll('#agenda-schedule-details .schedule-day').forEach(dayEl => {
                 const dayKey = dayEl.dataset.day;
                 const toggle = dayEl.querySelector('input[type="checkbox"]');
                 const openTime = dayEl.querySelector('input[type="time"]:first-of-type');
                 const closeTime = dayEl.querySelector('input[type="time"]:last-of-type');
 
-                agendaData.schedule_config.days.push({
+                scheduleDays.push({
                     day: dayKey,
                     active: toggle ? toggle.checked : false,
                     open: openTime ? openTime.value : '09:00',
@@ -756,26 +791,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
 
-            document.querySelectorAll('#agenda-services-list .knowledge-item').forEach(item => {
-                const name = item.querySelector('.agenda-service-name').value.trim();
-                const duration = parseInt(item.querySelector('.agenda-service-duration').value, 10);
-                
-                // <<< AQUI ESTÁ A CORREÇÃO CIRÚRGICA >>>
-                // Declaramos a variável 'serviceId' DENTRO do loop, lendo do elemento.
-                // Se o atributo não existir (modo de criação), ela se torna 'null'.
-                const serviceId = item.dataset.serviceId ? parseInt(item.dataset.serviceId, 10) : null;
-
-                if (name && duration) {
-                    // Agora, a variável 'serviceId' sempre existirá (seja com um número ou null).
-                    agendaData.services.push({ id: serviceId, name: name, duration_minutes: duration });
+            // 4. Montagem do payload final para a API
+            const agendaData = {
+                name: agendaName,
+                min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
+                max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
+                services: services, // Array de serviços
+                schedule_config: {
+                    interval: 30,
+                    days: scheduleDays // Array de horários
                 }
-            });
+            };
 
-            if (agendaData.services.length === 0) throw new Error("Adicione pelo menos um serviço válido.");
-
+            // 5. Definição da URL e método (POST para criar, PUT para editar)
             const url = isEditing ? `${API_BASE_URL}/api/agendas/${editingId}` : `${API_BASE_URL}/api/agendas`;
             const method = isEditing ? 'PUT' : 'POST';
             
+            // 6. Envio para o backend
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -783,7 +815,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const result = await response.json();
-            if (!response.ok) throw new Error(result.message || "Falha ao salvar a agenda.");
+            if (!response.ok) {
+                // O erro virá do backend, então apenas o exibimos
+                throw new Error(result.message || "Falha ao salvar a agenda.");
+            }
             
             showToast(isEditing ? 'Agenda atualizada com sucesso!' : 'Agenda criada com sucesso!', 'success');
             await fetchAgendas(); 
@@ -798,7 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.textContent = 'Salvar Agenda';
         }
     }
-    
+
     // =====================================================================
     //      EM app.js, COLE ESTA NOVA FUNÇÃO APÓS handleSaveAgenda
     // =====================================================================
@@ -1162,7 +1197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.disabled = false;
             } else if (service.duration_minutes > availableWindowInMinutes) {
                 // Se o serviço não couber na janela de tempo
-                option.textContent = `${service.name} (${service.duration_minutes} min) - Sem tempo hábil`;
+                option.textContent = `${service.name} (${service.duration_minutes} min) - Tempo insuficiente. `;
                 option.disabled = true; // Desabilita a opção
             } else {
                 // Se o serviço couber
