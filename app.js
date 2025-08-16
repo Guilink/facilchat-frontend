@@ -2428,13 +2428,13 @@ async function createBot() {
             let timeLeft = 20;
             const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
             if (!targetEl) return;
-            
-            // Renderiza o QR Code com o novo layout do timer
+
+            // Layout com o timer centralizado abaixo, como você pediu
             targetEl.innerHTML = `
                 <div class="qr-code-wrapper"></div>
                 <p class="qr-timer" id="qr-timer-display">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 5px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span>${timeLeft}</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span id="qr-time-left">${timeLeft}</span>
                 </p>
             `;
             new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
@@ -2444,55 +2444,47 @@ async function createBot() {
                 correctLevel: QRCode.CorrectLevel.H
             });
 
-            const timerSpan = document.querySelector('#qr-timer-display span');
+            const timerSpan = document.getElementById('qr-time-left');
 
-            // Inicia o contador regressivo visual
             qrTimerInterval = setInterval(() => {
                 timeLeft--;
                 if (timerSpan) timerSpan.textContent = timeLeft;
                 
                 if (timeLeft <= 0) {
                     clearInterval(qrTimerInterval);
-                    // Ao final dos 20s, o frontend AGORA PEDE um novo QR Code
                     targetEl.innerHTML = `
                         <div class="qr-loading">
                             <div class="loading-spinner"></div>
                             <h3>Gerando novo código...</h3>
                         </div>
                     `;
-                    // Chamamos a mesma função que inicia a conexão para obter um novo código
-                    handleConnectionToggle(data.botId, 'offline'); 
                 }
             }, 1000);
         });
 
         socket.on("connection_timeout", (data) => {
-            // Ignora o evento se não for para o bot que estamos conectando ativamente
             if (!isActivelyConnecting || data.botId != editingBotId) return;
             
-            isActivelyConnecting = false; // O processo de conexão falhou, então não está mais ativo
-            if (qrTimerInterval) clearInterval(qrTimerInterval); // Para o contador regressivo, se estiver rodando
+            isActivelyConnecting = false;
+            if (qrTimerInterval) clearInterval(qrTimerInterval);
             
-            // Determina onde mostrar a mensagem de erro (wizard ou modal)
             const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
             if (!targetEl) return;
 
-            // O novo HTML com o botão "Tentar Novamente"
-            const errorHTML = `
+            // Interface com o botão "Gerar Novo QR Code"
+            targetEl.innerHTML = `
                 <div class="qr-error">
                     <h3>Tempo Esgotado</h3>
-                    <p>O tempo para escanear expirou. Clique abaixo para tentar novamente.</p>
+                    <p>Clique abaixo para tentar novamente.</p>
                     <button class="btn-primary" id="retry-connection-btn">Gerar Novo QR Code</button>
                 </div>
             `;
-            targetEl.innerHTML = errorHTML;
 
-            // Adiciona um listener de clique ao botão que acabamos de criar
             document.getElementById('retry-connection-btn').addEventListener('click', () => {
-                // A ação do botão é simplesmente chamar a mesma função de conexão novamente
+                // Reinicia o processo chamando a mesma função de conexão
                 handleConnectionToggle(data.botId, 'offline');
             });
-        });        
+        });       
 
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
