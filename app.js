@@ -88,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isEditMode = false;
     let editingBotId = null;
     let wizardBotId = null;
+    let isConnectionStarted = false;
     let isActivelyConnecting = false;
     let wizardFilesToUpload = [];
     let isWizardInitialized = false;
@@ -1526,50 +1527,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = await getAuthToken();
             let response;
             
-            // Ação de DESCONECTAR (se estiver online/pausado) ou CANCELAR (se estiver conectando)
             if (currentStatus === 'online' || currentStatus === 'paused' || currentStatus === 'connecting') {
-                console.log(`[Bot ${botId}] Solicitando desconexão/cancelamento...`);
                 response = await fetch(`${API_BASE_URL}/api/bots/${botId}/disconnect`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
             } 
-            // Ação de CONECTAR (se estiver offline)
             else if (currentStatus === 'offline') {
                 console.log(`[Bot ${botId}] Iniciando conexão...`);
-                // Guarda o ID do bot que está tentando conectar para que os eventos do socket saibam qual modal atualizar
                 editingBotId = botId; 
                 isActivelyConnecting = true;
 
-                // 1. Abre o novo modal com um estado de "loading"
-                showQrModal(`
-                    <div class="qr-loading">
-                        <div class="loading-spinner"></div>
-                        <h3>Gerando QR Code...</h3>
-                        <p>Aguarde enquanto preparamos a conexão com o WhatsApp.</p>
-                    </div>
-                `);
+                // Verifica se o wizard está ativo para decidir se abre o modal
+                const wizardViewIsActive = views.wizard.classList.contains('active');
 
-
+                if (!wizardViewIsActive) {
+                    showQrModal(`
+                        <div class="qr-loading">
+                            <div class="loading-spinner"></div>
+                            <h3>Gerando QR Code...</h3>
+                            <p>Aguarde enquanto preparamos a conexão com o WhatsApp.</p>
+                        </div>
+                    `);
+                }
                 
-                // 2. Chama a API para iniciar o processo de conexão no backend.
-                // A resposta aqui apenas confirma que o processo começou.
-                // O QR code e o status de sucesso virão pelos eventos do WebSocket.
                 response = await fetch(`${API_BASE_URL}/api/bots/${botId}/connect`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json', // PRECISA ter este header
+                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    // Adicionamos o socket.id no corpo da requisição
                     body: JSON.stringify({ socketId: socket.id }) 
                 });
-                
-                // A antiga lógica de "showView('wizard')" foi removida daqui.
             }
 
-            // Se a resposta da API (não a conexão do whats) der erro, lança uma exceção
             if (response && !response.ok) {
                 const error = await response.json();
                 throw new Error(error.message || 'Falha na operação.');
@@ -1578,11 +1570,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error(`Erro na operação de conexão:`, error);
             alert(`Erro: ${error.message}`);
-            
-            // Em caso de erro, garante que o modal de QR code seja fechado
             hideQrModal(); 
-            
-            // Força a recarga dos bots para sincronizar o estado visual no dashboard
             await fetchBots();
         }
     }
@@ -1879,25 +1867,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         setTimeout(() => {
-            // Em vez de mirar em um elemento específico, rolamos a janela principal (window)
-            // para o topo. Isso funciona de forma confiável tanto no desktop quanto no mobile.
             window.scrollTo(0, 0);
         }, 0);        
         
         elements.wizardBack.style.display = step > 1 ? 'block' : 'none';
         
-        // --- LÓGICA DE BOTÕES E AÇÕES DA ETAPA 4 ---
         if (step === 4) {
-            // Altera o texto do botão principal para refletir a nova ação
             elements.wizardContinue.textContent = 'Fazer isso depois';
             
-            // Se estivermos criando um novo bot (não editando), iniciamos a criação E conexão
-            if (!isEditMode && wizardBotId === null) { 
-                console.log('🤖 Chegou na Etapa 4 pela primeira vez. Iniciando criação e conexão do bot...');
-                createBotAndConnect(); 
+            // <<< A NOVA LÓGICA DE TRAVA ESTÁ AQUI >>>
+            // Verificamos se a conexão já foi iniciada para esta sessão do wizard.
+            if (!isConnectionStarted) {
+                // Se NÃO foi iniciada, nós a iniciamos agora.
+                isConnectionStarted = true; // Ativa a trava para não iniciar de novo.
+                
+                if (wizardBotId) { 
+                    console.log(`🤖 Iniciando conexão pela PRIMEIRA VEZ para o bot ID: ${wizardBotId}`);
+                    startWhatsAppConnection(wizardBotId); 
+                } else {
+                    console.error("Erro crítico: Chegou na etapa 4 sem um ID de bot definido.");
+                    elements.qrDisplay.innerHTML = `<div class="qr-error"><h3>Erro</h3><p>Não foi possível identificar o assistente a ser conectado.</p></div>`;
+                }
             } else {
-                console.log('↩️ Retornando para a Etapa 4. O bot já foi criado ou está em modo de edição.');
+                // Se JÁ foi iniciada, não fazemos nada. Apenas exibimos a tela.
+                console.log(`↩️ Retornando para a Etapa 4. O processo de conexão já está ativo.`);
             }
+            // <<< FIM DA NOVA LÓGICA DE TRAVA >>>
+
         } else {
             elements.wizardContinue.textContent = 'Continuar';
         }
@@ -1906,7 +1902,6 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.wizardSkip.style.display = 'none';
         }
         
-        // CORRIGE BUG WIZARD: Valida o passo atual após mudança
         validateWizardStep(step);
     }
 
@@ -1956,23 +1951,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleWizardContinue() {
+        // A validação do passo atual permanece a mesma
         validateWizardStep(currentWizardStep);
-        if (elements.wizardContinue.disabled && currentWizardStep !== 4) {
+        if (elements.wizardContinue.disabled) {
             return;
         }
 
-        // Se não estamos na última etapa, apenas avança
-        if (currentWizardStep < 4) {
+        // Se estamos na etapa 3, prontos para ir para a 4...
+        if (currentWizardStep === 3) {
+            
+            // <<< A CORREÇÃO DEFINITIVA ESTÁ AQUI >>>
+            // Verificamos se o bot para esta sessão do wizard já foi criado.
+            if (wizardBotId === null) {
+                // Se NÃO foi criado (wizardBotId é null), então nós o criamos agora.
+                console.log("Bot ainda não existe nesta sessão. Criando agora...");
+                elements.wizardContinue.disabled = true;
+                elements.wizardContinue.innerHTML = '<span class="spinner"></span> Salvando assistente...';
+
+                try {
+                    const newBot = await createBot();
+                    if (!newBot || !newBot.id) {
+                        throw new Error("Não foi possível obter o ID do novo assistente.");
+                    }
+                    // Armazenamos o ID na nossa "trava" para não criar de novo.
+                    wizardBotId = newBot.id;
+                    
+                    // Só avançamos para a próxima etapa se a criação for bem-sucedida.
+                    setWizardStep(currentWizardStep + 1);
+
+                } catch (error) {
+                    console.error('Erro ao criar o bot na Etapa 3:', error);
+                    showToast(error.message || "Não foi possível salvar o assistente.", "error");
+                } finally {
+                    // Independentemente do resultado, restauramos o botão.
+                    elements.wizardContinue.disabled = false;
+                    elements.wizardContinue.textContent = 'Continuar';
+                }
+            } else {
+                // Se o bot JÁ foi criado (wizardBotId tem um número), nós apenas avançamos.
+                console.log(`Bot com ID ${wizardBotId} já criado para esta sessão. Apenas avançando para a Etapa 4.`);
+                setWizardStep(currentWizardStep + 1);
+            }
+            // <<< FIM DA CORREÇÃO >>>
+
+        } 
+        // A lógica para as outras etapas não muda.
+        else if (currentWizardStep < 3) {
             setWizardStep(currentWizardStep + 1);
         } 
-        // Se estamos na última etapa (botão "Fazer isso depois")
-        else {
-            console.log('Usuário clicou em "Fazer isso depois". Indo para o dashboard.');
-            
-            // Forçamos o código a ESPERAR que o processo de cancelamento termine
-            // antes de prosseguir para as próximas linhas.
-            if (editingBotId) {
-                await handleConnectionToggle(editingBotId, 'connecting');
+        else if (currentWizardStep === 4) {
+            console.log('Usuário clicou em "Fazer isso depois".');
+            if (editingBotId || wizardBotId) { // Garante que temos um ID para cancelar
+                await handleConnectionToggle(editingBotId || wizardBotId, 'connecting');
             }
             isActivelyConnecting = false;
             resetWizard();
@@ -2332,6 +2362,7 @@ async function createBot() {
         isEditMode = false;
         editingBotId = null;
         wizardBotId = null;
+        isConnectionStarted = false;
         wizardBotData = {};
         currentWizardStep = 1;
         
@@ -2425,17 +2456,12 @@ async function createBot() {
 
             if (qrTimerInterval) clearInterval(qrTimerInterval);
 
-            let timeLeft = 20;
             const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
             if (!targetEl) return;
-
-            // Layout com o timer centralizado abaixo, como você pediu
+            
+            // Mostra o QR Code, sem nenhum timer visual
             targetEl.innerHTML = `
                 <div class="qr-code-wrapper"></div>
-                <p class="qr-timer" id="qr-timer-display">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                    <span id="qr-time-left">${timeLeft}</span>
-                </p>
             `;
             new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
                 text: data.qrString,
@@ -2443,45 +2469,33 @@ async function createBot() {
                 colorDark: "#000000", colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.H
             });
-
-            const timerSpan = document.getElementById('qr-time-left');
-
-            qrTimerInterval = setInterval(() => {
-                timeLeft--;
-                if (timerSpan) timerSpan.textContent = timeLeft;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(qrTimerInterval);
-                    targetEl.innerHTML = `
-                        <div class="qr-loading">
-                            <div class="loading-spinner"></div>
-                            <h3>Gerando novo código...</h3>
-                        </div>
-                    `;
-                }
-            }, 1000);
         });
 
+        // 2. SUBSTITUA o listener 'connection_timeout'
         socket.on("connection_timeout", (data) => {
             if (!isActivelyConnecting || data.botId != editingBotId) return;
             
-            isActivelyConnecting = false;
-            if (qrTimerInterval) clearInterval(qrTimerInterval);
+            isActivelyConnecting = false; 
             
             const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
             if (!targetEl) return;
 
-            // Interface com o botão "Gerar Novo QR Code"
-            targetEl.innerHTML = `
+            const errorHTML = `
                 <div class="qr-error">
                     <h3>Tempo Esgotado</h3>
-                    <p>Clique abaixo para tentar novamente.</p>
+                    <p>O tempo para escanear o QR Code expirou. Clique abaixo para gerar um novo código.</p>
                     <button class="btn-primary" id="retry-connection-btn">Gerar Novo QR Code</button>
                 </div>
             `;
+            targetEl.innerHTML = errorHTML;
 
             document.getElementById('retry-connection-btn').addEventListener('click', () => {
-                // Reinicia o processo chamando a mesma função de conexão
+                targetEl.innerHTML = `
+                    <div class="qr-loading">
+                        <div class="loading-spinner"></div>
+                        <h3>Gerando novo código...</h3>
+                    </div>
+                `;
                 handleConnectionToggle(data.botId, 'offline');
             });
         });       

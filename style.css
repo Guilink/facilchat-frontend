@@ -3705,3 +3705,39 @@ input:checked + .toggle-slider:before {
 .page-header p {
     margin-bottom: 0;
 }
+
+.qr-code-wrapper {
+    /* Garante que o QR Code em si não tenha margens estranhas */
+    margin-bottom: 1rem;
+}
+
+.qr-timer {
+    /* Estiliza e centraliza o parágrafo do timer */
+    text-align: center;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    padding: 0;
+}
+
+    .qr-container, .modal-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .qr-code-wrapper {
+        margin-bottom: 1rem;
+    }
+
+    .qr-timer {
+        text-align: center;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
