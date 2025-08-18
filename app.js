@@ -29,25 +29,34 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Função que aplica todas as mudanças visuais do modo Whitelabel
     function applyWhitelabelMode() {
-        if (!isWhitelabelMode) return; // Se não for whitelabel, não faz nada.
+        // Se não for um domínio de revendedor, a função para imediatamente.
+        if (!isWhitelabelMode) return;
 
-        // 1. Esconder a guia "Planos" do menu principal
-        const plansLink = document.querySelector('.header-nav a.nav-link:nth-child(2)');
-        if (plansLink && plansLink.textContent.trim() === 'Planos') {
+        console.log('[Whitelabel] Modo revendedor ativado. Aplicando customizações...');
+
+        // 1. Esconder a guia "Planos" do menu principal no header
+        // Usamos um seletor que busca pelo link que contém o texto "Planos".
+        // Isso é mais seguro do que contar a posição (ex: nth-child).
+        const plansLink = Array.from(document.querySelectorAll('.header-nav a.nav-link'))
+                               .find(el => el.textContent.trim() === 'Planos');
+        if (plansLink) {
             plansLink.style.display = 'none';
         }
 
-        // 2. Esconder a view de Planos (caso o usuário tente acessar de alguma forma)
+        // 2. Esconder a view de Planos (uma garantia extra caso o usuário tente acessá-la)
         if (views.plans) {
             views.plans.style.display = 'none';
         }
 
         // 3. Trocar o card de promoção do "Plano Elite" pelo card de "Contato"
-        // Esta função será chamada depois que o usuário logar.
+        // Esta função será chamada depois que o usuário logar, então os cards já existirão.
         const allPromoCards = document.querySelectorAll('.sidebar-content .promo-card');
         allPromoCards.forEach(card => {
             const cardTitle = card.querySelector('h3');
+            // Procura pelo card que contém "Plano Elite" no título
             if (cardTitle && cardTitle.textContent.includes('Plano Elite')) {
+                // Substitui todo o conteúdo do card pelo novo HTML,
+                // inserindo dinamicamente o link de contato do revendedor.
                 card.innerHTML = `
                     <h3>Fale Conosco</h3>
                     <p>Quer saber mais sobre os planos ou precisa de ajuda? Entre em contato com nosso suporte.</p>
@@ -233,11 +242,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 await fetchBots();
                 await fetchAgendas();
                 initializeSocket();
+
+                applyWhitelabelMode();                   // <-- ADICIONE ESTA LINHA AQUI
                 
                 // ETAPA 3: TRANSIÇÃO VISUAL FINAL (Após tudo carregar)
                 elements.header.style.display = 'block'; // AGORA sim, mostra o header
                 showView('dashboard');                   // MOSTRA o dashboard
-                applyWhitelabelMode();                   // <-- ADICIONE ESTA LINHA AQUI
 
             } catch (error) {
                 console.error('ERRO CRÍTICO DURANTE A INICIALIZAÇÃO:', error);
