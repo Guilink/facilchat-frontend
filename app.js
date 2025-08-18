@@ -3280,7 +3280,7 @@ async function createBot() {
         const leadPromptTextarea = document.getElementById('edit-lead-collection-prompt');
 
         // Define o valor do textarea com o texto do bot ou o padrão
-        leadPromptTextarea.value = bot.lead_collection_prompt || 'Olá! Para podermos iniciar, poderia me dizer como você nos encontrou? (Ex: Instagram, Google, Indicação)';
+        leadPromptTextarea.value = bot.lead_collection_prompt || 'Para podermos iniciar, poderia me dizer como você nos encontrou? (Ex: Instagram, Google, Indicação)';
         
         // Define o estado do toggle
         leadEnabledCheckbox.checked = bot.lead_collection_enabled || false;
