@@ -1665,47 +1665,70 @@ input:checked + .toggle-slider:before {
 
     /* --- INÍCIO DA CORREÇÃO DE RESPONSIVIDADE --- */
 
-    /* 1. NOVO DESIGN PARA O COMPONENTE DE HORÁRIOS (Wizard e Edição) */
     #step-2 .schedule-day,
-    #modal-schedule-details .schedule-day {
-        flex-direction: row;      /* Mantém a direção de linha */
-        flex-wrap: wrap;          /* Permite que os itens quebrem para a próxima linha */
-        align-items: center;      /* Alinha verticalmente o nome do dia e o toggle */
-        justify-content: space-between; /* Espaça os itens */
-        background-color: var(--bg-tertiary);
-        border-radius: var(--radius-lg);
-        padding: var(--space-lg);
-        gap: var(--space-md);
-        border-bottom: none;      /* Remove a linha separadora antiga */
+    #modal-schedule-details .schedule-day,
+    #agenda-schedule-details .schedule-day,
+    #edit-schedule-days-container .schedule-day { /* <-- NOVO SELETOR ADICIONADO AQUI */
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        background: none;
+        border-radius: 0;
+        padding: 0;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    #step-2 .schedule-day:last-child,
+    #modal-schedule-details .schedule-day:last-child,
+    #agenda-schedule-details .schedule-day:last-child,
+    #edit-schedule-days-container .schedule-day:last-child { /* <-- NOVO SELETOR ADICIONADO AQUI */
+        border-bottom: none;
+        margin-bottom: 0;
     }
 
     #step-2 .schedule-details,
-    #modal-schedule-details .schedule-details {
-        background: none;
-        border: none;
+    #modal-schedule-details .schedule-details,
+    #agenda-schedule-details .schedule-details,
+    #edit-schedule-days-container { /* <-- NOVO SELETOR ADICIONADO AQUI */
+        background: none; 
+        border: none; 
         padding: 0;
         display: flex;
         flex-direction: column;
-        gap: 1rem; /* Espaço entre os cards de cada dia */
+        gap: 0; /* O espaçamento agora é controlado pela margem do .schedule-day */
     }
 
     #step-2 .schedule-day .day-name,
-    #modal-schedule-details .schedule-day .day-name {
-        font-size: 1.1rem;
+    #modal-schedule-details .schedule-day .day-name,
+    #agenda-schedule-details .schedule-day .day-name,
+    #edit-schedule-days-container .schedule-day .day-name { /* <-- NOVO SELETOR ADICIONADO AQUI */
+        font-size: 1.2rem;
         font-weight: 600;
-        flex-grow: 1; /* Faz o nome do dia ocupar o espaço à esquerda */
-        text-align: left;
-        padding: 0; margin: 0; border: none;
+        border: none; margin: 0; padding: 0;
+        order: 1;
+    }
+        
+    #step-2 .schedule-day .day-toggle,
+    #modal-schedule-details .schedule-day .day-toggle,
+    #agenda-schedule-details .schedule-day .day-toggle,
+    #edit-schedule-days-container .schedule-day .day-toggle { /* <-- NOVO SELETOR ADICIONADO AQUI */
+        order: 2;
     }
 
     #step-2 .schedule-day .time-inputs,
-    #modal-schedule-details .schedule-day .time-inputs {
-        flex-basis: 100%; /* Força os inputs a quebrarem para a linha de baixo */
-        order: 3;         /* Garante que fiquem por último */
-        justify-content: space-around;
-        background: var(--bg-primary);
-        padding: var(--space-lg);
-        border-radius: var(--radius-md);
+    #modal-schedule-details .schedule-day .time-inputs,
+    #agenda-schedule-details .schedule-day .time-inputs,
+    #edit-schedule-days-container .schedule-day .time-inputs { /* <-- NOVO SELETOR ADICIONADO AQUI */
+        order: 3;
+        width: max-content;
+        padding: 0;
+        background: none;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.75rem 1rem;
+        align-items: center;
     }
     
     /* 2. CORREÇÃO PARA ENCAMINHAMENTO HUMANO (Wizard e Edição) */
@@ -3912,4 +3935,30 @@ input:checked + .toggle-slider:before {
 }
 #appointment-modal .modal-body .form-group:last-child {
     margin-bottom: 0;
+}
+
+/* ===================================================================== */
+/* ==== CORREÇÕES FINAIS DE RESPONSIVIDADE (MOBILE v2025) =========== */
+/* ===================================================================== */
+
+/* 1. Corrige o layout de "Serviços Oferecidos" no modal de Agenda */
+@media (max-width: 768px) {
+    #agenda-modal .service-item-compact {
+        flex-direction: column;    /* A MÁGICA: Empilha os itens verticalmente */
+        align-items: stretch;      /* Faz os inputs ocuparem 100% da largura */
+        gap: 0.75rem;              /* Adiciona um espaço entre os campos empilhados */
+        
+        /* Bônus de Estilo: Deixa o item mais parecido com um "card" no mobile */
+        background-color: var(--bg-primary);
+        padding: var(--space-lg);
+        border-radius: var(--radius-md);
+    }
+
+    #agenda-modal .service-item-compact .agenda-service-duration {
+        width: 100%; /* Garante que o input de duração também ocupe a largura total */
+    }
+
+    #agenda-modal .service-item-compact span {
+        display: none; /* Esconde o texto "Min." que se torna redundante no mobile */
+    }
 }
