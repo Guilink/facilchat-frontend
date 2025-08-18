@@ -3006,50 +3006,6 @@ async function createBot() {
         
         const editView = views.edit; // Ponto de referência para a Tela de Edição
         
-        const editScheduleBtn = document.getElementById('edit-schedule-btn');
-        const scheduleModal = document.getElementById('schedule-modal');
-
-        if (editScheduleBtn && scheduleModal) {
-            editScheduleBtn.addEventListener('click', () => {
-                scheduleModal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            });
-        }
-
-        if (scheduleModal) {
-            const closeButtons = scheduleModal.querySelectorAll('[data-target-modal="schedule-modal"]');
-            closeButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    scheduleModal.classList.remove('active');
-                    document.body.style.overflow = 'auto';
-                });
-            });
-        }
-        
-        const saveScheduleBtn = document.getElementById('save-schedule-btn');
-        if(saveScheduleBtn) {
-            saveScheduleBtn.addEventListener('click', () => {
-                scheduleModal.classList.remove('active');
-                document.body.style.overflow = 'auto';
-                const scheduleEnabled = scheduleModal.querySelector('#modal-schedule-enabled').checked;
-                document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Sem restrição, sempre ativo.';
-            });
-        }
-
-        const modalScheduleDetails = document.getElementById('modal-schedule-details');
-        const modalScheduleEnabled = document.getElementById('modal-schedule-enabled');
-        if(modalScheduleEnabled && modalScheduleDetails){
-            modalScheduleEnabled.addEventListener('change', () => {
-                modalScheduleDetails.style.display = modalScheduleEnabled.checked ? 'block' : 'none';
-            });
-            modalScheduleDetails.querySelectorAll('.schedule-day').forEach(dayElement => {
-                const toggle = dayElement.querySelector('input[type="checkbox"]');
-                if (toggle) {
-                    toggle.addEventListener('change', () => updateDayScheduleState(dayElement));
-                }
-            });
-        }
-
         const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
         const leadDetails = document.getElementById('edit-lead-collection-details');
         if (leadEnabledCheckbox && leadDetails) {
@@ -3077,6 +3033,51 @@ async function createBot() {
                 showView('dashboard');
             });
         }
+
+        const editScheduleBtn = document.getElementById('edit-schedule-btn');
+        const scheduleSummary = document.querySelector('.schedule-summary');
+        const scheduleDetails = document.getElementById('edit-schedule-details');
+        const confirmScheduleBtn = document.getElementById('confirm-schedule-changes-btn');
+        const scheduleEnabledToggle = document.getElementById('edit-schedule-enabled');
+        const scheduleDaysContainer = document.getElementById('edit-schedule-days-container');
+
+        // Ao clicar em "Alterar", esconde o resumo e mostra os detalhes
+        if (editScheduleBtn) {
+            editScheduleBtn.addEventListener('click', () => {
+                scheduleSummary.style.display = 'none';
+                scheduleDetails.style.display = 'block';
+            });
+        }
+
+        // Ao clicar em "Confirmar Horários", faz o inverso e atualiza o texto
+        if (confirmScheduleBtn) {
+            confirmScheduleBtn.addEventListener('click', () => {
+                scheduleSummary.style.display = 'flex';
+                scheduleDetails.style.display = 'none';
+                // Atualiza o texto do resumo
+                const isEnabled = scheduleEnabledToggle.checked;
+                document.getElementById('schedule-status-text').textContent = isEnabled 
+                    ? 'Horários personalizados ativos.' 
+                    : 'Sem restrição, sempre ativo.';
+            });
+        }
+
+        // Controla a visibilidade dos dias da semana com base no toggle principal
+        if (scheduleEnabledToggle) {
+            scheduleEnabledToggle.addEventListener('change', () => {
+                scheduleDaysContainer.style.display = scheduleEnabledToggle.checked ? 'block' : 'none';
+            });
+        }
+
+        // Adiciona os listeners para os toggles de cada dia
+        if (scheduleDaysContainer) {
+            scheduleDaysContainer.querySelectorAll('.schedule-day').forEach(dayElement => {
+                const toggle = dayElement.querySelector('input[type="checkbox"]');
+                if (toggle) {
+                    toggle.addEventListener('change', () => updateDayScheduleState(dayElement));
+                }
+            });
+        }        
         
         setupEditKnowledgeBase();
         
@@ -3121,7 +3122,7 @@ async function createBot() {
                 toneCustom = document.getElementById('edit-bot-tone-custom').value.trim();
             }
 
-            const scheduleDataResult = collectScheduleData('#schedule-modal');
+            const scheduleDataResult = collectScheduleData('#edit-schedule-details');
             const scheduleEnabled = scheduleDataResult.enabled;
             const scheduleData = scheduleDataResult.data;
             
@@ -3241,27 +3242,44 @@ async function createBot() {
         populateEditContacts(bot.knowledge_contacts || []);
 
         // --- Preenche os dados de Horário (código anterior já estava correto) ---
-        const dayMapPtToEn = { 'segunda': 'monday', 'terca': 'tuesday', 'quarta': 'wednesday', 'quinta': 'thursday', 'sexta': 'friday', 'sabado': 'saturday', 'domingo': 'sunday' };
         const scheduleEnabled = bot.schedule_enabled || false;
-        document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Sem restrição, sempre ativo';
-        document.getElementById('modal-schedule-enabled').checked = scheduleEnabled;
-        document.getElementById('modal-schedule-details').style.display = scheduleEnabled ? 'block' : 'none';
+        document.getElementById('schedule-status-text').textContent = scheduleEnabled ? 'Horários personalizados ativos.' : 'Sem restrição, sempre ativo.';
+        
+        // Seletores para os novos elementos que estão integrados na página de edição
+        const scheduleEnabledToggle = document.getElementById('edit-schedule-enabled');
+        const scheduleDaysContainer = document.getElementById('edit-schedule-days-container');
+
+        // Define o estado inicial dos controles
+        scheduleEnabledToggle.checked = scheduleEnabled;
+        scheduleDaysContainer.style.display = scheduleEnabled ? 'block' : 'none';
+
+        // Garante que o painel expansível comece fechado e o resumo visível
+        document.getElementById('edit-schedule-details').style.display = 'none';
+        document.querySelector('.schedule-summary').style.display = 'flex';
+        
+        // Lógica para preencher os valores de cada dia (agora com o seletor corrigido)
         let scheduleData = [];
+        const dayMapPtToEn = { 'segunda': 'monday', 'terca': 'tuesday', 'quarta': 'wednesday', 'quinta': 'thursday', 'sexta': 'friday', 'sabado': 'saturday', 'domingo': 'sunday' };
         try { scheduleData = Array.isArray(bot.schedule_data) ? bot.schedule_data : JSON.parse(bot.schedule_data || '[]'); } catch (e) { console.error('Erro no parse do schedule_data:', e); }
+
         if (scheduleData.length > 0) {
             scheduleData.forEach((dayData) => {
                 const dayInEnglish = dayMapPtToEn[dayData.day.toLowerCase()];
                 if (!dayInEnglish) return;
-                const dayElement = document.querySelector(`#modal-schedule-details .schedule-day[data-day="${dayInEnglish}"]`);
+                
+                // AQUI ESTÁ A MUDANÇA CRÍTICA: O seletor agora busca dentro de #edit-schedule-days-container
+                const dayElement = document.querySelector(`#edit-schedule-days-container .schedule-day[data-day="${dayInEnglish}"]`);
+                
                 if (!dayElement) return;
                 const toggle = dayElement.querySelector('input[type="checkbox"]');
                 if (toggle) {
                     toggle.checked = dayData.active;
-                    updateDayScheduleState(dayElement);
+                    updateDayScheduleState(dayElement); // Essencial para o estado visual
                 }
-                const openTimeInput = dayElement.querySelector('input[type="time"]:first-of-type');
-                const closeTimeInput = dayElement.querySelector('input[type="time"]:last-of-type');
+                
                 if (dayData.active) {
+                    const openTimeInput = dayElement.querySelector('input[type="time"]:first-of-type');
+                    const closeTimeInput = dayElement.querySelector('input[type="time"]:last-of-type');
                     if (openTimeInput) openTimeInput.value = dayData.open;
                     if (closeTimeInput) closeTimeInput.value = dayData.close;
                 }

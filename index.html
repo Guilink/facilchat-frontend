@@ -531,11 +531,39 @@
                         
                         <!-- Card de Horário -->
                         <div class="edit-card">
-                           <h3>Horário de Atendimento</h3>
-                           <div class="schedule-summary">
-                               <p id="schedule-status-text">Horários configurados.</p>
-                               <button type="button" id="edit-schedule-btn" class="btn-secondary">Alterar</button>
-                           </div>
+                        <h3>Horário de Atendimento</h3>
+                        
+                        <!-- O resumo que já existia, para visualização rápida -->
+                        <div class="schedule-summary">
+                            <p id="schedule-status-text">Horários configurados.</p>
+                            <button type="button" id="edit-schedule-btn" class="btn-secondary">Alterar</button>
+                        </div>
+
+                        <!-- O novo painel expansível, com os controles que estavam no modal -->
+                        <div id="edit-schedule-details" class="operation-details" style="display: none;">
+                                <!-- Toggle principal para ativar/desativar a função -->
+                                <div class="schedule-toggle-container">
+                                    <span class="schedule-toggle-label">Ativar horário de funcionamento</span>
+                                    <label class="day-toggle">
+                                        <input type="checkbox" id="edit-schedule-enabled">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <!-- Div que contém os dias da semana (será mostrada/escondida pelo toggle acima) -->
+                                <div id="edit-schedule-days-container" class="schedule-details" style="display: none;">
+                                    <div class="schedule-day" data-day="monday"><span class="day-name">Segunda</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                                    <div class="schedule-day" data-day="tuesday"><span class="day-name">Terça</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                                    <div class="schedule-day" data-day="wednesday"><span class="day-name">Quarta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                                    <div class="schedule-day" data-day="thursday"><span class="day-name">Quinta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                                    <div class="schedule-day" data-day="friday"><span class="day-name">Sexta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                                    <div class="schedule-day" data-day="saturday"><span class="day-name">Sábado</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                                    <div class="schedule-day" data-day="sunday"><span class="day-name">Domingo</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+                                </div>
+                                
+                                <!-- Botão para "salvar" a alteração e fechar o painel -->
+                                <button type="button" id="confirm-schedule-changes-btn" class="btn-secondary" style="margin-top: 1rem;">Confirmar Horários</button>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -628,68 +656,82 @@
 
     <!-- MODAL DE CONFIRMAÇÃO PARA DELETAR BOT -->
     <div id="delete-modal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header"><h3>Deletar Assistente</h3><button class="modal-close" onclick="closeDeleteModal()">×</button></div>
-            <div class="modal-content"><div class="warning-icon">⚠️</div><h4>Tem certeza que deseja EXCLUIR o assistente?<br> <span id="delete-bot-name-modal" class="bot-name-highlight"></span></h4><p>Esta ação é <strong>permanente</strong> e não pode ser desfeita.<br>Todos os dados, estatísticas e configurações serão perdidos.</p></div>
-            <div class="modal-footer"><button class="btn-secondary" onclick="closeDeleteModal()">Cancelar</button><button class="btn-danger" id="confirm-delete-btn">Deletar Permanentemente</button></div>
-        </div>
-    </div>    
+        <div class="modal-dialog">
 
-    <!-- MODAL: CONEXÃO QR CODE -->
-    <div id="qr-modal" class="modal-overlay">
-        <div class="modal-container qr-modal-container">
-            <div class="modal-header"><h3>Conectar ao WhatsApp</h3><button class="modal-close" onclick="cancelConnection()">×</button></div>
-            <div class="modal-content" id="qr-modal-content">
-                <!-- O conteúdo (loading, QR code, sucesso, erro) será injetado aqui pelo JS -->
+            <!-- 1. CABEÇALHO -->
+            <div class="modal-header">
+                <h3>Deletar Assistente</h3>
+                <button type="button" class="modal-close" onclick="closeDeleteModal()">×</button>
             </div>
-            <div class="modal-footer"><button class="btn-secondary" onclick="cancelConnection()">Cancelar</button></div>
+
+            <!-- 2. CORPO -->
+            <div class="modal-body" style="text-align: center;">
+                <div class="warning-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                <h4>Tem certeza que deseja EXCLUIR o assistente?</h4>
+                <p style="font-size: 1.2rem; color: var(--accent); font-weight: 600; margin: 0.5rem 0 1.5rem 0;" id="delete-bot-name-modal"></p>
+                <p style="color: var(--text-secondary);">
+                    Esta ação é <strong style="color: var(--danger);">permanente</strong> e não pode ser desfeita.
+                    Todos os dados, estatísticas e configurações serão perdidos.
+                </p>
+            </div>
+
+            <!-- 3. RODAPÉ -->
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+                <button type="button" class="btn-danger" id="confirm-delete-btn">Deletar Permanentemente</button>
+            </div>
+            
         </div>
     </div>
 
-    <!-- MODAL: EDIÇÃO DE HORÁRIOS -->
-    <div id="schedule-modal" class="modal-overlay">
-        <div class="modal-container schedule-modal-container">
+    <!-- MODAL: CONEXÃO QR CODE -->
+    <div id="qr-modal" class="modal-overlay">
+        <div class="modal-dialog">
+
+            <!-- 1. CABEÇALHO -->
             <div class="modal-header">
-                <h3>Horário de Atendimento</h3>
-                <button type="button" class="modal-close" data-target-modal="schedule-modal">×</button>
+                <h3>Conectar ao WhatsApp</h3>
+                <button type="button" class="modal-close" onclick="cancelConnection()">×</button>
             </div>
-            <div class="modal-content">
-                 <div class="schedule-toggle-container">
-                    <!-- Texto agora envolvido em um span para melhor controle -->
-                    <span class="schedule-toggle-label">Ativar horário de funcionamento</span>
-                    <label class="day-toggle"><input type="checkbox" id="modal-schedule-enabled"><span class="toggle-slider"></span></label>
-                </div>
-                <div id="modal-schedule-details" class="schedule-details" style="display: none;">
-                    <div class="schedule-day" data-day="monday"><span class="day-name">Segunda</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-                    <div class="schedule-day" data-day="tuesday"><span class="day-name">Terça</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-                    <div class="schedule-day" data-day="wednesday"><span class="day-name">Quarta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-                    <div class="schedule-day" data-day="thursday"><span class="day-name">Quinta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-                    <div class="schedule-day" data-day="friday"><span class="day-name">Sexta</span><div class="time-inputs"><label>Abre</label><input type="time" value="09:00"><label>Fecha</label><input type="time" value="18:00"></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-                    <div class="schedule-day" data-day="saturday"><span class="day-name">Sábado</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
-                    <div class="schedule-day" data-day="sunday"><span class="day-name">Domingo</span><div class="time-inputs disabled"><label>Fechado</label></div><label class="day-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></div>
+
+            <!-- 2. CORPO -->
+            <div class="modal-body" id="qr-modal-content">
+                <!-- O conteúdo (loading, QR code, sucesso, erro) será injetado aqui pelo JS -->
+                <!-- Exemplo do estado inicial de loading -->
+                <div class="qr-loading">
+                    <div class="loading-spinner"></div>
+                    <h3>Gerando QR Code...</h3>
+                    <p>Aguarde enquanto preparamos a conexão com o WhatsApp.</p>
                 </div>
             </div>
+
+            <!-- 3. RODAPÉ -->
             <div class="modal-footer">
-                <button type="button" class="btn-secondary" data-target-modal="schedule-modal">Cancelar</button>
-                <button type="button" class="btn-primary" id="save-schedule-btn">Salvar Horários</button>
+                <button type="button" class="btn-secondary" onclick="cancelConnection()">Cancelar</button>
             </div>
+
         </div>
     </div>
 
     <!-- MODAL: CRIAÇÃO/EDIÇÃO DE AGENDA -->
     <div id="agenda-modal" class="modal-overlay">
-        <div class="modal-container agenda-modal-container">
+        <!-- NOVO CONTAINER INTELIGENTE -->
+        <div class="modal-dialog modal-lg"> 
             <form id="agenda-form">
                 <input type="hidden" id="agenda-edit-id">
+
+                <!-- 1. CABEÇALHO (SEMPRE VISÍVEL) -->
                 <div class="modal-header">
                     <h3 id="agenda-modal-title">Criar Nova Agenda</h3>
                     <button type="button" class="modal-close" data-target-modal="agenda-modal">×</button>
                 </div>
-                <div class="modal-content">
+
+                <!-- 2. CORPO (A ÚNICA PARTE QUE VAI ROLAR) -->
+                <div class="modal-body">
                     <!-- Seção de Nome -->
                     <div class="form-group">
                         <label for="agenda-name">Nome da Agenda / Profissional</label>
-                        <input type="text" id="agenda-name" placeholder="Ex: Barbeiro João, Dra. Ana (Psicóloga)" required maxlength="50">
+                        <input type="text" id="agenda-name" placeholder="Ex: Barbearia Clássica, Dra. Ana (Psicóloga)" required maxlength="50">
                     </div>
                     
                     <!-- Seção de Serviços -->
@@ -742,6 +784,8 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 3. RODAPÉ (SEMPRE VISÍVEL) -->
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" data-target-modal="agenda-modal">Cancelar</button>
                     <button type="submit" class="btn-primary" id="save-agenda-btn">Salvar Agenda</button>
@@ -750,26 +794,29 @@
         </div>
     </div>
 
-    <!-- MODAL: AGENDAMENTO MANUAL -->
-    <div id="appointment-modal" class="modal-overlay">
-        <div class="modal-container">
+        <!-- MODAL: AGENDAMENTO MANUAL -->
+        <div id="appointment-modal" class="modal-overlay">
+        <!-- Novo container inteligente -->
+        <div class="modal-dialog">
             <form id="appointment-form">
                 <input type="hidden" id="appointment-slot-start-time">
                 <input type="hidden" id="appointment-edit-id">
 
+                <!-- 1. CABEÇALHO (SEMPRE VISÍVEL) -->
                 <div class="modal-header">
                     <h3 id="appointment-modal-title">Novo Agendamento</h3>
                     <button type="button" class="modal-close" data-target-modal="appointment-modal">×</button>
                 </div>
-                <div class="modal-content">
-                    <!-- <<< ORDEM DOS CAMPOS CORRIGIDA >>> -->
+
+                <!-- 2. CORPO (ÚNICA PARTE COM ROLAGEM, SE NECESSÁRIO) -->
+                <div class="modal-body">
                     <div class="form-group">
                         <label for="appointment-client-name">Nome do Cliente</label>
                         <input type="text" id="appointment-client-name" placeholder="Nome de quem será atendido" required maxlength="100">
                     </div>
                     <div class="form-group">
                         <label for="appointment-service">Serviço</label>
-                        <!-- <<< WRAPPER ADICIONADO PARA ESTILO ELEGANTE >>> -->
+                        <!-- A MÁGICA DA CONSISTÊNCIA: Usando o mesmo wrapper do outro modal -->
                         <div class="custom-select-wrapper">
                             <select id="appointment-service" required>
                                 <!-- Opções de serviço serão populadas pelo JS -->
@@ -785,13 +832,15 @@
                         <textarea id="appointment-notes" rows="3" placeholder="Alguma observação sobre o cliente ou o serviço." maxlength="300"></textarea>
                     </div>
                 </div>
+
+                <!-- 3. RODAPÉ (SEMPRE VISÍVEL) -->
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" data-target-modal="appointment-modal">Cancelar</button>
                     <button type="submit" class="btn-primary" id="save-appointment-btn">Salvar Agendamento</button>
                 </div>
             </form>
         </div>
-    </div>    
+    </div>   
 
 
     <!-- Scripts movidos para o final para carregamento otimizado da página -->

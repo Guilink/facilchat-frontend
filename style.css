@@ -753,10 +753,6 @@ input:checked + .toggle-slider:before {
     transition: var(--transition-fast);
 }
 
-.stat-item:hover {
-    background-color: rgba(51, 65, 85, 0.8);
-}
-
 .stat-number {
     font-size: var(--text-lg);
     font-weight: 700;
@@ -1792,10 +1788,7 @@ input:checked + .toggle-slider:before {
     .edit-content { padding: 1.5rem; }
     .edit-actions { flex-direction: column; gap: 1rem; }
 
-    /* Modal e Toast mobile */
-    .modal-container { margin: 0.5rem; width: calc(100% - 1rem); }
-    .modal-content { padding: 1.5rem; }
-    .modal-footer { flex-direction: column; gap: 1rem; }
+
     .toast { top: 10px; right: 10px; left: 10px; width: auto; padding: 0.875rem 1rem; }
 }
 
@@ -1829,35 +1822,6 @@ input:checked + .toggle-slider:before {
     background: var(--border-light);
 }
 
-/* MODAL DE DELETAR BOT */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-}
-
-.modal-overlay.active {
-    display: flex;
-}
-
-.modal-container {
-    background: var(--bg-secondary); /* Fundo mais escuro */
-    border-radius: var(--radius-lg);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow: hidden;
-    border: 1px solid var(--border);
-}
 
 .modal-header {
     display: flex;
@@ -1893,29 +1857,12 @@ input:checked + .toggle-slider:before {
     color: var(--text-primary);
 }
 
-.modal-content {
-    padding: 2rem; /* Mais padding para respiro */
-    text-align: center;
-}
-
 .warning-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
     color: var(--danger); /* Garante a cor correta */
 }
 
-.modal-content h4 {
-    margin: 0 0 1rem 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.modal-content p {
-    margin: 0 0 1.5rem 0;
-    color: var(--text-secondary);
-    line-height: 1.5;
-}
 
 .bot-preview {
     background-color: var(--bg-secondary);
@@ -2008,11 +1955,6 @@ input:checked + .toggle-slider:before {
     cursor: not-allowed;
     transform: none !important;
     box-shadow: none !important;
-}
-
-/* ESTILOS PARA O NOVO MODAL DE QR CODE */
-.qr-modal-container {
-    max-width: 450px;
 }
 
 #qr-modal-content {
@@ -2787,20 +2729,6 @@ input:checked + .toggle-slider:before {
     color: var(--text-secondary);
 }
 
-/* Estilos para o Modal de Horários */
-.schedule-modal-container {
-    max-width: 700px;
-}
-.schedule-modal-container .modal-content {
-    padding: var(--space-2xl);
-}
-.schedule-modal-container .schedule-details {
-    margin-top: var(--space-xl);
-    padding: 0;
-    border: none;
-    background: none;
-}
-
 /* Responsividade para a nova tela de edição */
 @media (max-width: 1024px) {
     .edit-layout-grid {
@@ -2860,72 +2788,19 @@ input:checked + .toggle-slider:before {
     font-size: 0.9rem;
 }
 
-/* 1. Transforma o modal em um container Flexbox de coluna */
-.schedule-modal-container {
-    display: flex; /* ATIVA O FLEXBOX */
-    flex-direction: column; /* Organiza os filhos (header, content, footer) em coluna */
-    max-height: 85vh; /* Altura máxima para o modal não sair da tela */
-}
-
-/* 2. Permite que APENAS o conteúdo do meio role */
-#schedule-modal .modal-content {
-    flex-grow: 1; /* Faz esta área crescer e ocupar o espaço disponível */
-    overflow-y: auto; /* Adiciona a barra de rolagem APENAS aqui */
-    padding-right: var(--space-sm); /* Espaço para a barra de rolagem */
-}
-
-/* 3. Garante que o rodapé com os botões fique sempre fixo e visível */
-#schedule-modal .modal-footer {
-    flex-shrink: 0; /* Impede que o rodapé seja esmagado ou encolha */
-    border-top: 1px solid var(--border); /* Garante a linha de separação */
-}
-
-/* 4. Corrige o layout do texto "Ativar horário..." */
-#schedule-modal .schedule-toggle-container {
-    display: flex;
-    align-items: center; /* Alinha verticalmente */
-    justify-content: space-between; /* Empurra o texto para a esquerda e o toggle para a direita */
-    padding: var(--space-lg);
-    background-color: var(--bg-tertiary);
-    border-radius: var(--radius-md);
-}
-
-.schedule-toggle-label {
-    font-size: 1rem;
-    font-weight: 500;
-    line-height: 1.4;
-    padding-right: var(--space-lg); /* Adiciona espaço para não colar no toggle */
-}
-
-#schedule-modal .modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-lg) var(--space-xl);
-    border-top: 1px solid var(--border);
-    background-color: var(--bg-secondary); /* Garante um fundo sólido */
-}
-
 /* 
   Regra específica para o botão secundário (Cancelar) e primário (Salvar)
   Garante que AMBOS tenham o mesmo estilo base.
 */
-#schedule-modal .modal-footer .btn-secondary,
-#schedule-modal .modal-footer .btn-primary {
-    margin: 0;
-    font-size: 0.95rem; /* Harmoniza o tamanho da fonte */
-    font-weight: 500;
-    padding: 0.75rem 1.5rem;
-    line-height: 1.5; /* Garante a mesma altura de linha */
-    border-radius: 8px; /* Garante o mesmo raio de borda */
-}
 
 #edit-lead-collection-details textarea#edit-lead-collection-prompt {
     width: 100%;      /* Força a largura total do container pai */
     resize: none;     /* Remove a alça de redimensionamento do canto */
     min-height: 90px; /* Reduz um pouco a altura mínima */
 }
+
+
+
 
 /* Usamos max-width: 768px para aplicar estas regras em tablets (vertical) e celulares */
 @media (max-width: 768px) {
@@ -3127,18 +3002,6 @@ input:checked + .toggle-slider:before {
     .edit-container { padding: 1rem; }
     .form-grid { grid-template-columns: 1fr; gap: 1.5rem; }
     .grid-col-span-2 { grid-column: span 1; }
-}
-
-
-/* Correção para barra de rolagem em modais com muito conteúdo */
-.modal-content {
-  overflow-y: auto;
-  max-height: calc(100vh - 320px); /* Limita a altura máxima para 200px a menos que a altura da tela */
-}
-
-/* Garante que o espaçamento interno fique bonito mesmo com a barra de rolagem */
-.modal-content {
-    padding: 1.5rem 2rem;
 }
 
 /* ================================================================== */
@@ -3377,10 +3240,6 @@ input:checked + .toggle-slider:before {
 .day-schedule-slot.booked .slot-action-btn:hover { background-color: rgba(0,0,0,0.2); opacity: 1; }
 .slot-action-btn.danger:hover { color: var(--danger); }
 
-/* Modal de Agendas */
-.agenda-modal-container .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: center; }
-.agenda-modal-container .setting-item-toggle { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-primary); padding: 1rem; border-radius: 8px; }
-
 /* EM: style.css -> ADICIONE ESTE BLOCO NO FINAL DO ARQUIVO */
 
 /* --- EFEITOS DE CARREGAMENTO GRACIOSO PARA A AGENDA --- */
@@ -3408,13 +3267,6 @@ input:checked + .toggle-slider:before {
 /* =================== CORREÇÕES E POLIMENTO DA AGENDA (v5 - DEFINITIVO) = */
 /* ===================================================================== */
 
-/* --- 1. Alarga o modal e controla a rolagem (Mantido) --- */
-.agenda-modal-container {
-    max-width: 800px;
-    display: flex;
-    flex-direction: column;
-    max-height: 90vh;
-}
 #agenda-modal .modal-content {
     overflow-y: auto;
     flex: 1;
@@ -3741,3 +3593,323 @@ input:checked + .toggle-slider:before {
         align-items: center;
         justify-content: center;
     }
+
+/* ================================================================= */
+/* == NOVO COMPONENTE: PAINEL EXPANSÍVEL DE HORÁRIOS              == */
+/* ================================================================= */
+
+/* 1. O editor completo começa escondido e com altura zero. */
+.schedule-editor-full {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.5s ease-in-out, margin-top 0.5s ease-in-out;
+}
+
+/* 2. Quando o card estiver expandido, o editor ganha altura e o sumário some. */
+#schedule-card.expanded .schedule-editor-full {
+    max-height: 1000px; /* Um valor alto o suficiente para caber todo o conteúdo */
+    margin-top: 1.5rem; /* Cria um espaço bonito quando expande */
+}
+#schedule-card.expanded .schedule-summary {
+    display: none; /* Esconde o botão "Alterar" */
+}
+
+/* 3. Estilos para o conteúdo do editor. */
+.schedule-editor-full .schedule-details {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color-light);
+}
+.schedule-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ========================================================== */
+/* ======== AJUSTES DE RESPONSIVIDADE PARA HORÁRIOS ========= */
+/* ========================================================== */
+
+/* Aplica estas regras apenas em telas com largura de 768px ou menos (celulares e tablets pequenos) */
+@media (max-width: 768px) {
+
+    /* 
+      1. O container de cada dia se torna flexível para quebra de linha.
+      A ação principal está no `flex-wrap: wrap`.
+    */
+    .schedule-day {
+        flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo */
+        row-gap: 12px;   /* Adiciona um espaço vertical entre a linha do nome e a linha dos horários */
+        padding: 12px;   /* Melhora o espaçamento interno para toque */
+    }
+
+    /* 
+      2. O nome do dia ("Segunda", "Terça", etc.) ocupa o espaço disponível na primeira linha.
+    */
+    .schedule-day .day-name {
+        flex-grow: 1; /* Permite que ele cresça e empurre o toggle para a direita */
+        font-weight: 500;
+    }
+
+    /* 
+      3. O container dos inputs de horário ("Abre" e "Fecha") agora ocupa 100% da largura.
+      Isso o FORÇA a quebrar para a linha de baixo, abaixo do nome e do toggle.
+    */
+    .schedule-day .time-inputs {
+        width: 100%;                  /* FORÇA o container dos horários a ocupar uma linha inteira */
+        justify-content: space-around; /* Distribui os horários de forma mais agradável */
+        margin-top: 8px;              /* Adiciona uma pequena margem no topo */
+        padding: 0;                   /* Remove padding para não interferir no alinhamento */
+    }
+    
+    /* 
+       4. (Bônus de Polimento) Garante que os inputs de horário fiquem com uma aparência
+       mais consistente e ocupem o espaço corretamente.
+    */
+    .schedule-day .time-inputs input[type="time"] {
+        padding: 6px 8px;
+        flex-basis: 120px; /* Define uma largura base para cada input */
+    }
+}
+
+/* RESET TOTAL AQUI
+
+/* ===================================================================== */
+/* ==== NOVO SISTEMA DE MODAIS PROFISSIONAL E RESPONSIVO (v2025) ==== */
+/* ===================================================================== */
+
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* O "Miolo" do Modal (A caixa visível) */
+.modal-dialog {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl); /* Borda mais arredondada */
+    box-shadow: var(--shadow-xl);
+    
+    /* A MÁGICA DA RESPONSIVIDADE E TAMANHO */
+    width: 100%;
+    max-width: 600px; /* Tamanho padrão do modal */
+    max-height: 90vh; /* NUNCA será mais alto que 90% da tela */
+
+    /* A MÁGICA ANTI-CORTE */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Esconde qualquer coisa que tente "vazar" do modal */
+
+    /* Animação de entrada */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-dialog {
+    transform: scale(1);
+}
+
+/* Modificadores de tamanho (opcional, mas muito útil) */
+.modal-dialog.modal-lg {
+    max-width: 800px;
+}
+.modal-dialog.modal-xl {
+    max-width: 1100px;
+}
+
+/* Estrutura interna do Modal */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+.modal-header h3 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+/* O CORAÇÃO DA SOLUÇÃO ANTI-CORTE */
+.modal-body {
+    padding: var(--space-2xl);
+    overflow-y: auto; /* A MÁGICA: Adiciona a barra de rolagem APENAS no corpo do modal */
+    flex-grow: 1;     /* Faz o corpo ocupar todo o espaço disponível entre o header e o footer */
+}
+
+/* ===================================================================== */
+/* ==== POLIMENTO PÓS-REFATORAÇÃO DO MODAL DE AGENDA (v2025.2) ====== */
+/* ===================================================================== */
+
+/* Garante que o formulário não cause overflow dentro do modal */
+#agenda-modal #agenda-form {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Garante que o corpo do modal (a área de rolagem) cresça para preencher o espaço */
+#agenda-modal .modal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* Adiciona um espaçamento consistente entre as seções do formulário */
+#agenda-modal .modal-body .form-group {
+    margin-bottom: var(--space-3xl);
+}
+#agenda-modal .modal-body .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Garante que a lista de horários tenha um respiro no topo */
+#agenda-modal #agenda-schedule-details {
+    margin-top: var(--space-lg);
+}
+
+/* ===================================================================== */
+/* ==== SISTEMA DE MODAIS PROFISSIONAL E RESPONSIVO (v2025 - ZERO) ==== */
+/* ===================================================================== */
+
+/* 1. O FUNDO ESCURECIDO (OVERLAY) */
+.modal-overlay {
+    position: fixed;
+    inset: 0; /* Equivalente a top/left/right/bottom: 0 */
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease;
+}
+
+/* 2. A CAIXA DE DIÁLOGO VISÍVEL */
+.modal-dialog {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 500px; /* Tamanho padrão */
+    max-height: 90vh; /* NUNCA será mais alto que 90% da tela */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* Modificadores de tamanho */
+.modal-dialog.modal-lg { max-width: 800px; }
+.modal-dialog.modal-xl { max-width: 1100px; }
+
+/* 3. ESTRUTURA INTERNA DO MODAL */
+
+/* Cabeçalho Fixo */
+.modal-header {
+    padding: var(--space-lg) var(--space-2xl);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+/* Corpo com Rolagem - A MÁGICA ANTI-CORTE */
+.modal-body {
+    padding: var(--space-2xl);
+    overflow-y: auto; /* Apenas esta parte rola! */
+    flex-grow: 1;
+}
+
+/* Rodapé Fixo */
+.modal-footer {
+    padding: var(--space-lg) var(--space-2xl);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--border);
+}
+
+/* Botão de Fechar */
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition-normal);
+}
+.modal-close:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Correção para o formulário do modal de agenda */
+#agenda-modal #agenda-form {
+    display: contents; /* Faz o form não interferir no layout flex do modal */
+}
+
+/* ===================================================================== */
+/* ==== POLIMENTO DO MODAL DE AGENDAMENTO (v2025) ==================== */
+/* ===================================================================== */
+
+/* Garante que os campos de formulário ocupem 100% da largura disponível */
+#appointment-modal .form-group input,
+#appointment-modal .form-group textarea,
+#appointment-modal .form-group .custom-select-wrapper {
+    width: 100%;
+}
+
+/* Adiciona um espaçamento consistente entre os campos */
+#appointment-modal .modal-body .form-group {
+    margin-bottom: var(--space-xl);
+}
+#appointment-modal .modal-body .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Garante que o formulário não cause problemas de layout */
+#appointment-modal #appointment-form {
+    display: contents; /* O formulário não interfere no layout flex do modal */
+}
+
+/* Garante espaçamento consistente entre os campos */
+#appointment-modal .modal-body .form-group {
+    margin-bottom: var(--space-xl);
+}
+#appointment-modal .modal-body .form-group:last-child {
+    margin-bottom: 0;
+}
