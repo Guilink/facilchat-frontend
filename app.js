@@ -514,6 +514,24 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAgendas() {
         const listContainer = document.getElementById('agendas-list');
         const emptyState = document.getElementById('no-agendas-state');
+        
+        // --- INÍCIO DA NOVA LÓGICA DE LIMITE ---
+        // 1. Pegamos os dois botões que podem criar agendas
+        const createAgendaBtn = document.getElementById('create-agenda-btn');
+        const startCreationBtn = document.getElementById('start-agenda-creation-btn');
+        
+        // 2. Verificamos se a quantidade de agendas atingiu o limite de 3
+        const isLimitReached = userAgendas.length >= 3;
+
+        // 3. Escondemos ou mostramos os botões com base no limite
+        if (createAgendaBtn) {
+            createAgendaBtn.style.display = isLimitReached ? 'none' : 'block';
+        }
+        if (startCreationBtn) {
+            // Este botão só aparece no estado vazio, mas a lógica de limite também se aplica
+            startCreationBtn.style.display = isLimitReached ? 'none' : 'block';
+        }
+        // --- FIM DA NOVA LÓGICA DE LIMITE ---
 
         if (!listContainer || !emptyState) return;
 
@@ -663,6 +681,8 @@ document.addEventListener('DOMContentLoaded', () => {
             populateAgendaScheduleEditor();
         }
 
+        updateAddServiceButtonState();
+
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -690,6 +710,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            updateAddServiceButtonState();
         };
 
         createAgendaBtn.addEventListener('click', openModal);
@@ -707,6 +729,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listener para adicionar novos serviços
         addServiceBtn.addEventListener('click', () => {
             addAgendaServiceItem();
+            updateAddServiceButtonState();
         });
 
         // Listener para remover serviços (usando delegação de evento)
@@ -715,6 +738,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Apenas remove se não for o último item da lista
                 if (servicesList.childElementCount > 1) {
                     e.target.parentElement.remove();
+                    updateAddServiceButtonState();
                 } else {
                     showToast("A agenda deve ter pelo menos um serviço.", "error");
                 }
@@ -750,6 +774,25 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
         servicesList.appendChild(item);
     }
+
+    function updateAddServiceButtonState() {
+        const servicesList = document.getElementById('agenda-services-list');
+        const addServiceBtn = document.getElementById('add-agenda-service');
+        if (!servicesList || !addServiceBtn) return; // Segurança
+
+        // Conta quantos itens de serviço estão atualmente na lista do modal
+        const serviceCount = servicesList.querySelectorAll('.knowledge-item').length;
+
+        // Define o limite máximo
+        const limit = 5;
+
+        // Esconde o botão se o número de serviços for igual ou maior que o limite
+        if (serviceCount >= limit) {
+            addServiceBtn.style.display = 'none';
+        } else {
+            addServiceBtn.style.display = 'block';
+        }
+    }    
 
     async function handleSaveAgenda(onSuccessCallback) {
         const saveBtn = document.getElementById('save-agenda-btn');

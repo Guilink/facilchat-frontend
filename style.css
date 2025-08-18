@@ -3959,3 +3959,32 @@ input:checked + .toggle-slider:before {
         display: none; /* Esconde o texto "Min." que se torna redundante no mobile */
     }
 }
+
+/* =================================================================== */
+/* ============= CORREÇÃO DE PERFORMANCE DOS MODAIS ============= */
+/* =================================================================== */
+
+/* 1. Garante que o container do modal ocupe toda a altura da tela.
+   'display: flex' é a chave para o alinhamento vertical. */
+.modal-dialog {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Limita a altura máxima para 90% da tela */
+    width: 100%; /* Garante que o modal use a largura definida */
+}
+
+/* 2. Isola a rolagem APENAS para o corpo do modal.
+   'overflow-y: auto;' diz ao navegador: "Se o conteúdo aqui dentro for
+   maior que o espaço disponível, adicione uma barra de rolagem vertical". */
+.modal-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Melhora a fluidez em dispositivos móveis */
+    padding: 1.5rem; /* Garante um bom espaçamento interno */
+}
+
+/* 3. Garante que o cabeçalho e o rodapé NUNCA rolem.
+   'flex-shrink: 0;' impede que esses elementos encolham. */
+.modal-header,
+.modal-footer {
+    flex-shrink: 0;
+}
