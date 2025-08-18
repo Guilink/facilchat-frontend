@@ -3448,8 +3448,6 @@ input:checked + .toggle-slider:before {
     }
 }
 
-
-
 /* ===================================================================== */
 /* ==== ESTILO PARA OPÇÕES DESABILITADAS NO MODAL DE AGENDAMENTO ===== */
 /* ===================================================================== */
@@ -3703,7 +3701,6 @@ input:checked + .toggle-slider:before {
 /* ===================================================================== */
 /* ==== NOVO SISTEMA DE MODAIS PROFISSIONAL E RESPONSIVO (v2025) ==== */
 /* ===================================================================== */
-
 
 .modal-overlay.active {
     opacity: 1;

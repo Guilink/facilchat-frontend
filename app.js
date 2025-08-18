@@ -59,12 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === CONFIGURAÇÕES ===
     const firebaseConfig = {
-        apiKey: "AIzaSyD6KF1OxewXN1gI81Lsm9i82bkps1UxwJ8",
-        authDomain: "facilchat-auth.firebaseapp.com",
-        projectId: "facilchat-auth",
-        storageBucket: "facilchat-auth.appspot.com",
-        messagingSenderId: "473078468134",
-        appId: "1:473078468134:web:b74df1f1461093bab920e7"
+        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID
     };
     
     const API_BASE_URL = 'https://facilchat-backend-production.up.railway.app';
