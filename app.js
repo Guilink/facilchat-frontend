@@ -3202,7 +3202,8 @@ async function createBot() {
                 smart_snooze_minutes: parseInt(smartSnoozeMinutes, 10),
                 lead_collection_enabled: leadCollectionEnabled,
                 lead_collection_prompt: leadCollectionPrompt,
-                agenda_enabled: agendaEnabled,              
+                agenda_enabled: agendaEnabled,             
+                ask_for_name_enabled: document.getElementById('edit-ask-for-name-enabled').checked
             };
             
             const response = await fetch(`${API_BASE_URL}/api/bots/${botId}`, {
@@ -3273,6 +3274,7 @@ async function createBot() {
         populateEditFiles(bot.knowledge_files || []);
         
         // --- Preenche a Sidebar de Operações ---
+        document.getElementById('edit-ask-for-name-enabled').checked = bot.ask_for_name_enabled || false;
         const leadEnabledCheckbox = document.getElementById('edit-lead-collection-enabled');
         const leadDetails = document.getElementById('edit-lead-collection-details');
         const leadPromptTextarea = document.getElementById('edit-lead-collection-prompt');
