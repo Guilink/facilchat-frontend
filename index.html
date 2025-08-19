@@ -849,6 +849,51 @@
         </div>
     </div>   
 
+    <!-- NOVO MODAL: CONFIRMAÇÃO PARA DELETAR AGENDA -->
+    <div id="delete-agenda-modal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Excluir Agenda</h3>
+                <button type="button" class="modal-close" onclick="closeGenericModal('delete-agenda-modal')">×</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div class="warning-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                <h4>Tem certeza que deseja EXCLUIR a agenda?</h4>
+                <p style="font-size: 1.2rem; color: var(--accent); font-weight: 600; margin: 0.5rem 0 1.5rem 0;" id="delete-agenda-name-modal"></p>
+                <p style="color: var(--text-secondary);">
+                    Esta ação é <strong style="color: var(--danger);">permanente</strong>.
+                    Todos os serviços e agendamentos vinculados a ela serão perdidos.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeGenericModal('delete-agenda-modal')">Cancelar</button>
+                <button type="button" class="btn-danger" id="confirm-delete-agenda-btn">Excluir Permanentemente</button>
+            </div>
+        </div>
+    </div>    
+
+    <!-- NOVO MODAL: CONFIRMAÇÃO PARA DELETAR AGENDAMENTO -->
+    <div id="delete-appointment-modal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3>Excluir Agendamento</h3>
+                <button type="button" class="modal-close" onclick="closeGenericModal('delete-appointment-modal')">×</button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div class="warning-icon" style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                <h4>Tem certeza que deseja EXCLUIR o agendamento de:</h4>
+                <p style="font-size: 1.2rem; color: var(--accent); font-weight: 600; margin: 0.5rem 0 1.5rem 0;" id="delete-appointment-name-modal"></p>
+                <p style="color: var(--text-secondary);">
+                    Esta ação não pode ser desfeita.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeGenericModal('delete-appointment-modal')">Cancelar</button>
+                <button type="button" class="btn-danger" id="confirm-delete-appointment-btn">Excluir Agendamento</button>
+            </div>
+        </div>
+    </div>    
+
 
     <!-- Scripts movidos para o final para carregamento otimizado da página -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

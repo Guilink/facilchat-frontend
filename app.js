@@ -104,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isEditViewInitialized = false;
     let currentDayAppointments = [];
     let qrTimerInterval = null; // Timer para o QR Code
+    let itemToDelete = null;
 
     
     // === ELEMENTOS ===
@@ -163,6 +164,28 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('active');
         document.body.style.overflow = 'auto';
     }
+
+    function openGenericModal(modalId, itemId, itemName, nameElementId, confirmButtonId, onConfirmFunction) {
+        itemToDelete = { id: itemId, name: itemName };
+        const modal = document.getElementById(modalId);
+        const nameEl = document.getElementById(nameElementId);
+        const confirmBtn = document.getElementById(confirmButtonId);
+
+        if (nameEl) nameEl.textContent = `"${itemName}"`;
+        
+        confirmBtn.onclick = null;
+        confirmBtn.onclick = onConfirmFunction;
+
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeGenericModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.remove('active');
+        itemToDelete = null;
+        document.body.style.overflow = 'auto';
+    }    
 
     //FUNÇÃO GLOBAL PARA CANCELAR A CONEXÃO
     window.cancelConnection = function() {
@@ -607,32 +630,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return card;
     } 
 
-    window.handleDeleteAgenda = async function(agendaId, agendaName) {
-        // Sempre peça confirmação para ações destrutivas!
-        if (!confirm(`Tem certeza que deseja excluir a agenda "${agendaName}"?\n\nTodos os serviços e agendamentos vinculados a ela serão perdidos permanentemente.`)) {
-            return;
-        }
-
-        try {
-            const token = await getAuthToken();
-            const response = await fetch(`${API_BASE_URL}/api/agendas/${agendaId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.message || "Não foi possível excluir a agenda.");
-            }
-
-            showToast("Agenda excluída com sucesso!", 'success');
-            await fetchAgendas(); // Atualiza a lista na tela, fazendo o card sumir.
-
-        } catch (error) {
-            console.error("Erro ao excluir agenda:", error);
-            showToast(error.message, 'error');
-        }
-    }    
+    window.handleDeleteAgenda = function(agendaId, agendaName) {
+        openGenericModal(
+            'delete-agenda-modal',
+            agendaId,
+            agendaName,
+            'delete-agenda-name-modal',
+            'confirm-delete-agenda-btn',
+            confirmDeleteAgenda // <- Nome da função que fará a exclusão
+        );
+    } 
 
     window.handleEditAgenda = function(agendaId) {
         const agenda = userAgendas.find(a => a.id === agendaId);
@@ -1188,13 +1195,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Função única para bloquear ou desbloquear um horário
     window.handleToggleSlot = async function(slotISO, newStatus) {
-        // Ação de inversão simples
-        const actionText = newStatus === 'blocked' ? 'bloquear' : 'liberar';
-        if (!confirm(`Deseja ${actionText} este horário?`)) return;
-
+        // Ação de bloqueio/desbloqueio agora é instantânea.
+        // Opcional: podemos adicionar um feedback visual no slot clicado.
+        
         try {
             const token = await getAuthToken();
-            await fetch(`${API_BASE_URL}/api/agendas/toggle-slot`, {
+            const response = await fetch(`${API_BASE_URL}/api/agendas/toggle-slot`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
@@ -1203,13 +1209,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     new_status: newStatus
                 })
             });
-            showToast(`Horário ${actionText === 'bloquear' ? 'bloqueado' : 'liberado'}!`, 'success');
+
+            if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Falha ao atualizar horário.");
+            }
+
+            // Não mostramos mais o toast para não poluir a tela em ações rápidas.
+            // A atualização visual da grade já é o feedback suficiente.
             renderDaySchedule();
             renderMiniCalendar();
         } catch (error) {
-            showToast("Não foi possível atualizar o horário.", "error");
+            showToast(error.message, "error");
         }
-        
     }
 
     window.openAppointmentModal = function(slotISO, appointment = null) {
@@ -1394,11 +1406,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 // Função para deletar um agendamento
-    window.handleDeleteAppointment = async function(appointmentId, clientName) {
-        console.log('Função handleDeleteAppointment foi chamada com ID:', appointmentId, 'e Nome:', clientName);
-        if (!confirm(`Tem certeza que deseja excluir o agendamento de "${clientName}"?\n\nEsta ação não pode ser desfeita.`)) {
-            return;
-        }
+    window.handleDeleteAppointment = function(appointmentId, clientName) {
+        openGenericModal(
+            'delete-appointment-modal',
+            appointmentId,
+            clientName,
+            'delete-appointment-name-modal',
+            'confirm-delete-appointment-btn',
+            confirmDeleteAppointment // <- Nome da função que fará a exclusão
+        );
+    }    
+
+    async function confirmDeleteAppointment() {
+        if (!itemToDelete) return;
+
+        const { id: appointmentId } = itemToDelete;
+        const confirmBtn = document.getElementById('confirm-delete-appointment-btn');
+        const originalText = confirmBtn.textContent;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner"></span> Removendo...';
 
         try {
             const token = await getAuthToken();
@@ -1408,17 +1434,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.message || "Não foi possível remover o agendamento.");
-            }
+            if (!response.ok) throw new Error(result.message || "Não foi possível remover o agendamento.");
             
             showToast("Agendamento removido com sucesso!", 'success');
-            renderDaySchedule(); // Atualiza a grade para refletir a exclusão
+            renderDaySchedule();
             renderMiniCalendar();
 
         } catch (error) {
-            console.error("Erro ao remover agendamento:", error);
             showToast(error.message, 'error');
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = originalText;
+            closeGenericModal('delete-appointment-modal');
         }
     }    
 
@@ -1702,6 +1729,37 @@ document.addEventListener('DOMContentLoaded', () => {
         // Restaura scroll do body
         document.body.style.overflow = 'auto';
     }
+
+    async function confirmDeleteAgenda() {
+        if (!itemToDelete) return;
+
+        const { id: agendaId } = itemToDelete;
+        const confirmBtn = document.getElementById('confirm-delete-agenda-btn');
+        const originalText = confirmBtn.textContent;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<span class="spinner"></span> Excluindo...';
+        
+        try {
+            const token = await getAuthToken();
+            const response = await fetch(`${API_BASE_URL}/api/agendas/${agendaId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message || "Não foi possível excluir a agenda.");
+
+            showToast("Agenda excluída com sucesso!", 'success');
+            await fetchAgendas();
+
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = originalText;
+            closeGenericModal('delete-agenda-modal');
+        }
+    }    
 
     async function confirmDeleteBot() {
         if (!botToDelete) return;
