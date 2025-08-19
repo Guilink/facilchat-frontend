@@ -1152,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (status === 'available') {
                         finalHTML += `
-                            <div class="day-schedule-slot available" onclick="window.openAppointmentModal('${slotISO}')">
+                            <div class="day-schedule-slot available" data-slot-iso="${slotISO}" onclick="window.openAppointmentModal('${slotISO}')">
                                 <span class="slot-time">${slotTimeDisplay}</span>
                                 <div class="slot-actions">
                                     <button class="slot-action-btn" title="Bloquear horário" onclick="event.stopPropagation(); window.handleToggleSlot('${slotISO}', 'blocked')"><svg width="18" height="18"><use xlink:href="#icon-lock"/></svg></button>
@@ -1162,7 +1162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         `;
                     } else { 
                         finalHTML += `
-                            <div class="day-schedule-slot blocked">
+                            <div class="day-schedule-slot blocked" data-slot-iso="${slotISO}">
                                 <span class="slot-time">${slotTimeDisplay}</span>
                                 <div class="slot-actions">
                                     <button class="slot-action-btn" title="Liberar horário" onclick="window.handleToggleSlot('${slotISO}', 'available')"><svg width="18" height="18"><use xlink:href="#icon-unlock"/></svg></button>
@@ -1197,9 +1197,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Função única para bloquear ou desbloquear um horário
     window.handleToggleSlot = async function(slotISO, newStatus) {
-        // Ação de bloqueio/desbloqueio agora é instantânea.
-        // Opcional: podemos adicionar um feedback visual no slot clicado.
+        // Encontra o elemento HTML exato que foi clicado.
+        // Precisamos de um seletor mais específico para isso.
+        // Vamos adicionar um atributo de dados ao slot para encontrá-lo facilmente.
+        // ATENÇÃO: Isso requer uma pequena mudança no `renderDaySchedule` também.
+        const slotElement = document.querySelector(`.day-schedule-slot[data-slot-iso="${slotISO}"]`);
+        if (!slotElement) return;
+
+        // --- ETAPA 1: ATUALIZAÇÃO OTIMISTA (A MÁGICA INSTANTÂNEA) ---
+
+        const originalClasses = slotElement.className; // Guarda as classes originais
+        const originalHTML = slotElement.innerHTML;   // Guarda o conteúdo original
         
+        // Desabilita o slot para prevenir cliques duplos
+        slotElement.style.pointerEvents = 'none';
+        
+        // Muda a aparência visual imediatamente
+        if (newStatus === 'blocked') {
+            slotElement.className = 'day-schedule-slot blocked';
+            // Opcional: Adiciona um mini-spinner para indicar atividade em segundo plano
+            slotElement.innerHTML = `
+                <span class="slot-time">${slotElement.querySelector('.slot-time').textContent}</span>
+                <div class="slot-actions">
+                    <span class="spinner-small"></span>
+                </div>
+            `;
+        } else { // newStatus === 'available'
+            slotElement.className = 'day-schedule-slot available';
+            slotElement.innerHTML = `
+                <span class="slot-time">${slotElement.querySelector('.slot-time').textContent}</span>
+                <div class="slot-actions">
+                    <span class="spinner-small"></span>
+                </div>
+            `;
+        }
+
+        // --- ETAPA 2: AÇÃO EM SEGUNDO PLANO ---
+
         try {
             const token = await getAuthToken();
             const response = await fetch(`${API_BASE_URL}/api/agendas/toggle-slot`, {
@@ -1214,15 +1248,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!response.ok) {
             const error = await response.json();
+            // Se der erro, joga para o bloco catch
             throw new Error(error.message || "Falha ao atualizar horário.");
             }
 
-            // Não mostramos mais o toast para não poluir a tela em ações rápidas.
-            // A atualização visual da grade já é o feedback suficiente.
-            renderDaySchedule();
-            renderMiniCalendar();
+            // --- ETAPA 3 (SUCESSO): FINALIZAÇÃO ---
+            
+            // A API confirmou, então a mudança visual já está correta.
+            // Apenas redesenhamos a grade para garantir que os botões e `onclicks` estejam 100% corretos.
+            renderDaySchedule(); 
+            renderMiniCalendar(); // Atualiza a cor do dia no mini-calendário
+
         } catch (error) {
+            // --- ETAPA 3 (FALHA): REVERSÃO ---
+
             showToast(error.message, "error");
+            // Ocorreu um erro! Revertemos a UI para o estado original.
+            slotElement.className = originalClasses;
+            slotElement.innerHTML = originalHTML;
+            slotElement.style.pointerEvents = 'auto'; // Reabilita o clique
         }
     }
 

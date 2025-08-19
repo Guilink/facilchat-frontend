@@ -3988,3 +3988,14 @@ input:checked + .toggle-slider:before {
 .modal-footer {
     flex-shrink: 0;
 }
+
+/* Spinner para ações otimistas na grade de horários */
+.spinner-small {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--accent); /* Usa a cor de destaque do tema */
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+}
