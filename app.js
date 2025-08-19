@@ -180,12 +180,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = 'hidden';
     }
 
-    function closeGenericModal(modalId) {
+    window.closeGenericModal = function(modalId) {
         const modal = document.getElementById(modalId);
-        modal.classList.remove('active');
+        if (modal) { // Adiciona uma verificação de segurança
+            modal.classList.remove('active');
+        }
         itemToDelete = null;
         document.body.style.overflow = 'auto';
-    }    
+    }  
 
     //FUNÇÃO GLOBAL PARA CANCELAR A CONEXÃO
     window.cancelConnection = function() {
@@ -2693,6 +2695,30 @@ async function createBot() {
                 elements.qrDisplay.innerHTML = errorHTML;
             } else {
                 showQrModal(errorHTML);
+            }
+        });
+
+        socket.on('agenda_updated', (data) => {
+            // Segurança: Garante que temos um usuário logado
+            if (!auth.currentUser) return;
+
+            // 1. Verifica se a notificação é para o usuário que está na tela
+            if (auth.currentUser.uid === data.userId) {
+                console.log(`[Socket] Recebida notificação de atualização para a agenda ID: ${data.agendaId}`);
+
+                // 2. Verifica se o usuário está com a view do calendário aberta
+                // E se a agenda que ele está vendo é a mesma que foi atualizada.
+                const isCalendarActive = views.calendar.classList.contains('active');
+                const isCorrectAgenda = currentAgenda && currentAgenda.id === data.agendaId;
+
+                if (isCalendarActive && isCorrectAgenda) {
+                    console.log('[Socket] Atualizando a view do calendário em tempo real...');
+                    // 3. Se todas as condições forem verdadeiras, chama as funções de renderização.
+                    // Elas buscarão os dados mais recentes do backend e redesenharão a tela.
+                    showToast('A agenda foi atualizada pelo bot!', 'info'); // Opcional: um toast para notificar
+                    renderDaySchedule();
+                    renderMiniCalendar();
+                }
             }
         });
 
