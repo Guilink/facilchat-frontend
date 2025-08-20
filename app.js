@@ -1735,15 +1735,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.openBotSettings = function(botId) {
-        const bot = userBots.find(b => b.id == botId);
-        if (!bot) return;
-
-        isEditMode = true; // <-- CORREÇÃO: Define o modo de edição como ativo
-        editingBotId = botId;
-        populateEditFormWithBotData(bot);
-        showView('edit');
-    };
 
     let botToDelete = null;
 
@@ -1865,12 +1856,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         isEditMode = true;
-        editingBotId = botId;
+        editingBotId = botId; // AQUI ESTÁ A DEFINIÇÃO CORRETA
+
+        // NOVO LOG DE DIAGNÓSTICO
+        console.log(`[Modo Edição] Iniciado para o Bot ID: ${editingBotId}. O valor está definido.`);
         
         populateEditFormWithBotData(bot); 
         
         showView('edit');
-    };    
+    };
 
     // Adiciona funções globais para o modal
     window.closeDeleteModal = closeDeleteModal;
@@ -3290,7 +3284,7 @@ async function createBot() {
         
         try {
             const token = await getAuthToken();
-            const botId = document.getElementById('edit-bot-id').value;
+            const botId = editingBotId; // Usamos a variável global que já foi setada
             
             let functionValue = document.querySelector('#edit-function-options .option-card.selected')?.dataset.value || 'Suporte ao Cliente';
             if (functionValue === 'Personalizado') {
