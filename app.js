@@ -3361,26 +3361,32 @@ async function createBot() {
     }
 
     function populateEditFormWithBotData(bot) {
-        // --- Preenche o cabeçalho e campos de identidade ---
-        document.getElementById('editing-bot-name-header').textContent = bot.name || 'Bot sem nome';
-        document.getElementById('edit-bot-id').value = bot.id;
-        document.getElementById('edit-bot-name').value = bot.name || '';
-        
+        // --- Seleciona o card de Função Principal (LÓGICA CORRIGIDA) ---
         const functionOptionsContainer = document.getElementById('edit-function-options');
         const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
         functionOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
-        let functionCard = functionOptionsContainer.querySelector(`.option-card[data-value="${bot.function_type}"]`);
-        if (functionCard) {
-            functionCard.classList.add('selected');
+
+        // Lista de valores que NÃO são personalizados
+        const predefinedFunctions = ["Produtos e Serviços", "Suporte ao Cliente", "Agendamentos"];
+        let cardToSelect;
+
+        // Verifica se o valor salvo é um dos predefinidos
+        if (predefinedFunctions.includes(bot.function_type)) {
+            // Se for, procura pelo card com esse valor. O seletor aqui é seguro.
+            cardToSelect = functionOptionsContainer.querySelector(`.option-card[data-value="${bot.function_type}"]`);
             functionCustomTextarea.style.display = 'none';
-            functionCustomTextarea.value = '';
+            functionCustomTextarea.value = ''; // Limpa o campo personalizado
         } else {
-            functionCard = functionOptionsContainer.querySelector('.option-card[data-value="Personalizado"]');
-            if (functionCard) {
-                functionCard.classList.add('selected');
-                functionCustomTextarea.style.display = 'block';
-                functionCustomTextarea.value = bot.function_type || '';
-            }
+            // Se NÃO for um dos predefinidos, significa que é um texto personalizado.
+            // Procuramos pelo card com o data-value="Personalizado".
+            cardToSelect = functionOptionsContainer.querySelector('.option-card[data-value="Personalizado"]');
+            functionCustomTextarea.style.display = 'block';
+            functionCustomTextarea.value = bot.function_type || ''; // Popula o textarea
+        }
+
+        // Adiciona a classe 'selected' ao card que encontramos
+        if (cardToSelect) {
+            cardToSelect.classList.add('selected');
         }
 
         const toneOptionsContainer = document.getElementById('edit-tone-options');
