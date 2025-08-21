@@ -810,17 +810,17 @@
                             <div class="radio-group">
                                 <label class="radio-label">
                                     <input type="radio" name="reminder_timing" value="daily_9am" checked>
-                                    <span>Todos os dias, às 9:00h.<br></span>
+                                    <small>Todos os dias às 9h<br></small>
                                 </label>
                                 <label class="radio-label">
                                     <input type="radio" name="reminder_timing" value="relative_3hr">
-                                    <span>3 horas antes do agendamento.</span>
+                                    <small>3h antes do compromisso</small>
                                 </label>
                             </div>
 
                             <!-- Container para a seleção do bot, também controlado via JS -->
                             <div id="agenda-bot-selector-container" style="display: none; margin-top: 1.5rem;">
-                                <label for="agenda-responsible-bot">Assistente Responsável pelo Envio</label>
+                                <label for="agenda-responsible-bot">Assistente Responsável pelo Envio <br></label>
                                 <small>Escolha qual dos seus assistentes deve enviar os lembretes para esta agenda.</small>
                                 <div class="custom-select-wrapper">
                                     <select id="agenda-responsible-bot">

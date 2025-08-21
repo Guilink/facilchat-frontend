@@ -836,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("O nome da agenda é obrigatório.");
             }
 
-            // 2. Coleta dos serviços (Array de objetos)
+            // 2. Coleta dos serviços
             const services = [];
             document.querySelectorAll('#agenda-services-list .knowledge-item').forEach(item => {
                 const nameInput = item.querySelector('.agenda-service-name');
@@ -844,9 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const name = nameInput ? nameInput.value.trim() : '';
                 const duration = durationInput ? parseInt(durationInput.value, 10) : 0;
                 
-                // Adiciona o serviço apenas se for válido
                 if (name && duration > 0) {
-                    // Para criação, o ID é nulo. Para edição, pegamos do dataset.
                     const serviceId = item.dataset.serviceId ? parseInt(item.dataset.serviceId, 10) : null;
                     services.push({ id: serviceId, name: name, duration_minutes: duration });
                 }
@@ -856,7 +854,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error("Adicione pelo menos um serviço válido com nome e duração.");
             }
 
-            // 3. Coleta da configuração de horários (Array de objetos)
+            // 3. Coleta da configuração de horários
             const scheduleDays = [];
             document.querySelectorAll('#agenda-schedule-details .schedule-day').forEach(dayEl => {
                 const dayKey = dayEl.dataset.day;
@@ -871,8 +869,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     close: closeTime ? closeTime.value : '18:00'
                 });
             });
+            
+            // 4. Coleta dos dados de lembrete com validação de segurança
+            const responsibleBotId = document.getElementById('agenda-responsible-bot').value;
+            const finalResponsibleBotId = responsibleBotId || (userBots.length > 0 ? userBots[0].id : null);
 
-            // 4. Montagem do payload final para a API
+            // 5. Montagem do payload final para a API
             const agendaData = {
                 name: agendaName,
                 min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
@@ -882,17 +884,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     interval: 30,
                     days: scheduleDays
                 },
-                // <<< COLETA DOS NOVOS CAMPOS AQUI >>>
                 reminders_enabled: document.getElementById('agenda-reminders-enabled').checked,
                 reminder_timing: document.querySelector('input[name="reminder_timing"]:checked').value,
-                responsible_bot_id: document.getElementById('agenda-responsible-bot').value
+                responsible_bot_id: finalResponsibleBotId // Usamos a variável final segura
             };
 
-            // 5. Definição da URL e método (POST para criar, PUT para editar)
+            // 6. Definição da URL e método
             const url = isEditing ? `${API_BASE_URL}/api/agendas/${editingId}` : `${API_BASE_URL}/api/agendas`;
             const method = isEditing ? 'PUT' : 'POST';
             
-            // 6. Envio para o backend
+            // 7. Envio para o backend
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -901,7 +902,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             if (!response.ok) {
-                // O erro virá do backend, então apenas o exibimos
                 throw new Error(result.message || "Falha ao salvar a agenda.");
             }
             
@@ -923,32 +923,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectorContainer = document.getElementById('agenda-bot-selector-container');
         const botSelector = document.getElementById('agenda-responsible-bot');
         
-        // Usamos o userBots que já está na memória para ser rápido.
-        // A lógica de sempre buscar o mais recente já está no 'openBotSettings'.
-        const availableBots = userBots.filter(bot => bot.status !== 'offline');
+        // Usamos o array 'userBots' completo, sem filtros.
+        const allUserBots = userBots; 
 
-        if (availableBots.length > 1) {
-            selectorContainer.style.display = 'block';
-            botSelector.innerHTML = ''; // Limpa opções antigas
-            
-            availableBots.forEach(bot => {
-                const option = document.createElement('option');
-                option.value = bot.id;
-                option.textContent = bot.name;
-                if (bot.id === selectedBotId) {
-                    option.selected = true;
-                }
-                botSelector.appendChild(option);
-            });
-            // Se nenhum bot estiver selecionado, seleciona o primeiro por padrão
-            if (!selectedBotId && botSelector.options.length > 0) {
-                botSelector.value = availableBots[0].id;
-            }
-
-        } else {
+        // Se o usuário não tem NENHUM bot, escondemos a funcionalidade.
+        if (allUserBots.length === 0) {
             selectorContainer.style.display = 'none';
-            // Mesmo que escondido, garantimos que tenha um valor padrão (o único bot disponível)
-            botSelector.innerHTML = availableBots.length === 1 ? `<option value="${availableBots[0].id}">${availableBots[0].name}</option>` : '';
+            botSelector.innerHTML = ''; // Garante que o seletor esteja vazio.
+            return;
+        }
+
+        // CORREÇÃO PRINCIPAL: Se o usuário tem 1 ou mais bots, o seletor é SEMPRE visível.
+        selectorContainer.style.display = 'block';
+        botSelector.innerHTML = ''; // Limpa opções antigas para repopular.
+        
+        // Popula o seletor com todos os bots do usuário.
+        allUserBots.forEach(bot => {
+            const option = document.createElement('option');
+            option.value = bot.id;
+            option.textContent = `${bot.name} (${bot.status.charAt(0).toUpperCase() + bot.status.slice(1)})`;
+            botSelector.appendChild(option);
+        });
+
+        // Lógica de seleção inteligente:
+        // 1. Tenta selecionar o bot que já estava salvo na agenda.
+        // O 'find' verifica se o ID salvo ainda existe na lista de bots atuais.
+        const savedBotExists = allUserBots.find(b => b.id === selectedBotId);
+        if (selectedBotId && savedBotExists) {
+            botSelector.value = selectedBotId;
+        } 
+        // 2. Se não havia um bot salvo, ou o bot salvo foi deletado (como no seu cenário),
+        // tenta selecionar o primeiro bot online como um padrão inteligente.
+        else {
+            const firstOnlineBot = allUserBots.find(b => b.status === 'online');
+            if (firstOnlineBot) {
+                botSelector.value = firstOnlineBot.id;
+            } else if (allUserBots.length > 0) {
+                // 3. Se nenhum estiver online, apenas seleciona o primeiro da lista como fallback.
+                botSelector.value = allUserBots[0].id;
+            }
         }
     }
 
