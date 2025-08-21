@@ -1847,23 +1847,30 @@ document.addEventListener('DOMContentLoaded', () => {
         openDeleteModal(botId, botName);
     };
 
-    window.openBotSettings = function(botId) {
-        const bot = userBots.find(b => b.id == botId);
-        if (!bot) {
-            console.error("Bot não encontrado para o ID:", botId);
-            showToast("Erro: Assistente não encontrado.", "error");
-            return;
+    window.openBotSettings = async function(botId) { // Adiciona async
+        try {
+            // Passo 1: Busca os dados mais recentes do servidor
+            await fetchBots(); 
+
+            // Passo 2: Agora, com o userBots atualizado, encontra o bot
+            const bot = userBots.find(b => b.id === Number(botId));
+            if (!bot) {
+                console.error("Bot não encontrado para o ID:", botId);
+                showToast("Erro: Assistente não encontrado.", "error");
+                return;
+            }
+
+            // Passo 3: O resto do fluxo continua como antes
+            isEditMode = true;
+            editingBotId = Number(botId); // Armazena como número por consistência
+            
+            populateEditFormWithBotData(bot); 
+            showView('edit');
+
+        } catch (error) {
+            console.error("Falha ao abrir configurações do bot:", error);
+            showToast("Não foi possível carregar as configurações. Tente novamente.", "error");
         }
-
-        isEditMode = true;
-        editingBotId = botId; // AQUI ESTÁ A DEFINIÇÃO CORRETA
-
-        // NOVO LOG DE DIAGNÓSTICO
-        console.log(`[Modo Edição] Iniciado para o Bot ID: ${editingBotId}. O valor está definido.`);
-        
-        populateEditFormWithBotData(bot); 
-        
-        showView('edit');
     };
 
     // Adiciona funções globais para o modal
