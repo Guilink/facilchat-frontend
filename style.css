@@ -3999,3 +3999,4 @@ input:checked + .toggle-slider:before {
     animation: spin 0.8s linear infinite;
     display: inline-block;
 }
+
