@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '360agencia.adnest.com.br': {
             contactLink: 'https://wa.me/5511999899032?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20os%20planos%20do%20assistente%20virtual.'
         },
-        'dix.adnest.com.br': {
+        'wzaap.adnest.com.br': {
             contactLink: 'https://wa.me/5511983477906?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20os%20planos%20do%20assistente%20virtual'
         },
         // Exemplo de como adicionar um terceiro revendedor no futuro:
