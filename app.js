@@ -1847,30 +1847,25 @@ document.addEventListener('DOMContentLoaded', () => {
         openDeleteModal(botId, botName);
     };
 
-    window.openBotSettings = async function(botId) { // Adiciona async
-        try {
-            // Passo 1: Busca os dados mais recentes do servidor
-            await fetchBots(); 
+    window.openBotSettings = function(botId) {
+        // 1. Encontra o bot nos dados locais que já foram carregados.
+        // Usamos Number(botId) e '===' para garantir uma busca segura e sem ambiguidades.
+        const bot = userBots.find(b => b.id === Number(botId));
 
-            // Passo 2: Agora, com o userBots atualizado, encontra o bot
-            const bot = userBots.find(b => b.id === Number(botId));
-            if (!bot) {
-                console.error("Bot não encontrado para o ID:", botId);
-                showToast("Erro: Assistente não encontrado.", "error");
-                return;
-            }
-
-            // Passo 3: O resto do fluxo continua como antes
-            isEditMode = true;
-            editingBotId = Number(botId); // Armazena como número por consistência
-            
-            populateEditFormWithBotData(bot); 
-            showView('edit');
-
-        } catch (error) {
-            console.error("Falha ao abrir configurações do bot:", error);
-            showToast("Não foi possível carregar as configurações. Tente novamente.", "error");
+        // 2. Se o bot não for encontrado, mostra um erro claro e para a execução.
+        if (!bot) {
+            console.error("Bot não encontrado para o ID:", botId, "em userBots:", userBots);
+            showToast("Erro: Assistente não encontrado. Tente atualizar a página.", "error");
+            return;
         }
+
+        // 3. O fluxo normal continua, sem chamadas extras à API.
+        isEditMode = true;
+        editingBotId = Number(botId);
+        
+        // 4. A função de preenchimento (que já corrigimos) é chamada.
+        populateEditFormWithBotData(bot); 
+        showView('edit');
     };
 
     // Adiciona funções globais para o modal
@@ -3363,6 +3358,7 @@ async function createBot() {
 
     function populateEditFormWithBotData(bot) {
         // --- Seleciona o card de Função Principal (LÓGICA CORRIGIDA) ---
+        document.getElementById('edit-bot-name').value = bot.name || '';
         const functionOptionsContainer = document.getElementById('edit-function-options');
         const functionCustomTextarea = document.getElementById('edit-bot-function-custom');
         functionOptionsContainer.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
