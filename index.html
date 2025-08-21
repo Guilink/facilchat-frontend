@@ -792,6 +792,45 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="form-group">
+                        <label>Lembretes Automáticos de Agendamento</label>
+                        <div class="operation-item">
+                            <label for="agenda-reminders-enabled">Ativar envio de lembretes via WhatsApp</label>
+                            <label class="day-toggle">
+                                <input type="checkbox" id="agenda-reminders-enabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
+                        <!-- Container para as opções, ficará visível/invisível -->
+                        <div id="agenda-reminder-options-container" class="operation-details" style="display: none; margin-top: 1rem;">
+                            
+                            <label>Quando enviar o lembrete?</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="reminder_timing" value="daily_9am" checked>
+                                    <span>Todos os dias às 9:00 da manhã</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="reminder_timing" value="relative_3hr">
+                                    <span>3 horas antes do horário agendado</span>
+                                </label>
+                            </div>
+
+                            <!-- Container para a seleção do bot, também controlado via JS -->
+                            <div id="agenda-bot-selector-container" style="display: none; margin-top: 1.5rem;">
+                                <label for="agenda-responsible-bot">Assistente Responsável pelo Envio</label>
+                                <small>Escolha qual dos seus assistentes deve enviar os lembretes para esta agenda.</small>
+                                <div class="custom-select-wrapper">
+                                    <select id="agenda-responsible-bot">
+                                        <!-- Opções de bots serão populadas pelo JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>                    
                 </div>
 
                 <!-- 3. RODAPÉ (SEMPRE VISÍVEL) -->

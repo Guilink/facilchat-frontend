@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     } 
 
-    window.handleEditAgenda = function(agendaId) {
+    window.handleEditAgenda = async function(agendaId) { // Adiciona async
         const agenda = userAgendas.find(a => a.id === agendaId);
         if (!agenda) {
             showToast("Agenda não encontrada.", "error");
@@ -653,45 +653,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const modal = document.getElementById('agenda-modal');
         const servicesList = document.getElementById('agenda-services-list');
 
-        // Preenche os campos do formulário com os dados da agenda
+        // Preenchimento dos campos antigos (sem alteração)
         document.getElementById('agenda-modal-title').textContent = 'Editar Agenda';
         document.getElementById('agenda-edit-id').value = agenda.id;
         document.getElementById('agenda-name').value = agenda.name;
         document.getElementById('agenda-min-antecedence').value = agenda.min_antecedence_minutes;
         document.getElementById('agenda-max-days').value = agenda.max_days_ahead;
         
-        // Limpa a lista antes de adicionar os itens
+        // Lógica de serviços (sem alteração)
         servicesList.innerHTML = '';
-
-        // Garante que o array de serviços exista e só itera sobre os NÃO arquivados
         if (agenda.services && Array.isArray(agenda.services)) {
             const activeServices = agenda.services.filter(s => !s.is_archived);
-            
-            // Se não houver serviços ativos, adiciona um item em branco para começar
             if (activeServices.length === 0) {
                 addAgendaServiceItem('', 30, null);
             } else {
-                // Itera sobre os serviços e os adiciona à lista
-                activeServices.forEach(service => {
-                    addAgendaServiceItem(service.name, service.duration_minutes, service.id);
-                });
+                activeServices.forEach(service => addAgendaServiceItem(service.name, service.duration_minutes, service.id));
             }
         } else {
-            // Se a agenda não tiver nenhum serviço, adiciona um em branco
             addAgendaServiceItem('', 30, null);
         }
 
-
-        // Popula o editor de horários com os dados salvos da agenda
+        // Lógica de horários (sem alteração)
         if (agenda.schedule_config && agenda.schedule_config.days) {
             populateAgendaScheduleEditor(agenda.schedule_config.days);
         } else {
-            // Se não houver config, popula com o padrão
             populateAgendaScheduleEditor();
         }
 
-        updateAddServiceButtonState();
+        // <<< INÍCIO DA NOVA LÓGICA DE LEMBRETES >>>
+        
+        // Popula os novos campos com os dados da agenda
+        document.getElementById('agenda-reminders-enabled').checked = agenda.reminders_enabled;
+        document.querySelector(`input[name="reminder_timing"][value="${agenda.reminder_timing}"]`).checked = true;
 
+        // Popula o seletor de bots e o exibe se necessário
+        // Adicionamos 'await' pois a função agora é assíncrona
+        await populateBotSelector(agenda.responsible_bot_id);
+
+        // Dispara a lógica que mostra/esconde as opções com base no estado inicial
+        toggleReminderOptions();
+
+        // <<< FIM DA NOVA LÓGICA DE LEMBRETES >>>
+
+        updateAddServiceButtonState();
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -706,25 +710,38 @@ document.addEventListener('DOMContentLoaded', () => {
         const addServiceBtn = document.getElementById('add-agenda-service');
         const servicesList = document.getElementById('agenda-services-list');
 
+        const reminderToggle = document.getElementById('agenda-reminders-enabled');
+        if (reminderToggle) {
+            reminderToggle.addEventListener('change', toggleReminderOptions);
+        }
+
         // Listeners para abrir o modal
-        const openModal = () => {
+        const openModal = async () => { // Adiciona async
             form.reset(); 
             document.getElementById('agenda-edit-id').value = '';
             document.getElementById('agenda-modal-title').textContent = 'Criar Nova Agenda';
             document.getElementById('agenda-services-list').innerHTML = '';
             addAgendaServiceItem();
-            
-            // CHAMA A NOVA FUNÇÃO PARA POPULAR OS HORÁRIOS PADRÃO
             populateAgendaScheduleEditor();
+            
+            // <<< NOVA LÓGICA AQUI >>>
+            // Define os padrões para os novos campos ao criar uma nova agenda
+            document.getElementById('agenda-reminders-enabled').checked = true;
+            document.querySelector('input[name="reminder_timing"][value="daily_9am"]').checked = true;
+            
+            // Popula o seletor de bots
+            await populateBotSelector();
+            // Garante que a UI esteja no estado correto
+            toggleReminderOptions();
+            // <<< FIM DA NOVA LÓGICA >>>
             
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
-
             updateAddServiceButtonState();
         };
 
-        createAgendaBtn.addEventListener('click', openModal);
-        startCreationBtn.addEventListener('click', openModal);
+        if (createAgendaBtn) createAgendaBtn.addEventListener('click', openModal);
+        if (startCreationBtn) startCreationBtn.addEventListener('click', openModal);
 
         // Listeners para fechar o modal
         const closeModal = () => {
@@ -860,11 +877,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: agendaName,
                 min_antecedence_minutes: parseInt(document.getElementById('agenda-min-antecedence').value, 10),
                 max_days_ahead: parseInt(document.getElementById('agenda-max-days').value, 10),
-                services: services, // Array de serviços
+                services: services,
                 schedule_config: {
                     interval: 30,
-                    days: scheduleDays // Array de horários
-                }
+                    days: scheduleDays
+                },
+                // <<< COLETA DOS NOVOS CAMPOS AQUI >>>
+                reminders_enabled: document.getElementById('agenda-reminders-enabled').checked,
+                reminder_timing: document.querySelector('input[name="reminder_timing"]:checked').value,
+                responsible_bot_id: document.getElementById('agenda-responsible-bot').value
             };
 
             // 5. Definição da URL e método (POST para criar, PUT para editar)
@@ -898,9 +919,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // =====================================================================
-    //      EM app.js, COLE ESTA NOVA FUNÇÃO APÓS handleSaveAgenda
-    // =====================================================================
+    async function populateBotSelector(selectedBotId = null) {
+        const selectorContainer = document.getElementById('agenda-bot-selector-container');
+        const botSelector = document.getElementById('agenda-responsible-bot');
+        
+        // Usamos o userBots que já está na memória para ser rápido.
+        // A lógica de sempre buscar o mais recente já está no 'openBotSettings'.
+        const availableBots = userBots.filter(bot => bot.status !== 'offline');
+
+        if (availableBots.length > 1) {
+            selectorContainer.style.display = 'block';
+            botSelector.innerHTML = ''; // Limpa opções antigas
+            
+            availableBots.forEach(bot => {
+                const option = document.createElement('option');
+                option.value = bot.id;
+                option.textContent = bot.name;
+                if (bot.id === selectedBotId) {
+                    option.selected = true;
+                }
+                botSelector.appendChild(option);
+            });
+            // Se nenhum bot estiver selecionado, seleciona o primeiro por padrão
+            if (!selectedBotId && botSelector.options.length > 0) {
+                botSelector.value = availableBots[0].id;
+            }
+
+        } else {
+            selectorContainer.style.display = 'none';
+            // Mesmo que escondido, garantimos que tenha um valor padrão (o único bot disponível)
+            botSelector.innerHTML = availableBots.length === 1 ? `<option value="${availableBots[0].id}">${availableBots[0].name}</option>` : '';
+        }
+    }
+
+    function toggleReminderOptions() {
+        const enabled = document.getElementById('agenda-reminders-enabled').checked;
+        document.getElementById('agenda-reminder-options-container').style.display = enabled ? 'block' : 'none';
+    }
 
     function populateAgendaScheduleEditor(scheduleData = []) {
         const container = document.getElementById('agenda-schedule-details');
