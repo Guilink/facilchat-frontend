@@ -2690,15 +2690,15 @@ async function createBot() {
                 `;
             } else {
                 // É uma string normal - gera QR Code com QRCode.js
-                targetEl.innerHTML = `
-                    <div class="qr-code-wrapper"></div>
-                `;
-                new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
-                    text: data.qrString,
-                    width: 240, height: 240,
-                    colorDark: "#000000", colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
+            targetEl.innerHTML = `
+                <div class="qr-code-wrapper"></div>
+            `;
+            new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
+                text: data.qrString,
+                width: 240, height: 240,
+                colorDark: "#000000", colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
             }
         });
 
@@ -2730,6 +2730,46 @@ async function createBot() {
                 handleConnectionToggle(data.botId, 'offline');
             });
         });       
+
+        // Listener para conexão bem-sucedida via Evolution API
+        socket.on("bot_connection_success", (data) => {
+            console.log("✅ Bot conectado com sucesso via Evolution API:", data);
+            
+            // Para o timer do QR Code se estiver rodando
+            if (qrTimerInterval) {
+                clearInterval(qrTimerInterval);
+                qrTimerInterval = null;
+            }
+            
+            // Atualizar UI para mostrar status conectado
+            const statusEl = document.querySelector(`.bot-status[data-bot-id="${data.botId}"]`);
+            if (statusEl) {
+                statusEl.textContent = "Conectado";
+                statusEl.className = "bot-status connected";
+            }
+            
+            // Atualizar bot localmente
+            const bot = userBots.find(b => b.id == data.botId);
+            if (bot) {
+                bot.status = 'online';
+            }
+            
+            // Se estivermos no wizard, avançar para próximo passo
+            if (currentView === 'wizard' && data.botId == currentBotBeingConfigured) {
+                showWizardStep('step3');
+            }
+            
+            // Mostrar notificação de sucesso
+            showNotification(data.message || "Bot conectado com sucesso!", "success");
+            
+            // Limpar o display do QR Code
+            const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
+            if (targetEl) {
+                targetEl.innerHTML = '<div class="success-message" style="text-align: center; padding: 40px; color: #28a745;"><h3>✅ Conectado com sucesso!</h3></div>';
+            }
+            
+            isActivelyConnecting = false;
+        });
 
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
