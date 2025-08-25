@@ -2747,7 +2747,8 @@ async function createBot() {
 
         // Listener para agendamentos criados via bot
         socket.on("appointment_created", (data) => {
-            console.log("📅 Novo agendamento criado via bot:", data);
+            console.log("📅 [FRONTEND] Novo agendamento criado via bot:", data);
+            console.log("📅 [FRONTEND] currentView:", currentView);
             
             // Se estivermos na view de agenda, atualizar o calendário
             if (currentView === 'agenda') {
