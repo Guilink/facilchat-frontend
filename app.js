@@ -2680,16 +2680,26 @@ async function createBot() {
             const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
             if (!targetEl) return;
             
-            // Mostra o QR Code, sem nenhum timer visual
-            targetEl.innerHTML = `
-                <div class="qr-code-wrapper"></div>
-            `;
-            new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
-                text: data.qrString,
-                width: 240, height: 240,
-                colorDark: "#000000", colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            // Detecta se é uma imagem base64 ou string para gerar QR Code
+            if (data.qrString.startsWith('data:image/')) {
+                // É uma imagem base64 da Evolution API - exibe diretamente
+                targetEl.innerHTML = `
+                    <div class="qr-code-wrapper">
+                        <img src="${data.qrString}" style="width: 240px; height: 240px; border: 1px solid #ccc;" alt="QR Code" />
+                    </div>
+                `;
+            } else {
+                // É uma string normal - gera QR Code com QRCode.js
+                targetEl.innerHTML = `
+                    <div class="qr-code-wrapper"></div>
+                `;
+                new QRCode(targetEl.querySelector('.qr-code-wrapper'), {
+                    text: data.qrString,
+                    width: 240, height: 240,
+                    colorDark: "#000000", colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
         });
 
         // 2. SUBSTITUA o listener 'connection_timeout'
