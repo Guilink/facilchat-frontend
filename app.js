@@ -2680,16 +2680,7 @@ async function createBot() {
             const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
             if (!targetEl) return;
             
-            // Detecta se é uma imagem base64 ou string para gerar QR Code
-            if (data.qrString.startsWith('data:image/')) {
-                // É uma imagem base64 da Evolution API - exibe diretamente
-                targetEl.innerHTML = `
-                    <div class="qr-code-wrapper">
-                        <img src="${data.qrString}" style="width: 240px; height: 240px; border: 1px solid #ccc;" alt="QR Code" />
-                    </div>
-                `;
-            } else {
-                // É uma string normal - gera QR Code com QRCode.js
+            // Mostra o QR Code, sem nenhum timer visual
             targetEl.innerHTML = `
                 <div class="qr-code-wrapper"></div>
             `;
@@ -2699,7 +2690,6 @@ async function createBot() {
                 colorDark: "#000000", colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.H
             });
-            }
         });
 
         // 2. SUBSTITUA o listener 'connection_timeout'
@@ -2730,72 +2720,6 @@ async function createBot() {
                 handleConnectionToggle(data.botId, 'offline');
             });
         });       
-
-        // Listener para conexão bem-sucedida via Evolution API
-        socket.on("bot_connection_success", (data) => {
-            console.log("✅ Bot conectado com sucesso via Evolution API:", data);
-            
-            // Para o timer do QR Code se estiver rodando
-            if (qrTimerInterval) {
-                clearInterval(qrTimerInterval);
-                qrTimerInterval = null;
-            }
-            
-            // Atualizar UI para mostrar status conectado
-            const statusEl = document.querySelector(`.bot-status[data-bot-id="${data.botId}"]`);
-        });
-
-        // Listener para agendamentos criados via bot
-        socket.on("appointment_created", (data) => {
-            console.log("📅 [FRONTEND] Novo agendamento criado via bot:", data);
-            console.log("📅 [FRONTEND] currentView:", currentView);
-            
-            // Se estivermos na view de agenda, atualizar o calendário
-            if (currentView === 'agenda') {
-                console.log("🔄 Atualizando agenda automaticamente...");
-                // Recarrega os agendamentos se estivermos na view de agenda
-                if (typeof loadAppointments === 'function') {
-                    loadAppointments();
-                } else {
-                    // Fallback: recarregar a view de agenda
-                    showAgenda();
-                }
-            }
-            
-            // Mostrar notificação
-            showToast(`Novo agendamento: ${data.client_name} - ${data.date} às ${data.time}`, 'success');
-        });
-
-        // Continuar com o código do bot_connection_success
-        socket.on("bot_connection_success", (data) => {
-            const statusEl = document.querySelector(`.bot-status[data-bot-id="${data.botId}"]`);
-            if (statusEl) {
-                statusEl.textContent = "Conectado";
-                statusEl.className = "bot-status connected";
-            }
-            
-            // Atualizar bot localmente
-            const bot = userBots.find(b => b.id == data.botId);
-            if (bot) {
-                bot.status = 'online';
-            }
-            
-            // Se estivermos no wizard, avançar para próximo passo
-            if (currentView === 'wizard' && data.botId == currentBotBeingConfigured) {
-                showWizardStep('step3');
-            }
-            
-            // Mostrar notificação de sucesso
-            showNotification(data.message || "Bot conectado com sucesso!", "success");
-            
-            // Limpar o display do QR Code
-            const targetEl = views.wizard.classList.contains('active') ? elements.qrDisplay : document.getElementById('qr-modal-content');
-            if (targetEl) {
-                targetEl.innerHTML = '<div class="success-message" style="text-align: center; padding: 40px; color: #28a745;"><h3>✅ Conectado com sucesso!</h3></div>';
-            }
-            
-            isActivelyConnecting = false;
-        });
 
         socket.on("client_ready", async (data) => {
             if (data.botId != editingBotId) return;
