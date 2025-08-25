@@ -2743,6 +2743,31 @@ async function createBot() {
             
             // Atualizar UI para mostrar status conectado
             const statusEl = document.querySelector(`.bot-status[data-bot-id="${data.botId}"]`);
+        });
+
+        // Listener para agendamentos criados via bot
+        socket.on("appointment_created", (data) => {
+            console.log("📅 Novo agendamento criado via bot:", data);
+            
+            // Se estivermos na view de agenda, atualizar o calendário
+            if (currentView === 'agenda') {
+                console.log("🔄 Atualizando agenda automaticamente...");
+                // Recarrega os agendamentos se estivermos na view de agenda
+                if (typeof loadAppointments === 'function') {
+                    loadAppointments();
+                } else {
+                    // Fallback: recarregar a view de agenda
+                    showAgenda();
+                }
+            }
+            
+            // Mostrar notificação
+            showToast(`Novo agendamento: ${data.client_name} - ${data.date} às ${data.time}`, 'success');
+        });
+
+        // Continuar com o código do bot_connection_success
+        socket.on("bot_connection_success", (data) => {
+            const statusEl = document.querySelector(`.bot-status[data-bot-id="${data.botId}"]`);
             if (statusEl) {
                 statusEl.textContent = "Conectado";
                 statusEl.className = "bot-status connected";
